@@ -1,0 +1,230 @@
+<html>
+
+<head>
+    <title>Rockwell Collins</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+    <script type="text/javascript" src1="https://cdn.jsdelivr.net/npm/vue"></script>
+
+    <!-- Load required Bootstrap and BootstrapVue CSS -->
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css" />
+
+    <!-- Load polyfills to support older browsers -->
+    <script src="//polyfill.io/v3/polyfill.min.js?features=es2015%2CIntersectionObserver" crossorigin="anonymous">
+    </script>
+
+    <!-- Load Vue followed by BootstrapVue -->
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
+
+    <!-- Load the following for BootstrapVueIcons support -->
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
+
+</head>
+
+<body>
+    <div id="MainApp">
+        <b-alert show>
+            <h1>Rockwell Collins</h1>
+        </b-alert>
+
+        <div class="container" v-if="!bLogStatus">
+            <div class="row">
+                <div class="col m-3">
+                    <b-card no-body>
+                        <b-card-footer>
+                            <h4>Hello {{userName}}.</h4>
+                        </b-card-footer>
+                        <b-card-body>
+                            <b-card-title></b-card-title>
+                            <b-card-sub-title class="mb-2">Welcome to <strong>STROLR</strong>, the <strong>Self Service
+                                    Tool
+                                    for Railwaynet Onboard Log Retrieval</strong>. Based on your assigned SCAC
+                                <strong>RCAX</strong>, you have access to logs from locomotives with the following SCAC
+                                Mark
+                                combinations</b-card-sub-title>
+                            <b-card-text>
+                                <b-collapse  id="collapse-1">
+                                    <pre>
+                                <strong>    SCAC	Mark</strong>
+                                    AMTK	AMTK
+                                    AMTK	CDTX
+                                    AMTK	WDTX
+                                    AMTK	IDTX
+                                    AMTK	RNCX
+                                    VREX	VREX
+                                </pre>
+                                </b-collapse>
+                            </b-card-text>
+                        </b-card-body>
+                        <b-card-footer>
+                            To obtain the latest log file for a locomotive, select the SCAC, Mark and enter the
+                            locomotive
+                            ID. If the locomotive exists in our database, you will receive a link that points the
+                            current
+                            log files for that locomotive on the MDM. Please note that it may take up to 5 minutes for
+                            the
+                            log file to be available for download.
+                        </b-card-footer>
+                    </b-card>
+                    <b-link v-b-toggle.collapse-1 class="float-right m-1" variant="outline-info">Hide / Show
+                    </b-link>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col m-3">
+                    <b-form @submit="onSubmit" @reset="onReset" v-if="show">
+                        <div class="form-group row">
+                            <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
+                            <div class="col">
+                                <b-form-select id="selSCACMark" v-model="form.SCACMark" :options="lstFullTree" required size="sm"
+                                    @change1="onChange($event)"></b-form-select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="inpLocoID" size="sm" class="col-sm-5 col-form-label">Locomotive ID</label>
+                            <div class="col">
+                                <b-form-input id="inpLocoID" v-model="form.LocoID" required placeholder="Enter Locomotive ID" type="number" size="sm">
+                                </b-form-input>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="inpStartDate" size="sm" class="col-sm-5 col-form-label">Start Date / Time</label>
+                            <div class="col-sm-4">
+                                <b-form-input id="inpStartDate" v-model="form.StartDate" required type="date" size="sm">></b-form-input>
+                            </div>
+                            <div class="col-sm-3">
+                                <b-form-input id="inpStartTime" v-model="form.StartTime" type="time" size="sm">></b-form-input>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="inpEndDate" size="sm" class="col-sm-5 col-form-label">End Date / Time</label>
+                            <div class="col-sm-4">
+                                <b-form-input id="inpEndDate" v-model="form.EndDate" required type="date" size="sm">></b-form-input>
+                            </div>
+                            <div class="col-sm-3">
+                                <b-form-input id="inpEndTime" v-model="form.EndTime" type="time" size="sm">></b-form-input>
+                            </div>
+                        </div>
+
+                         <div class="form-group row">
+                            <label class="col-sm-5 "> </label>
+                            <div class="col">
+                                <b-button type="submit" variant="primary">Get Logs</b-button>
+                                <b-button type="reset" variant="light">Reset</b-button>
+                            </div>
+                        </div>
+                        
+                    </b-form>
+
+
+                    <!-- <b-card class="mt-3" header="Form Data Result">
+                        <pre class="m-0">{{ form }}</pre>
+                    </b-card> -->
+                </div>
+                <div class="col-sm-3">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="container" v-if="bLogStatus">
+            <div class="row">
+                <div class="col m-3">
+                    <b-card no-body>
+                        <b-card-footer>
+                            <h4>Log File Retrieval Status</h4>
+                        </b-card-footer>
+                        <b-card-body>
+                            <b-card-title>Status</b-card-title>
+                            <b-card-sub-title class="mb-2"></b-card-sub-title>
+                            <b-card-text>
+                                Number of Log Files Being Retrieved: Counting...<br>
+                                Size of Compressed Log File: Checking log file...<br>
+
+                                {{JSON.stringify(this.form)}} <br>
+                                {{sStatus}}
+                            </b-card-text>
+                        </b-card-body>
+                        <b-card-footer>
+                            Log Server is currently processing request. Please do not close this window! You will be shown a download URL when the log files are ready
+                        </b-card-footer>
+                    </b-card>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var vue_det = new Vue({
+            el: '#MainApp',
+            data: {
+                form: {
+                    LocoID: null,
+                    StartDate: null,
+                    EndDate: null,
+                    StartTime: null,
+                    EndTime: null,
+                    SCACMark: null
+                },
+                lstFullTree:[
+                    { value: null, text: 'Please select an option' }
+                ],
+                show: true,
+                bLogStatus: false,
+                timerCheck: '',
+                sStatus: '',
+                userName: 'Dev1'
+            },
+            created: function () {
+                this.fetchData()
+            },
+            methods: {
+                onSubmit(evt) {
+                    evt.preventDefault()
+                    alert(JSON.stringify(this.form))
+                    this.bLogStatus = true
+                    this.timer = setInterval(this.checkLogData, 1000)
+                },
+                onReset(evt) {
+                    evt.preventDefault()
+                    this.form.LocoID = null
+                    this.form.StartDate = null
+                    this.form.EndDate = null
+                    this.form.StartTime = null
+                    this.form.EndTime = null
+                    this.form.SCACMark = null
+                    // Trick to reset/clear native browser form validation state
+                    this.show = false
+                    this.$nextTick(() => {
+                        this.show = true
+                    })
+                },
+                fetchData: function () {
+                    var xhr = new XMLHttpRequest()
+                    var self = this
+                    var dataSCAC
+
+                    xhr.open('GET', 'data.json')
+                    xhr.onload = function () {
+                        dataSCAC = JSON.parse(xhr.responseText)
+                        //console.log(dataSCAC[0].SCAC)
+                        self.lstFullTree = self.lstFullTree.concat(dataSCAC[0].SCAC)
+                        //console.log(self.lstFullTree)
+                    }
+                    xhr.send()
+                },
+                checkLogData: function () {
+                    this.sStatus = this.sStatus + ' ping '
+                },
+                cancelLogDataCheck () { clearInterval(this.timerCheck) }
+
+            }
+        });
+    </script>
+</body>
+
+</html>

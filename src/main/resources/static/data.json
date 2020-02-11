@@ -1,0 +1,11 @@
+[{
+  "SCAC": [{
+      "label": "AMTK",
+      "options": ["AMTK", "CDTX", "WDTX", "IDTX", "RNCX"]
+    },
+    {
+      "label": "VREX",
+      "options": ["VREX"]
+    }
+  ]
+}]
