@@ -32,7 +32,7 @@
                 <div class="col m-3">
                     <b-card no-body>
                         <b-card-footer>
-                            <h4>Hello {{userName}}.</h4>
+                            <h4>Hello {{userName}}!</h4>
                         </b-card-footer>
                         <b-card-body>
                             <b-card-title></b-card-title>
@@ -43,7 +43,7 @@
                                 Mark
                                 combinations</b-card-sub-title>
                             <b-card-text>
-                                <b-collapse  id="collapse-1">
+                                <b-collapse id="collapse-1">
                                     <pre>
                                 <strong>    SCAC	Mark</strong>
                                     AMTK	AMTK
@@ -77,47 +77,65 @@
                         <div class="form-group row">
                             <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
                             <div class="col">
-                                <b-form-select id="selSCACMark" v-model="form.SCACMark" :options="lstFullTree" required size="sm"
-                                    @change1="onChange($event)"></b-form-select>
+                                <b-form-select id="selSCACMark" v-model="form.SCACMark" :options="lstFullTree" required
+                                    size="sm" @change1="onChange($event)"></b-form-select>
                             </div>
                         </div>
 
                         <div class="form-group row">
                             <label for="inpLocoID" size="sm" class="col-sm-5 col-form-label">Locomotive ID</label>
                             <div class="col">
-                                <b-form-input id="inpLocoID" v-model="form.LocoID" required placeholder="Enter Locomotive ID" type="number" size="sm">
+                                <b-form-input id="inpLocoID" v-model="form.LocoID" required
+                                    placeholder="Enter Locomotive ID" type="number" size="sm">
                                 </b-form-input>
                             </div>
                         </div>
-
                         <div class="form-group row">
-                            <label for="inpStartDate" size="sm" class="col-sm-5 col-form-label">Start Date / Time</label>
+                            <div class="col-sm-9"></div>
+                            <div class="col-sm-3">
+                                <b-input-group size="sm" prepend="UTC clock">
+                                    <b-form-input id="inpStartTime" v-model="timeUTC" type="text" size="sm" disabled="true">
+                                    </b-form-input>
+                                </b-input-group>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="inpStartDate" size="sm" class="col-sm-5 col-form-label">Start Date /
+                                Time</label>
                             <div class="col-sm-4">
-                                <b-form-input id="inpStartDate" v-model="form.StartDate" required type="date" size="sm">></b-form-input>
+                                <b-form-input id="inpStartDate" v-model="form.StartDate" required type="date" size="sm">
+                                    ></b-form-input>
                             </div>
                             <div class="col-sm-3">
-                                <b-form-input id="inpStartTime" v-model="form.StartTime" type="time" size="sm">></b-form-input>
+                                <b-input-group size="sm" append="UTC">
+                                    <b-form-input id="inpStartTime" v-model="form.StartTime" type="time" size="sm">
+                                    </b-form-input>
+                                </b-input-group>
                             </div>
                         </div>
 
                         <div class="form-group row">
                             <label for="inpEndDate" size="sm" class="col-sm-5 col-form-label">End Date / Time</label>
                             <div class="col-sm-4">
-                                <b-form-input id="inpEndDate" v-model="form.EndDate" required type="date" size="sm">></b-form-input>
+                                <b-form-input id="inpEndDate" v-model="form.EndDate" required type="date" size="sm">>
+                                </b-form-input>
                             </div>
                             <div class="col-sm-3">
-                                <b-form-input id="inpEndTime" v-model="form.EndTime" type="time" size="sm">></b-form-input>
+                                <b-input-group size="sm" append="UTC">
+                                    <b-form-input id="inpEndTime" v-model="form.EndTime" type="time" size="sm">
+                                    </b-form-input>
+                                </b-input-group>
                             </div>
                         </div>
 
-                         <div class="form-group row">
+                        <div class="form-group row">
                             <label class="col-sm-5 "> </label>
                             <div class="col">
                                 <b-button type="submit" variant="primary">Get Logs</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
-                        
+
                     </b-form>
 
 
@@ -150,7 +168,8 @@
                             </b-card-text>
                         </b-card-body>
                         <b-card-footer>
-                            Log Server is currently processing request. Please do not close this window! You will be shown a download URL when the log files are ready
+                            Log Server is currently processing request. Please do not close this window! You will be
+                            shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
                 </div>
@@ -170,38 +189,46 @@
                     EndTime: null,
                     SCACMark: null
                 },
-                lstFullTree:[
-                    { value: null, text: 'Please select an option' }
-                ],
+                lstFullTree: [{
+                    value: null,
+                    text: 'Please select an option'
+                }],
                 show: true,
                 bLogStatus: false,
                 timerCheck: '',
                 sStatus: '',
-                userName: 'Dev1'
+                timeUTC: '',
+                userName: 'amtk'
             },
             created: function () {
                 this.fetchData()
+                this.initDateTime()
+                this.timeUTC = this.getUTCTime()
+                this.timer = setInterval(this.getUTCTime, 5000)
             },
             methods: {
                 onSubmit(evt) {
                     evt.preventDefault()
-                    alert(JSON.stringify(this.form))
+                    // alert(JSON.stringify(this.form))
                     this.bLogStatus = true
                     this.timer = setInterval(this.checkLogData, 1000)
                 },
                 onReset(evt) {
                     evt.preventDefault()
                     this.form.LocoID = null
-                    this.form.StartDate = null
-                    this.form.EndDate = null
-                    this.form.StartTime = null
-                    this.form.EndTime = null
                     this.form.SCACMark = null
+                    this.initDateTime()
                     // Trick to reset/clear native browser form validation state
                     this.show = false
                     this.$nextTick(() => {
                         this.show = true
                     })
+                },
+                initDateTime: function () {
+                    this.form.StartDate = this.formatDate()
+                    this.form.EndDate = this.form.StartDate
+                    this.form.StartTime = '00:01'
+                    this.form.EndTime = '23:59'
                 },
                 fetchData: function () {
                     var xhr = new XMLHttpRequest()
@@ -211,16 +238,52 @@
                     xhr.open('GET', 'data.json')
                     xhr.onload = function () {
                         dataSCAC = JSON.parse(xhr.responseText)
-                        //console.log(dataSCAC[0].SCAC)
                         self.lstFullTree = self.lstFullTree.concat(dataSCAC[0].SCAC)
-                        //console.log(self.lstFullTree)
                     }
                     xhr.send()
                 },
                 checkLogData: function () {
                     this.sStatus = this.sStatus + ' ping '
                 },
-                cancelLogDataCheck () { clearInterval(this.timerCheck) }
+                cancelLogDataCheck() {
+                    clearInterval(this.timerCheck)
+                },
+                formatDate: function () {
+                    var d = new Date(),
+                        month = '' + (d.getMonth() + 1),
+                        day = '' + d.getDate(),
+                        year = d.getFullYear();
+
+                    if (month.length < 2)
+                        month = '0' + month;
+                    if (day.length < 2)
+                        day = '0' + day;
+
+                    return [year, month, day].join('-');
+                },
+
+                getUTCTime: function () {
+                    // var str = 'AM'
+                    var d = new Date();
+                    var hr = d.getUTCHours();
+                    var min = d.getUTCMinutes();
+                    var res;
+
+                    // if (hr == 0) {
+                    //     hr = 12
+                    // } else
+                    // if (hr > 11) {
+                    //     hr = hr - 11
+                    //     str = 'PM'
+                    // }
+                    if (hr < 10) hr = '0' + hr;
+                    if (min < 10) min = '0' + min;
+
+                    res = hr + ":" + min // + " " + str
+                    this.timeUTC = res
+                    return res
+
+                }
 
             }
         });
