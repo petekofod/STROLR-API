@@ -15,7 +15,7 @@ public class WelcomeController {
 
     private static final Logger logger = LoggerFactory.getLogger(WelcomeController.class);
 
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('AMTK') || hasAuthority('VREX')")
     @RequestMapping("/user_test")
     public String userTest(Principal principal) {
         UserDetails currentUser

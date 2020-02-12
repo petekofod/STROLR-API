@@ -54,15 +54,9 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter {
 		return new UserDetailsService() {
 			@Override
 			public UserDetails loadUserByUsername(String username) {
-				if (username.equals("localhost")) {
-					return new User(username, "",
-						AuthorityUtils
-								.commaSeparatedStringToAuthorityList("ROLE_USER"));
-				} else {
-					return new User(username, "",
-							AuthorityUtils
-									.commaSeparatedStringToAuthorityList("UNKNOWN"));
-				}
+				return new User(username, "",
+					AuthorityUtils
+							.commaSeparatedStringToAuthorityList(username));
 			}
 		};
 	}
