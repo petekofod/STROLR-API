@@ -4,12 +4,14 @@ import org.apache.coyote.http11.Http11NioProtocol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -49,34 +51,5 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter {
 		return username -> new User(username, "",
 			AuthorityUtils
 					.commaSeparatedStringToAuthorityList(username));
-	}
-
-	@Bean
-	@Profile("production")
-	WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> containerCustomizer(
-			@Value("${keystore.file}") Resource keystoreFile,
-			@Value("${keystore.pass}") String keystorePass,
-			@Value("${server.port}") String serverPort) throws Exception {
-
-		String absoluteKeystoreFile = keystoreFile.getFile().getAbsolutePath();
-
-		return (ConfigurableServletWebServerFactory container) -> {
-			TomcatServletWebServerFactory tomcat = (TomcatServletWebServerFactory) container;
-			tomcat.addConnectorCustomizers(
-					(connector) -> {
-						connector.setPort(Integer.parseInt(serverPort));
-						connector.setSecure(true);
-						connector.setScheme("https");
-
-						Http11NioProtocol proto = (Http11NioProtocol) connector.getProtocolHandler();
-						proto.setSSLEnabled(true);
-						proto.setKeystoreFile(absoluteKeystoreFile);
-						proto.setKeystorePass(keystorePass);
-						proto.setKeystoreType("PKCS12");
-						proto.setKeyAlias("tomcat");
-					}
-			);
-
-		};
 	}
 }
