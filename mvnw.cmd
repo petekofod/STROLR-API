@@ -1,3 +1,4 @@
+SET JAVA_HOME=C:\Program Files\Java\jdk1.8.0_241
 @REM ----------------------------------------------------------------------------
 @REM Licensed to the Apache Software Foundation (ASF) under one
 @REM or more contributor license agreements.  See the NOTICE file

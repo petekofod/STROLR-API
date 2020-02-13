@@ -1,0 +1,1 @@
+java -Dspring.profiles.active=production -Dkeystore.file=file:///src/main/resources/keystore.p12 -Dserver.port=8447 -jar target\strolr2-0.0.1-SNAPSHOT.jar 
