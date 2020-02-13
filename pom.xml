@@ -11,7 +11,7 @@
 	<groupId>net.railwaynet.logdelivery</groupId>
 	<artifactId>strolr2</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>strolr</name>
 	<description>Self-service Tool for Retrieving Onboard Logs for RailwayNet</description>
 
