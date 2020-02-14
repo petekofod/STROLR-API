@@ -19,11 +19,16 @@
     <!-- Load the following for BootstrapVueIcons support -->
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
 
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="MainApp">
-        <b-alert show>
+    <div id="MainApp" v-cloak>
+        <b-alert show >
             <h1>Rockwell Collins</h1>
         </b-alert>
 
@@ -177,117 +182,7 @@
         </div>
     </div>
 
-    <script type="text/javascript">
-        var vue_det = new Vue({
-            el: '#MainApp',
-            data: {
-                form: {
-                    LocoID: null,
-                    StartDate: null,
-                    EndDate: null,
-                    StartTime: null,
-                    EndTime: null,
-                    SCACMark: null
-                },
-                lstFullTree: [{
-                    value: null,
-                    text: 'Please select an option'
-                }],
-                show: true,
-                bLogStatus: false,
-                timerCheck: '',
-                sStatus: '',
-                timeUTC: '',
-                userName: 'amtk'
-            },
-            created: function () {
-                this.fetchData()
-                this.initDateTime()
-                this.timeUTC = this.getUTCTime()
-                this.timer = setInterval(this.getUTCTime, 5000)
-            },
-            methods: {
-                onSubmit(evt) {
-                    evt.preventDefault()
-                    // alert(JSON.stringify(this.form))
-                    this.bLogStatus = true
-                    this.timer = setInterval(this.checkLogData, 1000)
-                },
-                onReset(evt) {
-                    evt.preventDefault()
-                    this.form.LocoID = null
-                    this.form.SCACMark = null
-                    this.initDateTime()
-                    // Trick to reset/clear native browser form validation state
-                    this.show = false
-                    this.$nextTick(() => {
-                        this.show = true
-                    })
-                },
-                initDateTime: function () {
-                    this.form.StartDate = this.formatDate()
-                    this.form.EndDate = this.form.StartDate
-                    this.form.StartTime = '00:01'
-                    this.form.EndTime = '23:59'
-                },
-                fetchData: function () {
-                    var xhr = new XMLHttpRequest()
-                    var self = this
-                    var dataSCAC
-
-                    xhr.open('GET', 'data.json')
-                    xhr.onload = function () {
-                        dataSCAC = JSON.parse(xhr.responseText)
-                        self.lstFullTree = self.lstFullTree.concat(dataSCAC[0].SCAC)
-                    }
-                    xhr.send()
-                },
-                checkLogData: function () {
-                    this.sStatus = this.sStatus + ' ping '
-                },
-                cancelLogDataCheck() {
-                    clearInterval(this.timerCheck)
-                },
-                formatDate: function () {
-                    var d = new Date(),
-                        month = '' + (d.getMonth() + 1),
-                        day = '' + d.getDate(),
-                        year = d.getFullYear();
-
-                    if (month.length < 2)
-                        month = '0' + month;
-                    if (day.length < 2)
-                        day = '0' + day;
-
-                    return [year, month, day].join('-');
-                },
-
-                getUTCTime: function () {
-                    // var str = 'AM'
-                    var d = new Date();
-                    var hr = d.getUTCHours();
-                    var min = d.getUTCMinutes();
-                    var res;
-
-                    // if (hr == 0) {
-                    //     hr = 12
-                    // } else
-                    // if (hr > 11) {
-                    //     hr = hr - 11
-                    //     str = 'PM'
-                    // }
-                    if (hr < 10) hr = '0' + hr;
-                    if (min < 10) min = '0' + min;
-
-                    res = hr + ":" + min // + " " + str
-                    this.timeUTC = res
-                    return res
-
-                }
-
-            }
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 
 </html>
