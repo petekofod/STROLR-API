@@ -17,6 +17,7 @@ var vue_det = new Vue({
         bLogStatus: false,
         timerCheck: '',
         sStatus: '',
+        sLogRequestStatus: '',
         timeUTC: '',
         userName: ''
     },
@@ -30,8 +31,19 @@ var vue_det = new Vue({
     methods: {
         onSubmit(evt) {
             evt.preventDefault()
+
             this.bLogStatus = true
             this.timer = setInterval(this.checkLogData, 1000)
+
+            var xhr = new XMLHttpRequest()
+            var self = this
+
+            xhr.open('POST', 'request-logs')
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+            xhr.onload = function () {
+                self.sLogRequestStatus = "Request status: " + xhr.responseText
+            }
+            xhr.send(JSON.stringify(this.form))
         },
         onReset(evt) {
             evt.preventDefault()
