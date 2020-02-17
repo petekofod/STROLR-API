@@ -1,6 +1,7 @@
 package net.railwaynet.logdelivery.strolr;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,18 +26,20 @@ public class ListOfRailroadsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ListOfRailroadsController.class);
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @RequestMapping("/data.json")
     public String data(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
 
         Map<String, ArrayList<Map<?, ?>>> result = new HashMap<>();
-        result.put("SCAC", new ArrayList<Map<?,?>>());
+        result.put("SCAC", new ArrayList<>());
 
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            Map<?, ?> map = objectMapper.readValue(new FileInputStream(ResourceUtils.getFile("classpath:data.json")), Map.class);
-            List<Map<?, ?>> scacs = (List<Map<?, ?>>) map.get("SCAC");
+            Map<String, ArrayList<Map<?, ?>>> map = objectMapper.readValue(new FileInputStream(ResourceUtils.getFile("classpath:data.json")),
+                    new TypeReference<Map<String, ArrayList<Map<?, ?>>>>() {});
+            List<Map<?, ?>> scacs = map.get("SCAC");
             for (Map<?, ?> scac: scacs) {
                 if (scac.get("label").toString().equals(currentUser.getUsername())) {
                     result.get("SCAC").add(scac);
