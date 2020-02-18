@@ -1,5 +1,7 @@
 
-java -Dspring.profiles.active=production \
+java \
+	-classpath "/$PWD/src/main/resources" \
+	-Dspring.profiles.active=production \
 	-Dkeystore.file=file:///$PWD/src/main/resources/keystore.p12 -Dkeystore.pass=strolr \
 	-Dtruststore.file=file:///$PWD/src/main/resources/truststore.jks -Dtruststore.pass=strolr \
 	-Dserver.port=8443 \

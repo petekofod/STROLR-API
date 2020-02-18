@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,7 +38,7 @@ public class ListOfRailroadsController {
         result.put("SCAC", new ArrayList<>());
 
         try {
-            Map<String, ArrayList<Map<?, ?>>> map = objectMapper.readValue(new FileInputStream(ResourceUtils.getFile("classpath:data.json")),
+            Map<String, ArrayList<Map<?, ?>>> map = objectMapper.readValue(new ClassPathResource("data.json").getInputStream(),
                     new TypeReference<Map<String, ArrayList<Map<?, ?>>>>() {});
             List<Map<?, ?>> scacs = map.get("SCAC");
             for (Map<?, ?> scac: scacs) {
@@ -49,7 +50,7 @@ public class ListOfRailroadsController {
 
             logger.debug("JSON:" + result.get("SCAC").toString());
         } catch (IOException e) {
-            logger.error("Can't read the list of railroads!");
+            logger.error("Can't read the list of railroads!", e);
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't read the list of railroads!", e);
         }
