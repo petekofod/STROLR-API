@@ -67,7 +67,7 @@ var vue_det = new Vue({
             var self = this
             var dataSCAC
 
-            xhr.open('GET', 'data.json')
+            xhr.open('GET', 'railroads.json')
             xhr.onload = function () {
                 dataSCAC = JSON.parse(xhr.responseText)
                 self.lstFullTree = self.lstFullTree.concat(dataSCAC.SCAC)

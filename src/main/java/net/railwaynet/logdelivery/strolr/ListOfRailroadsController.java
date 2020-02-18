@@ -9,12 +9,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -27,9 +25,11 @@ public class ListOfRailroadsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ListOfRailroadsController.class);
 
+    private static final String RAILROADS_FILE = "railroads.json";
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @RequestMapping("/data.json")
+    @RequestMapping("/railroads.json")
     public String data(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
@@ -38,7 +38,7 @@ public class ListOfRailroadsController {
         result.put("SCAC", new ArrayList<>());
 
         try {
-            Map<String, ArrayList<Map<?, ?>>> map = objectMapper.readValue(new ClassPathResource("data.json").getInputStream(),
+            Map<String, ArrayList<Map<?, ?>>> map = objectMapper.readValue(new ClassPathResource(RAILROADS_FILE).getInputStream(),
                     new TypeReference<Map<String, ArrayList<Map<?, ?>>>>() {});
             List<Map<?, ?>> scacs = map.get("SCAC");
             for (Map<?, ?> scac: scacs) {
