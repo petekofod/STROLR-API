@@ -41,7 +41,15 @@ var vue_det = new Vue({
             xhr.open('POST', 'request-logs')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
             xhr.onload = function () {
-                self.sLogRequestStatus = "Request status: " + xhr.responseText
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        self.sLogRequestStatus = "Request status: " + xhr.responseText
+                        self.userName = dataUser.userName
+                    } else {
+                        self.sLogRequestStatus = "Request status: ERROR, " + statusText
+                        console.error('error - ' + xhr.statusText);
+                    }
+                }
             }
             xhr.send(JSON.stringify(this.form))
         },
