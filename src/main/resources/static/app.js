@@ -19,7 +19,11 @@ var vue_det = new Vue({
         sStatus: '',
         sLogRequestStatus: '',
         timeUTC: '',
-        userName: ''
+        userName: '',
+        messageId: '',
+        sFilesCount: 'Counting...',
+        sTotalBytes: 'Checking log file...',
+        showLinks: false,
     },
     created: function () {
         this.getUserName()
@@ -43,8 +47,8 @@ var vue_det = new Vue({
             xhr.onload = function () {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        self.sLogRequestStatus = "Request status: " + xhr.responseText
-                        self.userName = dataUser.userName
+                        self.sLogRequestStatus = "Request submitted successfully"
+                        self.messageId = xhr.responseText
                     } else {
                         self.sLogRequestStatus = "Request status: ERROR, " + statusText
                         console.error('error - ' + xhr.statusText);
@@ -102,7 +106,32 @@ var vue_det = new Vue({
             xhr.send()
         },
         checkLogData: function () {
-            this.sStatus = this.sStatus + ' ping '
+            var xhr = new XMLHttpRequest()
+            var self = this
+
+            xhr.open('GET', 'status-update/' + this.messageId)
+            xhr.onload = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        statusUpdate = JSON.parse(xhr.responseText)
+                        if (statusUpdate.filesCount)
+                            self.sFilesCount = statusUpdate.filesCount
+                        if (statusUpdate.totalBytes)
+                            self.sTotalBytes = statusUpdate.totalBytes
+                        if (statusUpdate.Status === "4") {
+                            self.cancelLogDataCheck()
+                            self.showLinks = true
+                        }
+                        self.sStatus = statusUpdate.statusText
+                    } else if (xhr.status === 204) {
+                        // no update, try again later
+                    }
+                    else {
+                        console.error('error - ' + xhr.statusText);
+                    }
+                }
+            }
+            xhr.send()
         },
         cancelLogDataCheck() {
             clearInterval(this.timerCheck)

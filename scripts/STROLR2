@@ -1,0 +1,53 @@
+#!/bin/bash
+
+. ./functions-lib
+
+POLL_TIMEOUT=5
+
+readConfig
+
+while :
+do
+        log "Next polling loop"
+
+        message=`receiveMessage`
+
+        if [[ -z "$message" ]]; then
+                log "No new messages"
+                sleep $POLL_TIMEOUT
+                continue
+        fi
+
+        messageId=`echo $message | jq -r '.Messages[0].MessageId'`
+        receiptHandle=`echo $message | jq -r '.Messages[0].ReceiptHandle'`
+        SCAC=`echo $message | jq -r '.Messages[0].MessageAttributes.SCAC.StringValue'`
+        mark=`echo $message | jq -r '.Messages[0].MessageAttributes.SCACMark.StringValue'`
+        locoID=`echo $message | jq -r '.Messages[0].MessageAttributes.LocoID.StringValue'`
+        startDate=`echo $message | jq -r '.Messages[0].MessageAttributes.StartDate.StringValue'`
+        startTime=`echo $message | jq -r '.Messages[0].MessageAttributes.StartTime.StringValue'`
+        endDate=`echo $message | jq -r '.Messages[0].MessageAttributes.EndDate.StringValue'`
+        endTime=`echo $message | jq -r '.Messages[0].MessageAttributes.EndTime.StringValue'`
+
+        if [[ "$SCAC" == "null" ]]; then
+                log "SCAC is empty, deleteing the invalid message"
+                deleteMessage $receiptHandle
+        else
+                log "Getting logs for loko $lokoID of $SCAC/$mark from $startDate $startTime till $endDate $endTime"
+
+                jobsCount=$(jobs -r | wc -l)
+                log "Number of running jobs = $jobsCount"
+
+                if [[ "$jobsCount" -gt "$MAX_JOBS" ]]; then
+                        log "Maximum number of workers exceeded, waiting..."
+                        sleep $POLL_TIMEOUT
+                        continue
+                fi
+
+                log "Starting a worker"
+                "workers/$SCAC" $messageId $mark $locoID $startDate $startTime $endDate $endTime &
+                log "Deleting the incoming message"
+                deleteMessage $receiptHandle
+        fi
+
+        sleep $POLL_TIMEOUT
+done

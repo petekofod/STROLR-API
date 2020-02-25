@@ -165,15 +165,19 @@
                             <b-card-title>Status</b-card-title>
                             <b-card-sub-title class="mb-2"></b-card-sub-title>
                             <b-card-text>
-                                Number of Log Files Being Retrieved: Counting...<br>
-                                Size of Compressed Log File: Checking log file...<br>
-
-                                {{JSON.stringify(this.form)}} <br>
+                                Number of Log Files Being Retrieved: {{sFilesCount}}<br>
+                                Size of Compressed Log File: {{sTotalBytes}}<br>
                                 {{sLogRequestStatus}} <br>
                                 {{sStatus}}
                             </b-card-text>
+                            <b-card-title v-if="showLinks">Download links</b-card-title>
+                            <b-card-text v-if="showLinks">
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar.gz'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar.gz</a><br>
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar</a><br>
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.7z'">https://strolrdev.s3.amazonaws.com/{{messageId}}.7z</a><br>
+                            </b-card-text>
                         </b-card-body>
-                        <b-card-footer>
+                        <b-card-footer v-if="!showLinks">
                             Log Server is currently processing request. Please do not close this window! You will be
                             shown a download URL when the log files are ready
                         </b-card-footer>

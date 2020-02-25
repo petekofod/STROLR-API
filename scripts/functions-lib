@@ -1,0 +1,41 @@
+receiveMessage()
+{
+        aws sqs receive-message \
+                --queue-url $INCOMING_QUEUE \
+                --attribute-names \
+                --message-attribute-names All \
+                --max-number-of-messages 1
+}
+
+readConfig()
+{
+        INCOMING_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogrequest
+        MAX_JOBS=2
+        VREX_DIR=/amtk-logs/vrex
+        AWS_PROFILE=OTG
+        RESPONSE_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogresponse.fifo
+}
+
+sendStatus()
+{
+        log "Sending status $2 of message $1"
+        messageElement='"MessageID":"'${1}'"'
+        statusElement='"Status":"'${2}'"'
+        infoElement='"Info":"'${3}'"'
+        messageBody="{$messageElement,$statusElement,$infoElement}"
+        log "Message body is: $messageBody"
+        aws sqs send-message --queue-url $RESPONSE_QUEUE \
+                --message-body "$messageBody" \
+                --message-group-id $messageId
+}
+
+deleteMessage()
+{
+        log "Deleting message, receipt handler is $1"
+        aws sqs delete-message --queue-url $INCOMING_QUEUE --receipt-handle $1
+}
+
+log()
+{
+        echo $@
+}
