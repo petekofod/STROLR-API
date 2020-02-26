@@ -1,0 +1,132 @@
+#!/bin/bash
+
+. ./functions-lib
+
+readConfig
+
+monthnames=(invalid JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC)
+uppermonth="$(date +%b)"
+datepath="/$(date +%Y)/${uppermonth^^}/$(date +%d)"
+
+messageId=$1
+mark=$2
+mark=`echo "${mark}" | awk '{print tolower($0)}'`
+locoID=$3
+startDate=$4
+startTime=$5
+endDate=$6
+endTime=$7
+
+log "AMTK started"
+log "Message ID = $messageId, mark = $mark"
+
+yearstart=${startDate:0:4}
+yearend=${endDate:0:4}
+monthstart=${startDate:5:2}
+monthend=${endDate:5:2}
+daystart=${startDate:8:2}
+dayend=${endDate:8:2}
+hourstart=${startTime:0:2}
+hourend=${endTime:0:2}
+minutestart=${startTime:3:2}
+minuteend=${endTime:3:2}
+
+log "yearstart = $yearstart"
+log "yearend = $yearend"
+
+manifest=/tmp/${messageId}.manifest
+packageId=${mark}.${locoID}.${messageId}
+
+pathstring=${AMTK_DIR}/amtk.l.${mark}.${locoID}:mdm/
+pathstring=$(printf '%q' "$pathstring")
+log "Path string is $pathstring"
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "install|depart_test|fault_history|event_history"  | sort --key 7 --field-separator=. >/tmp/sort.${messageId}.all
+
+if [[ $yearstart == $yearend ]]; then
+        log "All dates are in the same year (${yearstart}), filtering out all other years"
+        cat /tmp/sort.${messageId}.all | grep ".${yearstart}" >/tmp/sort.${messageId}.all.tmp
+        mv /tmp/sort.${messageId}.all.tmp /tmp/sort.${messageId}.all
+        if [[ $monthstart == $monthend ]]; then
+                log "All dates are in the same month (${monthstart} of ${yearstart}), filtering out all other months"
+                cat /tmp/sort.${messageId}.all | grep ".${yearstart}${monthstart}" >/tmp/sort.${messageId}.all.tmp
+                mv /tmp/sort.${messageId}.all.tmp /tmp/sort.${messageId}.all
+                if [[ $daystart == $dayend ]]; then
+                        log "Start and end dates are equal (${daystart} of ${monthstart} of ${yearstart}), filtering out all other days"
+                        cat /tmp/sort.${messageId}.all | grep ".${yearstart}${monthstart}${daystart}" >/tmp/sort.${messageId}.all.tmp
+                        mv /tmp/sort.${messageId}.all.tmp /tmp/sort.${messageId}.all
+                fi
+        fi
+fi
+
+startDateTime=${yearstart}${monthstart}${daystart}${hourstart}${minutestart}
+log "Start from ${startDateTime}"
+endDateTime=${yearend}${monthend}${dayend}${hourend}${minuteend}
+log "End at ${endDateTime}"
+
+previousLine=none
+copyMode=before
+
+while IFS= read -r line
+do
+        log "Next line is $line"
+        if [[ ${copyMode} == "before" ]]; then
+                log "Skipping..."
+                if [[ ${line: -21:12} -gt ${startDateTime} ]]; then
+                        log "Adding first line"
+                        if [ ${previousLine} != "none" ]; then
+                                echo ${previousLine} >${manifest}
+                        fi
+                        copyMode=copying
+                fi
+                previousLine=${line}
+        fi
+        if [[ ${copyMode} == "copying" ]]; then
+                log "Copying..."
+                if [[ ${line: -21:12} -gt ${endDateTime} ]]; then
+                        log "Breaking!"
+                        break
+                else
+                        echo "${line}" >>${manifest}
+                fi
+        fi
+done </tmp/sort.${messageId}.all
+
+rm -f /tmp/sort.${messageId}.all
+
+sendStatus $messageId 1 None
+
+filesCount=`wc -l $manifest`
+log "Files found: $filesCount"
+
+log "Copying files"
+mkdir -p /tmp/wabtecformat/wabtec.${packageId}/{CDU-1,CPU-1,CPU-2,CPU-3}
+cat $manifest | grep CDU-1 | xargs -I {} sudo cp {} /tmp/wabtecformat/wabtec.${packageId}/CDU-1
+cat $manifest | grep CPU-1 | xargs -I {} sudo cp {} /tmp/wabtecformat/wabtec.${packageId}/CPU-1
+cat $manifest | grep CPU-2 | xargs -I {} sudo cp {} /tmp/wabtecformat/wabtec.${packageId}/CPU-2
+cat $manifest | grep CPU-3 | xargs -I {} sudo cp {} /tmp/wabtecformat/wabtec.${packageId}/CPU-3
+
+log "Archiving"
+sendStatus $messageId 2 $filesCount
+tar czf /tmp/${messageId}.tar.gz -C /tmp/wabtecformat/wabtec.${packageId} .
+tar cf /tmp/${messageId}.tar -C /tmp/wabtecformat/wabtec.${packageId} .
+7za a -bd /tmp/${messageId}.7z /tmp/wabtecformat/wabtec.${packageId}/* >/dev/null
+
+log "Deleting manifest file ($manifest) and temporary files (/tmp/wabtecformat/wabtec.${packageId})"
+rm -f $manifest
+rm -rf /tmp/wabtecformat/wabtec.${packageId}
+
+log "Sending files to S3 bucket"
+tarsize="$(ls -ltr /tmp/${messageId}.tar.gz | awk '{print $5}')"
+sendStatus $messageId 3 $tarsize
+aws s3 cp --quiet /tmp/${messageId}.tar.gz s3://strolrdev/${messageId}.tar.gz --acl public-read --profile $AWS_PROFILE
+aws s3 cp --quiet /tmp/${messageId}.tar s3://strolrdev/${messageId}.tar --acl public-read --profile $AWS_PROFILE
+aws s3 cp --quiet /tmp/${messageId}.7z s3://strolrdev/${messageId}.7z --acl public-read --profile $AWS_PROFILE
+
+log "Deleting archives"
+rm -f /tmp/${messageId}.tar.gz
+rm -f /tmp/${messageId}.tar
+rm -f /tmp/${messageId}.7z
+
+sendStatus $messageId 4 None
+log "Handling of $messageId completed"
