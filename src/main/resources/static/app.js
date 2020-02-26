@@ -134,7 +134,7 @@ var vue_det = new Vue({
             xhr.send()
         },
         cancelLogDataCheck() {
-            clearInterval(this.timerCheck)
+            clearInterval(this.timer)
         },
         formatDate: function () {
             var d = new Date(),
