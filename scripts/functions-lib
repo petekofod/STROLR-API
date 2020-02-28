@@ -14,7 +14,10 @@ readConfig()
         VREX_DIR=/amtk-logs/vrex
         AWS_PROFILE=OTG
         RESPONSE_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogresponse.fifo
+        AMTK_DIR=/amtk-logs
+        LOGS_TEMP_DIR=/tmp/strolr
 }
+
 
 sendStatus()
 {
@@ -38,4 +41,156 @@ deleteMessage()
 log()
 {
         echo $@
+}
+
+deleteArchives()
+{
+        log "Deleting archives of $1"
+        rm -f /tmp/$1.tar.gz
+        rm -f /tmp/$1.tar
+        rm -f /tmp/$1.7z
+}
+
+uploadArchives()
+{
+        log "Sending files to S3 bucket. Message ID is $1"
+        aws s3 cp --quiet /tmp/$1.tar.gz s3://strolrdev/$1.tar.gz --acl public-read --profile $AWS_PROFILE
+        aws s3 cp --quiet /tmp/$1.tar s3://strolrdev/$1.tar --acl public-read --profile $AWS_PROFILE
+        aws s3 cp --quiet /tmp/$1.7z s3://strolrdev/$1.7z --acl public-read --profile $AWS_PROFILE
+}
+
+copyLogs()
+{
+        log "Copying logs listed in $1 to /tmp/strolr/$2"
+        mkdir -p ${LOGS_TEMP_DIR}/$2/{CDU-1,CPU-1,CPU-2,CPU-3}
+        cat $1 | grep CDU-1 | xargs -I {} sudo cp {} ${LOGS_TEMP_DIR}/$2/CDU-1
+        cat $1 | grep CPU-1 | xargs -I {} sudo cp {} ${LOGS_TEMP_DIR}/$2/CPU-1
+        cat $1 | grep CPU-2 | xargs -I {} sudo cp {} ${LOGS_TEMP_DIR}/$2/CPU-2
+        cat $1 | grep CPU-3 | xargs -I {} sudo cp {} ${LOGS_TEMP_DIR}/$2/CPU-3
+
+        log "Deleting the manifest file: $1"
+        rm -f $1
+}
+
+archiveLogs()
+{
+        log "Archiving located in ${LOGS_TEMP_DIR}/$2"
+
+        log "Creating /tmp/$1.tar.gz"
+        tar czf /tmp/$1.tar.gz -C ${LOGS_TEMP_DIR}/$2 .
+
+        log "Creating /tmp/$1.tar"
+        tar cf /tmp/$1.tar -C ${LOGS_TEMP_DIR}/$2 .
+
+        log "Creating /tmp/$1.7z"
+        7za a -bd /tmp/$1.7z ${LOGS_TEMP_DIR}/$2/* >/dev/null
+
+        log "Deleting logs in ${LOGS_TEMP_DIR}/$2"
+        rm -rf ${LOGS_TEMP_DIR}/$2
+}
+
+putLogsToS3()
+{
+        # Params are ${manifest} ${messageId} ${packageId}
+
+        filesCount=`wc -l $1`
+        log "Files found: $filesCount"
+
+        copyLogs $1 $3
+
+        sendStatus $2 2 $filesCount
+
+        archiveLogs $2 $3
+
+        tarsize="$(ls -ltr /tmp/$2.tar.gz | awk '{print $5}')"
+        sendStatus $2 3 $tarsize
+
+        uploadArchives $2
+        deleteArchives $2
+
+        sendStatus $2 4 None
+        log "Handling of $2 completed"
+}
+
+
+filterByTime()
+{
+        # ${startDateTime} ${endDateTime} ${manifest} ${foundFiles}
+        log "Filtering from $1 till $2 data from $4 to $3"
+        previousLine=none
+        copyMode=before
+
+        log "Number of files before the time filter: `wc -l ${4}`"
+
+        while IFS= read -r line
+        do
+                if [[ ${copyMode} == "before" ]]; then
+                        if [[ ${line: -21:12} -gt ${1} ]]; then
+                                if [ ${previousLine} != "none" ]; then
+                                        echo ${previousLine} >>${3}
+                                fi
+                                copyMode=copying
+                        fi
+                        previousLine=${line}
+                fi
+                if [[ ${copyMode} == "copying" ]]; then
+                        if [[ ${line: -21:12} -gt ${2} ]]; then
+                                break
+                        else
+                                echo "${line}" >>${3}
+                        fi
+                fi
+        done <$4
+
+        log "Deleting the temporary file: $4"
+        rm -f $4
+}
+
+filterByDate()
+{
+        # $yearstart $yearend $monthstart $monthend $daystart $dayend ${foundFiles}
+
+        grepCondition=none
+
+        if [[ $1 == $2 ]]; then
+                grepCondition=.$1
+                if [[ $3 == $4 ]]; then
+                        grepCondition=${grepCondition}$3
+                        if [[ $5 == $6 ]]; then
+                                grepCondition=${grepCondition}$5
+                        fi
+                fi
+        fi
+
+        if [[ ${grepCondition} != "none" ]]; then
+                log "Grepping for requested year/month/day to improve performance, the condition is ${grepCondition}"
+                cat $7 | grep ".${grepCondition}" >$7.tmp
+                mv $7.tmp $7
+        fi
+
+}
+
+filterLogs()
+{
+        # ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+        yearstart=${1:0:4}
+        yearend=${2:0:4}
+        monthstart=${1:5:2}
+        monthend=${2:5:2}
+        daystart=${1:8:2}
+        dayend=${2:8:2}
+        hourstart=${3:0:2}
+        hourend=${4:0:2}
+        minutestart=${3:3:2}
+        minuteend=${4:3:2}
+
+        filterByDate $yearstart $yearend $monthstart $monthend $daystart $dayend ${foundFiles}
+
+        startDateTime=${yearstart}${monthstart}${daystart}${hourstart}${minutestart}
+        log "Start from ${startDateTime}"
+        endDateTime=${yearend}${monthend}${dayend}${hourend}${minuteend}
+        log "End at ${endDateTime}"
+
+        filterByTime ${startDateTime} ${endDateTime} $5 $6
 }

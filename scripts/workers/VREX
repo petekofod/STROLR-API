@@ -15,52 +15,19 @@ endTime=$7
 log "VREX started"
 log "Message ID = $messageId"
 
-yearend=${endDate:0:4}
-monthstart=${startDate:5:2}
-monthend=${endDate:5:2}
-daystart=${startDate:8:2}
-dayend=${endDate:8:2}
-
 manifest=/tmp/${messageId}.manifest
 packageId=${mark}.${locoID}.${messageId}
 
-pathstring=${VREX_DIR}/${mark}${locoID}/{CPU-1,CPU-2,CPU-3}/disk/var/log/*.VREX.${locoID}.${yearend}{${monthstart}..${monthend}}{${daystart}..${dayend}}*
+pathstring=${VREX_DIR}/${mark}${locoID}/
 log "Path string is $pathstring"
 
 sendStatus $messageId 1 None
 
-eval "find ${pathstring} -type f -print >${manifest} 2>/dev/null"
-filesCount=`wc -l $manifest`
-log "Files found: $filesCount"
+foundFiles=/tmp/sort.${messageId}.all
+sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "depart_test|fault_history|event_history|failure_history" | sort --key 4 --field-separator=. >${foundFiles}
+log "Number of files found by find: `wc -l $foundFiles`"
 
-log "Copying files"
-mkdir -p /tmp/vrex/vrex.${mark}.${locoID}.${messageId}/{CDU-1,CPU-1,CPU-2,CPU-3}
-cat $manifest | grep CDU-1 | xargs -I {} sudo cp {} /tmp/vrex/vrex.${packageId}/CDU-1
-cat $manifest | grep CPU-1 | xargs -I {} sudo cp {} /tmp/vrex/vrex.${packageId}/CPU-1
-cat $manifest | grep CPU-2 | xargs -I {} sudo cp {} /tmp/vrex/vrex.${packageId}/CPU-2
-cat $manifest | grep CPU-3 | xargs -I {} sudo cp {} /tmp/vrex/vrex.${packageId}/CPU-3
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
 
-log "Archiving"
-sendStatus $messageId 2 $filesCount
-tar czf /tmp/${messageId}.tar.gz -C /tmp/vrex/vrex.${packageId} .
-tar cf /tmp/${messageId}.tar -C /tmp/vrex/vrex.${packageId} .
-7za a -bd /tmp/${messageId}.7z /tmp/vrex/vrex.${packageId}/* >/dev/null
-
-log "Deleting manifest file ($manifest) and temporary files (/tmp/vrex/vrex.${packageId})"
-rm -f $manifest
-rm -rf /tmp/vrex/vrex.${packageId}
-
-log "Sending files to S3 bucket"
-tarsize="$(ls -ltr /tmp/${messageId}.tar.gz | awk '{print $5}')"
-sendStatus $messageId 3 $tarsize
-aws s3 cp --quiet /tmp/${messageId}.tar.gz s3://strolrdev/${messageId}.tar.gz --acl public-read --profile $AWS_PROFILE
-aws s3 cp --quiet /tmp/${messageId}.tar s3://strolrdev/${messageId}.tar --acl public-read --profile $AWS_PROFILE
-aws s3 cp --quiet /tmp/${messageId}.7z s3://strolrdev/${messageId}.7z --acl public-read --profile $AWS_PROFILE
-
-log "Deleting archives"
-rm -f /tmp/${messageId}.tar.gz
-rm -f /tmp/${messageId}.tar
-rm -f /tmp/${messageId}.7z
-
-sendStatus $messageId 4 None
-log "Handling of $messageId completed"
+putLogsToS3 ${manifest} ${messageId} ${packageId}
+log "VREX worker completed request $messageId"
