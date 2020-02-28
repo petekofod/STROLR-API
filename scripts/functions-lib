@@ -9,13 +9,15 @@ receiveMessage()
 
 readConfig()
 {
-        INCOMING_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogrequest
-        MAX_JOBS=2
-        VREX_DIR=/amtk-logs/vrex
-        AWS_PROFILE=OTG
-        RESPONSE_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogresponse.fifo
-        AMTK_DIR=/amtk-logs
-        LOGS_TEMP_DIR=/tmp/strolr
+        . /etc/strolr2.conf
+
+#       INCOMING_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogrequest
+#       MAX_JOBS=2
+#       VREX_DIR=/amtk-logs/vrex
+#       AWS_PROFILE=OTG
+#       RESPONSE_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogresponse.fifo
+#       AMTK_DIR=/amtk-logs
+#       LOGS_TEMP_DIR=/tmp/strolr
 }
 
 
@@ -29,7 +31,7 @@ sendStatus()
         log "Message body is: $messageBody"
         aws sqs send-message --queue-url $RESPONSE_QUEUE \
                 --message-body "$messageBody" \
-                --message-group-id $messageId
+                --message-group-id $messageId >/dev/null
 }
 
 deleteMessage()

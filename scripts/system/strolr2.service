@@ -1,0 +1,12 @@
+[Unit]
+Description=STROLR2 logs delivery application
+After=network.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/nohup /usr/bin/strolr2/STROLR2
+WorkingDirectory=/usr/bin/strolr2
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

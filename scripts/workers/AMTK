@@ -25,8 +25,23 @@ log "Path string is ${pathstring}"
 sendStatus ${messageId} 1 None
 
 foundFiles=/tmp/sort.${messageId}.all
-sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "installdepart|testfault|historyevent|history" | sort --key 7 --field-separator=. >${foundFiles}
-log "Number of files found by find: `wc -l $foundFiles`"
+sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "install|depart_test|fault_history|event_history" | sort --key 7 --field-separator=. >${foundFiles}
+log "Number of normal log files found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "fault_history" | sort --key 6 --field-separator=. >${foundFiles}
+log "Number of fault_history logs found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "depart_test" | sort --key 5 --field-separator=. >${foundFiles}
+log "Number of depart_test logs found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "event_history" | sort --key 6 --field-separator=. >${foundFiles}
+log "Number of event_history logs found by find: `wc -l $foundFiles`"
 
 filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
 

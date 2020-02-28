@@ -25,7 +25,27 @@ sendStatus $messageId 1 None
 
 foundFiles=/tmp/sort.${messageId}.all
 sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "depart_test|fault_history|event_history|failure_history" | sort --key 4 --field-separator=. >${foundFiles}
-log "Number of files found by find: `wc -l $foundFiles`"
+log "Number of normal files found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "fault_history" | sort --key 3 --field-separator=. >${foundFiles}
+log "Number of fault_history files found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "depart_test" | sort --key 2 --field-separator=. >${foundFiles}
+log "Number of depart_test files found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "event_history" | sort --key 3 --field-separator=. >${foundFiles}
+log "Number of event_history files found by find: `wc -l $foundFiles`"
+
+filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
+
+sudo find "${pathstring}" -type f -name "*.log.gz" | grep "failure_history" | sort --key 3 --field-separator=. >${foundFiles}
+log "Number of failure_history files found by find: `wc -l $foundFiles`"
 
 filterLogs ${startDate} ${endDate} ${startTime} ${endTime} ${manifest} ${foundFiles}
 
