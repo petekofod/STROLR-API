@@ -12,44 +12,68 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class StatusesService {
 
     private static final Logger logger = LoggerFactory.getLogger(StatusesService.class);
 
-    private static final String QUEUE_NAME = "dev_strolrlogresponse.fifo";
-
-    private static final BasicAWSCredentials bAWSc = new BasicAWSCredentials("AKIAZZT54LR2UM7XFBET", "mW8/hHj/NafsEZqJNaAnzoRSjruT/FUbQZ2YxF56");
-    private static final AmazonSQS sqs = AmazonSQSClientBuilder.standard()
-            .withRegion("us-east-1")
-            .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
-            .build();
-    private static String QUEUE_URL = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+    @Autowired
+    private Environment env;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private AmazonSQS SQS;
+    private String QUEUE_URL;
+
+    private void init() {
+        BasicAWSCredentials bAWSc = new BasicAWSCredentials(
+                Objects.requireNonNull(env.getProperty("aws.api.key")),
+                Objects.requireNonNull(env.getProperty("aws.api.secret")));
+        SQS = AmazonSQSClientBuilder.standard()
+                .withRegion(Objects.requireNonNull(env.getProperty("aws.region")))
+                .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
+                .build();
+        String queueName = Objects.requireNonNull(env.getProperty("response.queue.name"));
+        logger.info("Initialing response queue: " + queueName);
+        QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
+    }
+
+    private AmazonSQS getSQS() {
+        if (SQS == null)
+            init();
+        return SQS;
+    }
+
+    private String getQueueUrl() {
+        if (QUEUE_URL == null)
+            init();
+        return QUEUE_URL;
+    }
 
     private static final Map<String, Map<String, String>> statusUpdates = new HashMap<>();
 
     @Async
     public void monitorResponseQueue() throws InterruptedException {
+        //noinspection InfiniteLoopStatement
         while (true) {
             Thread.sleep(1000); // sleep for 1 second
             logger.info("Checking for new messages");
 
-            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(QUEUE_URL)
+            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(getQueueUrl())
                     .withWaitTimeSeconds(10)
                     .withMaxNumberOfMessages(10);
 
-            List<Message> sqsMessages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            List<Message> sqsMessages = getSQS().receiveMessage(receiveMessageRequest).getMessages();
             logger.info("Getting new messages: " + sqsMessages.size());
 
             if (!sqsMessages.isEmpty()) {
@@ -73,8 +97,8 @@ public class StatusesService {
             logger.warn("Can't parse status update: " + m.getBody(), e);
         } finally {
             logger.debug("Deleting the message");
-            sqs.deleteMessage(new DeleteMessageRequest()
-                    .withQueueUrl(QUEUE_URL)
+            getSQS().deleteMessage(new DeleteMessageRequest()
+                    .withQueueUrl(getQueueUrl())
                     .withReceiptHandle(m.getReceiptHandle()));
         }
     }

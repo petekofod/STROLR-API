@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 
 @Configuration
 public class ProductionProfile {
+
     @Bean
     @Profile("production")
     WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> containerCustomizer(

@@ -13,32 +13,61 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
+@Configuration
 @RestController
+@Component
 public class LogsController {
     private static final Logger logger = LoggerFactory.getLogger(LogsController.class);
 
-    private static final String QUEUE_NAME = "dev_strolrlogrequest";
+    @Autowired
+    private Environment env;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final BasicAWSCredentials bAWSc = new BasicAWSCredentials("AKIAZZT54LR2UM7XFBET", "mW8/hHj/NafsEZqJNaAnzoRSjruT/FUbQZ2YxF56");
-    private static final AmazonSQS sqs = AmazonSQSClientBuilder.standard()
-            .withRegion("us-east-1")
-            .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
-            .build();
-    private static String QUEUE_URL = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private AmazonSQS SQS;
+    private String QUEUE_URL;
 
     @Autowired
     private StatusesService statusesService;
+
+    private void init() {
+        BasicAWSCredentials bAWSc = new BasicAWSCredentials(
+                Objects.requireNonNull(env.getProperty("aws.api.key")),
+                Objects.requireNonNull(env.getProperty("aws.api.secret")));
+        SQS = AmazonSQSClientBuilder.standard()
+                .withRegion(Objects.requireNonNull(env.getProperty("aws.region")))
+                .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
+                .build();
+        String queueName = Objects.requireNonNull(env.getProperty("request.queue.name"));
+        logger.info("Initialing request queue: " + queueName);
+        QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
+    }
+
+    private AmazonSQS getSQS() {
+        if (SQS == null)
+            init();
+        return SQS;
+    }
+
+    private String getQueueUrl() {
+        if (QUEUE_URL == null)
+            init();
+        return QUEUE_URL;
+    }
 
     @RequestMapping(
             value = "/request-logs",
@@ -70,11 +99,11 @@ public class LogsController {
         }
 
         SendMessageRequest send_msg_request = new SendMessageRequest()
-                .withQueueUrl(QUEUE_URL)
+                .withQueueUrl(getQueueUrl())
                 .withMessageBody(payload)
                 .withMessageAttributes(messageAttributes)
                 .withDelaySeconds(5);
-        SendMessageResult result = sqs.sendMessage(send_msg_request);
+        SendMessageResult result = getSQS().sendMessage(send_msg_request);
 
         logger.info("Message ID is " + result.getMessageId());
         return result.getMessageId();
