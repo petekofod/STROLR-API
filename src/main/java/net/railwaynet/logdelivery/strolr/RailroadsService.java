@@ -34,18 +34,27 @@ public class RailroadsService {
         }
     }
 
-    private final static List<Map<?, ?>> scacs = allRailroads.get("SCAC");
+    //Changed SCAC to SCACS
+    private final static List<Map<?, ?>> scacs = allRailroads.get("SCACS");
 
-    public static Map<String, ArrayList<Map<?, ?>>> getRailroadsBySCAC(String scac) {
-        Map<String, ArrayList<Map<?, ?>>> result = new HashMap<>();
-        result.put("SCAC", new ArrayList<>());
+    //Need to first get AccessSCAC, then from that get the list of SCACs (labels), which in turn give list of options
+    public static Map<String, ArrayList<Map<?, ?>>> getRailroadsBySCAC(String accessScac) {
+        //This Map Stores the SCACS that are authorized
+    	Map<String, ArrayList<Map<?, ?>>> accessResult = new HashMap<>();
+    	//This Map Stores the SCAC list result that gets returned
+    	Map<String, ArrayList<Map<?, ?>>> result = new HashMap<>();
+        accessResult.put("SCACS", new ArrayList<>());
 
-        for (Map<?, ?> scacItem: scacs) {
-            if (scacItem.get("label").toString().equals(scac)) {
-                result.get("SCAC").add(scacItem);
+        for (Map<?, ?> accessScacItem: scacs) {
+            if (accessScacItem.get("accessSCAC").toString().equals(accessScac)) {
+            	//Pull the List of SCACS and their options (Marks)
+            	//We will need to create another ArrayList here because some AccessSCACS have access to more than one SCAC.
+                accessResult.get("SCACS").add(accessScacItem);               
                 break;
             }
         }
+        // accessResult should now hold the list of SCACs and Marks we need.  
+        // Andrey can you load up the result map the right way ??
 
         logger.debug("JSON:" + result.get("SCAC").toString());
 
