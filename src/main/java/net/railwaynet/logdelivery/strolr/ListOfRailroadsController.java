@@ -27,7 +27,7 @@ public class ListOfRailroadsController {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
 
-        Map<String, ArrayList<Map<?, ?>>> railroadsForUser = RailroadsService.getRailroadsBySCAC(currentUser.getUsername());
+        Map<?, ?> railroadsForUser = RailroadsService.getRailroadsBySCAC(currentUser.getUsername());
 
         try {
             return objectMapper.writeValueAsString(railroadsForUser);
