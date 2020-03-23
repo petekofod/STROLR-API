@@ -34,17 +34,25 @@ public class RailroadsService {
         }
     }
 
-    private final static List<Map<?, ?>> scacs = allRailroads.get("SCAC");
+    private final static List<Map<?, ?>> scacs = allRailroads.get("SCACS");
 
-    public static Map<String, ArrayList<Map<?, ?>>> getRailroadsBySCAC(String scac) {
-        Map<String, ArrayList<Map<?, ?>>> result = new HashMap<>();
-        result.put("SCAC", new ArrayList<>());
+    /*
+    Need to first get AccessSCAC, then from that get the list of SCACs (labels), which in turn give list of options
+     */
+    public static Map<?, ?> getRailroadsBySCAC(String accessScac) {
+    	//This Map Stores the SCAC list result that gets returned
+    	Map<?, ?> result = null;
 
-        for (Map<?, ?> scacItem: scacs) {
-            if (scacItem.get("label").toString().equals(scac)) {
-                result.get("SCAC").add(scacItem);
+        for (Map<?, ?> accessScacItem: scacs) {
+            if (accessScacItem.get("AccessSCAC").toString().equals(accessScac)) {
+                result = accessScacItem;
                 break;
             }
+        }
+
+        if (result == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "User role is not found!");
         }
 
         logger.debug("JSON:" + result.get("SCAC").toString());

@@ -1,11 +1,49 @@
 {
-  "SCAC": [{
-      "label": "AMTK",
-      "options": ["AMTK", "CDTX", "WDTX", "IDTX", "RNCX"]
-    },
-    {
-      "label": "VREX",
-      "options": ["VREX"]
-    }
+  "SCACS": 
+  	[
+		{
+		  "AccessSCAC": "AMTK",
+		  "SCAC" : [
+		    {
+		    "label": "AMTK",
+		    "options": ["AMTK", "CDTX", "WDTX", "IDTX", "RNCX"]
+		    }
+		  ]
+		},
+		{
+		  "AccessSCAC": "VREX",
+		  "SCAC" : [
+		    {
+		    "label": "VREX",
+		    "options": ["VREX"]
+		    }
+		  ]
+		},
+		{
+		  "AccessSCAC": "RCAX",
+		  "SCAC" : [
+		    {
+		    "label": "AMTK",
+		    "options": ["AMTK", "CDTX", "WDTX", "IDTX", "RNCX"]
+		    },
+		    {
+		    "label": "VREX",
+		    "options": ["VREX"]
+		    }
+		  ]
+		},
+		{
+		  "AccessSCAC": "WABT",
+		  "SCAC" : [
+		    {
+		    "label": "AMTK",
+		    "options": ["AMTK", "CDTX", "WDTX", "IDTX", "RNCX"]
+		    },
+		    {
+		    "label": "VREX",
+		    "options": ["VREX"]
+		    }
+		  ]
+		}
   ]
 }
