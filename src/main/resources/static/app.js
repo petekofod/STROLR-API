@@ -7,7 +7,6 @@ var vue_det = new Vue({
             EndDate: null,
             StartTime: null,
             EndTime: null,
-            SCAC: null,
             SCACMark: null
         },
         lstFullTree: [{
@@ -51,7 +50,7 @@ var vue_det = new Vue({
                         self.sLogRequestStatus = "Request submitted successfully"
                         self.messageId = xhr.responseText
                     } else {
-                        self.sLogRequestStatus = "Request status: ERROR, " + statusText
+                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + xhr.statusText
                         console.error('error - ' + xhr.statusText);
                     }
                 }
@@ -61,7 +60,6 @@ var vue_det = new Vue({
         onReset(evt) {
             evt.preventDefault()
             this.form.LocoID = null
-            this.form.SCAC = null
             this.form.SCACMark = null
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
