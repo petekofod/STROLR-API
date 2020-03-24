@@ -4,6 +4,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.AmazonSQSException;
 import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
@@ -35,6 +36,9 @@ public class LogsController {
 
     @Autowired
     private Environment env;
+
+    @Autowired
+    private RailroadsService railroadsService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -80,10 +84,6 @@ public class LogsController {
         final Map<String, String> payloadMap;
         final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
 
-        messageAttributes.put("SCAC", new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(currentUser.getUsername()));
-
         try {
             payloadMap = objectMapper.readValue(payload,
                     new TypeReference<Map<String, String>>() {});
@@ -91,6 +91,10 @@ public class LogsController {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the log request JSON", e);
         }
+
+        messageAttributes.put("SCAC", new MessageAttributeValue()
+                .withDataType("String")
+                .withStringValue(railroadsService.getSCACbyMARK(currentUser.getUsername(), payloadMap.get("SCACMark"))));
 
         for (Map.Entry<String, String> entry : payloadMap.entrySet()) {
             messageAttributes.put(entry.getKey(), new MessageAttributeValue()
@@ -103,7 +107,17 @@ public class LogsController {
                 .withMessageBody(payload)
                 .withMessageAttributes(messageAttributes)
                 .withDelaySeconds(5);
-        SendMessageResult result = getSQS().sendMessage(send_msg_request);
+
+        SendMessageResult result;
+
+        try {
+            result = getSQS().sendMessage(send_msg_request);
+        } catch (AmazonSQSException e) {
+            logger.error("AmazonSQSException while sending the message! " + e.getErrorMessage(), e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, e.getErrorMessage(), e);
+        }
+
 
         logger.info("Message ID is " + result.getMessageId());
         return result.getMessageId();

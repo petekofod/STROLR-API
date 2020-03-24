@@ -50,7 +50,7 @@ var vue_det = new Vue({
                         self.sLogRequestStatus = "Request submitted successfully"
                         self.messageId = xhr.responseText
                     } else {
-                        self.sLogRequestStatus = "Request status: ERROR, " + statusText
+                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + xhr.statusText
                         console.error('error - ' + xhr.statusText);
                     }
                 }

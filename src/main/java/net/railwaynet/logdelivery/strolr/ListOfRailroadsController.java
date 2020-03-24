@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,12 +23,15 @@ public class ListOfRailroadsController {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
+    private RailroadsService railroadsService;
+
     @RequestMapping("/railroads.json")
     public String data(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
 
-        Map<?, ?> railroadsForUser = RailroadsService.getRailroadsBySCAC(currentUser.getUsername());
+        Map<?, ?> railroadsForUser = railroadsService.getRailroadsBySCAC(currentUser.getUsername());
 
         try {
             return objectMapper.writeValueAsString(railroadsForUser);
