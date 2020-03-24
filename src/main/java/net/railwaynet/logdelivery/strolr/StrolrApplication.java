@@ -43,7 +43,7 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter {
 		http.authorizeRequests().anyRequest().authenticated()
 				.and().csrf().disable()
 				.x509()
-				.subjectPrincipalRegex("CN=.*?(....),")
+				.subjectPrincipalRegex("CN=.*?(....)$")
 				.userDetailsService(userDetailsService());
 	}
 
