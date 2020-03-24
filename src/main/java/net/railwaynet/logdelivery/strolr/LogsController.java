@@ -80,9 +80,14 @@ public class LogsController {
         final Map<String, String> payloadMap;
         final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
 
+        /*  This won't work.  Need to get the SCAC from the drop down menu and load it from the payloadMap.entrySet below.
+         * Requires that the Vue app.js gets updated as well as index.html.
+         * app.js has been updated to add SCAC as a parameter.  Need to update index.html
+        
         messageAttributes.put("SCAC", new MessageAttributeValue()
                 .withDataType("String")
                 .withStringValue(currentUser.getUsername()));
+		*/
 
         try {
             payloadMap = objectMapper.readValue(payload,
