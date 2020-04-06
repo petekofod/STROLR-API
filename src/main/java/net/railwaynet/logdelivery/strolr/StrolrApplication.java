@@ -44,6 +44,8 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter {
 				.and().csrf().disable()
 				.x509()
 				.subjectPrincipalRegex("CN=.*?(....)$")
+				//.subjectPrincipalRegex("CN=(.*?),")
+	
 				.userDetailsService(userDetailsService());
 	}
 

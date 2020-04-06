@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Rockwell Collins</title>
+    <title>Collins Aerospace</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
     <script type="text/javascript" src1="https://cdn.jsdelivr.net/npm/vue"></script>
 
@@ -29,22 +29,20 @@
 <body>
     <div id="MainApp" v-cloak>
         <b-alert show >
-            <h1>Rockwell Collins</h1>
+            <h1>Collins</h1>
         </b-alert>
 
         <div class="container" v-if="!bLogStatus">
             <div class="row">
                 <div class="col m-3">
                     <b-card no-body>
-                        <b-card-footer>
-                            <h4>Hello {{userName}}!</h4>
-                        </b-card-footer>
+                        
                         <b-card-body>
                             <b-card-title></b-card-title>
                             <b-card-sub-title class="mb-2">Welcome to <strong>STROLR</strong>, the <strong>Self Service
                                     Tool
                                     for Railwaynet Onboard Log Retrieval</strong>. Based on your assigned SCAC
-                                <strong>RCAX</strong>, you have access to logs from locomotives with the following SCAC
+                                <strong>{{userName}}</strong>, you have access to logs from locomotives with the following SCAC
                                 Mark
                                 combinations</b-card-sub-title>
                             <b-card-text>
@@ -96,7 +94,23 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <div class="col-sm-9"></div>
+                            <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Time Zone</label>
+                            <div class="col-sm-3">
+                                <b-form-select id="selTimeZone" v-model="form.timeZone" :options="lstTimeZone" required
+                                    size="sm" @change1="onChange($event)"></b-form-select>
+                            </div>   
+                            <div class="col-sm-1">
+                                <b-form-checkbox
+								      id="chkDST"
+								      v-model="form.dst"
+								      name="chkDST"
+								      :disabled="form.timeZone==0"								     
+								    >
+								      DST
+								    </b-form-checkbox>
+								    </div>
+                            
+                                                     
                             <div class="col-sm-3">
                                 <b-input-group size="sm" prepend="UTC clock">
                                     <b-form-input id="inpStartTime" v-model="timeUTC" type="text" size="sm" disabled="true">
@@ -112,7 +126,7 @@
                                     ></b-form-input>
                             </div>
                             <div class="col-sm-3">
-                                <b-input-group size="sm" append="UTC">
+                                <b-input-group size="sm" append="">
                                     <b-form-input id="inpStartTime" v-model="form.StartTime" type="time" size="sm">
                                     </b-form-input>
                                 </b-input-group>
@@ -126,7 +140,7 @@
                                 </b-form-input>
                             </div>
                             <div class="col-sm-3">
-                                <b-input-group size="sm" append="UTC">
+                                <b-input-group size="sm" append="">
                                     <b-form-input id="inpEndTime" v-model="form.EndTime" type="time" size="sm">
                                     </b-form-input>
                                 </b-input-group>
@@ -172,9 +186,9 @@
                             </b-card-text>
                             <b-card-title v-if="showLinks">Download links</b-card-title>
                             <b-card-text v-if="showLinks">
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar.gz'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar.gz</a><br>
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar</a><br>
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.7z'">https://strolrdev.s3.amazonaws.com/{{messageId}}.7z</a><br>
+                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + messageId + '.tar.gz'">https://s3.amazonaws.com/rwn.strolr2/{{messageId}}.tar.gz</a><br>
+                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + messageId + '.tar'">https://s3.amazonaws.com/rwn.strolr2/{{messageId}}.tar</a><br>
+                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + messageId + '.7z'">https://s3.amazonaws.com/rwn.strolr2/{{messageId}}.7z</a><br>
                             </b-card-text>
                         </b-card-body>
                         <b-card-footer v-if="!showLinks">
