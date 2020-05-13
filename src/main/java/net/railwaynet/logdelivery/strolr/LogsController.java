@@ -109,7 +109,7 @@ public class LogsController {
 	        endDate = tzModifiedDate(endDate, payloadMap.get("timeZone"), payloadMap.get("dst"));
 	        String sStartDate = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
 	        String sStartTime = new SimpleDateFormat("HH:mm").format(startDate);
-	        String sEndDate = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
+	        String sEndDate = new SimpleDateFormat("yyyy-MM-dd").format(endDate);
 	        String sEndTime = new SimpleDateFormat("HH:mm").format(endDate);
 	        logger.debug("Modified StartDate: " + sStartDate);
 	        logger.debug("Modified StartTime: " + sStartTime);
