@@ -24,6 +24,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -91,6 +95,42 @@ public class LogsController {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the log request JSON", e);
         }
+        
+        //Modify Start and End Date times for Timezones
+                     
+        String startDateTime=payloadMap.get("StartDate") + ":" + payloadMap.get("StartTime");
+        String endDateTime=payloadMap.get("EndDate") + ":" + payloadMap.get("EndTime");
+        try {
+        	logger.debug("startDateTime: " + startDateTime);
+        	logger.debug("endDateTime:   " + endDateTime);
+			Date startDate = new SimpleDateFormat("yyyy-MM-dd:HH:mm").parse(startDateTime);
+			Date endDate = new SimpleDateFormat("yyyy-MM-dd:HH:mm").parse(endDateTime);
+	        startDate = tzModifiedDate(startDate, payloadMap.get("timeZone"), payloadMap.get("dst"));
+	        endDate = tzModifiedDate(endDate, payloadMap.get("timeZone"), payloadMap.get("dst"));
+	        String sStartDate = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
+	        String sStartTime = new SimpleDateFormat("HH:mm").format(startDate);
+	        String sEndDate = new SimpleDateFormat("yyyy-MM-dd").format(endDate);
+	        String sEndTime = new SimpleDateFormat("HH:mm").format(endDate);
+	        logger.debug("Modified StartDate: " + sStartDate);
+	        logger.debug("Modified StartTime: " + sStartTime);
+	        logger.debug("Modified EndDate:   " + sEndDate);
+	        logger.debug("Modified EndTime:   " + sEndTime);
+	                
+	        payloadMap.put("StartDate", sStartDate);
+	        payloadMap.put("StartTime", sStartTime);
+	        payloadMap.put("EndDate", sEndDate);
+	        payloadMap.put("EndTime", sEndTime);
+
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}
+        //put payloadMap back in to payload
+        try {
+			payload = objectMapper.writeValueAsString(payloadMap);
+		} catch (JsonProcessingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
         messageAttributes.put("SCAC", new MessageAttributeValue()
                 .withDataType("String")
@@ -111,6 +151,7 @@ public class LogsController {
         SendMessageResult result;
 
         try {
+        	logger.debug("Send Message Request: " + send_msg_request.toString());
             result = getSQS().sendMessage(send_msg_request);
         } catch (AmazonSQSException e) {
             logger.error("AmazonSQSException while sending the message! " + e.getErrorMessage(), e);
@@ -137,5 +178,18 @@ public class LogsController {
             throw new ResponseStatusException(
                     HttpStatus.NO_CONTENT, "No status update available");
         return status;
+    }
+    
+    public Date tzModifiedDate(Date unModifiedDate, String stringOffset, String stringDst) {
+    	int offset = Integer.parseInt(stringOffset);
+    	Boolean dst = Boolean.parseBoolean(stringDst);
+    	//Apply DST to everything except UTC
+    	if (dst==true && offset != 0) {
+    		offset = offset - 1;    		
+    	}
+    	Calendar calendar = Calendar.getInstance();
+        calendar.setTime(unModifiedDate);
+        calendar.add(Calendar.HOUR_OF_DAY, offset);
+        return calendar.getTime();
     }
 }

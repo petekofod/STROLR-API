@@ -7,12 +7,24 @@ var vue_det = new Vue({
             EndDate: null,
             StartTime: null,
             EndTime: null,
-            SCACMark: null
+            SCACMark: null,
+            timeZone: 0,
+            dst: false,
+
         },
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
         }],
+        lstTimeZone: 
+        		[
+            	{ text: 'Eastern' , value: 5},
+            	{ text: 'Central' , value: 6},
+            	{ text: 'Mountain' , value: 7},
+            	{ text: 'Pacific' , value: 8}, 
+            	{ text: 'UTC' , value: 0}            	            	
+            	]
+        ,
         show: true,
         bLogStatus: false,
         timerCheck: '',
@@ -20,6 +32,8 @@ var vue_det = new Vue({
         sLogRequestStatus: '',
         timeUTC: '',
         userName: '',
+        formTZ: '',
+        
         messageId: '',
         sFilesCount: 'Counting...',
         sTotalBytes: 'Checking log file...',
@@ -27,6 +41,7 @@ var vue_det = new Vue({
     },
     created: function () {
         this.getUserName()
+        this.getDstState()
         this.fetchData()
         this.initDateTime()
         this.timeUTC = this.getUTCTime()
@@ -57,6 +72,11 @@ var vue_det = new Vue({
             }
             xhr.send(JSON.stringify(this.form))
         },
+        onChange(evt) {
+            console.log(evt.target.value)
+        },
+        
+        
         onReset(evt) {
             evt.preventDefault()
             this.form.LocoID = null
@@ -86,6 +106,18 @@ var vue_det = new Vue({
             }
             xhr.send()
         },
+        getDstState: function () {
+        	var today = new Date();
+            var jan = new Date(today.getFullYear(), 0, 1);
+            var jul = new Date(today.getFullYear(), 6, 1);
+            var hiTZ = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+            if (today.getTimezoneOffset() < hiTZ){
+            	console.log("DST detected");
+
+            }
+        	
+        },
+              
         getUserName: function () {
             var xhr = new XMLHttpRequest()
             var self = this
@@ -171,7 +203,14 @@ var vue_det = new Vue({
             this.timeUTC = res
             return res
 
+        },
+        
+        getLocalTimeZone: function () {
+        	var zone = new Date().toLocaleTimeString('en-us',{timeZoneName:'short'}).split(' ')[2]
+        	return zone
         }
+        
+        
 
     }
 });
