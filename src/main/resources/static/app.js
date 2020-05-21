@@ -1,3 +1,4 @@
+Vue.config.devtools = true
 var vue_det = new Vue({
     el: '#MainApp',
     data: {
@@ -7,24 +8,47 @@ var vue_det = new Vue({
             EndDate: null,
             StartTime: null,
             EndTime: null,
-            SCACMark: null,
-            timeZone: 0,
-            dst: false,
-
+            SCACMark: null
         },
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
         }],
-        lstTimeZone: 
-        		[
-            	{ text: 'Eastern' , value: 5},
-            	{ text: 'Central' , value: 6},
-            	{ text: 'Mountain' , value: 7},
-            	{ text: 'Pacific' , value: 8}, 
-            	{ text: 'UTC' , value: 0}            	            	
-            	]
-        ,
+        status_data: {
+            TestTime: null,
+            IpInformation: {
+              isAvailable: false,
+              ATTModem: null,
+              VerizonModem: null
+            },
+            IpReachability: {
+               isAvailable: false,
+               ATTModemStatus: null,
+               VerizonModemStatus: null
+            },
+            WifiInformation: {
+               isAvailable: false,
+               ClientId: null,
+               AccessPoint: null
+            },
+            GatewayInformation: {
+               isAvailable: false,
+               ETMSClient: null,
+               MDMClient: null
+            },
+            RouteInformation: {
+               isAvailable: false,
+               ATTRoute: null,
+               VerizonRoute: null,
+               WifiRoute: null,
+               MHzRadio: null
+            },
+            RadioInformation: {
+              isAvailable: false,
+              RadioId: null,
+              EMPAddress: null
+            },
+        },
         show: true,
         bLogStatus: false,
         timerCheck: '',
@@ -32,16 +56,18 @@ var vue_det = new Vue({
         sLogRequestStatus: '',
         timeUTC: '',
         userName: '',
-        formTZ: '',
-        
         messageId: '',
         sFilesCount: 'Counting...',
         sTotalBytes: 'Checking log file...',
         showLinks: false,
+        showStatus:false,
+        cell_class: 'table-danger',
+        isActive: false,
+        showLogs_tab: false,
+        showStatus_tab: false
     },
     created: function () {
         this.getUserName()
-        this.getDstState()
         this.fetchData()
         this.initDateTime()
         this.timeUTC = this.getUTCTime()
@@ -52,6 +78,8 @@ var vue_det = new Vue({
             evt.preventDefault()
 
             this.bLogStatus = true
+            this.showLogs_tab = true
+            this.showStatus_tab = false
             this.timer = setInterval(this.checkLogData, 1000)
 
             var xhr = new XMLHttpRequest()
@@ -72,11 +100,6 @@ var vue_det = new Vue({
             }
             xhr.send(JSON.stringify(this.form))
         },
-        onChange(evt) {
-            console.log(evt.target.value)
-        },
-        
-        
         onReset(evt) {
             evt.preventDefault()
             this.form.LocoID = null
@@ -106,18 +129,6 @@ var vue_det = new Vue({
             }
             xhr.send()
         },
-        getDstState: function () {
-        	var today = new Date();
-            var jan = new Date(today.getFullYear(), 0, 1);
-            var jul = new Date(today.getFullYear(), 6, 1);
-            var hiTZ = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-            if (today.getTimezoneOffset() < hiTZ){
-            	console.log("DST detected");
-
-            }
-        	
-        },
-              
         getUserName: function () {
             var xhr = new XMLHttpRequest()
             var self = this
@@ -204,13 +215,50 @@ var vue_det = new Vue({
             return res
 
         },
-        
-        getLocalTimeZone: function () {
-        	var zone = new Date().toLocaleTimeString('en-us',{timeZoneName:'short'}).split(' ')[2]
-        	return zone
-        }
-        
-        
+         onGetStatus(evt) {
+           this.status_data.TestTime = "Tue Apr 21 11:14:02 EDT 2020"
+           this.status_data.IpInformation.isAvailable = true;
+           this.status_data.IpInformation.ATTModem = "10.149.1.42"
+           this.status_data.IpInformation.VerizonModem = "10.148.0.33"
 
+           this.status_data.IpReachability.isAvailable = true;
+           this.status_data.IpReachability.ATTModemStatus = "Online"
+           this.status_data.IpReachability.VerizonModemStatus = "Unreachable"
+
+           if (this.status_data.IpReachability.VerizonModemStatus == "Unreachable")
+               this.cell_class = 'table-danger'
+           else
+                this.cell_class = 'table-success'
+
+           this.status_data.WifiInformation.ClientId = "NTD4873"
+           this.status_data.WifiInformation.AccessPoint = "38:ED:18:E6:23"
+
+           this.status_data.GatewayInformation.ETMSClient= "Connected"
+           this.status_data.GatewayInformation.MDMClient= "Connected"
+
+           this.status_data.RouteInformation.ATTRoute="Connected"
+           this.status_data.RouteInformation.VerizonRoute="Connected"
+           this.status_data.RouteInformation.WifiRoute="Not connected"
+           this.status_data.RouteInformation.MHzRadio="Connected"
+
+           this.status_data.RadioInformation.RadioId="10944515"
+           this.status_data.RadioInformation.EMPAddress="netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
+
+            this.showStatus = true
+            this.showStatus_tab = true
+            this.showLogs_tab = false
+         },
+      show_logs_tab  : function () {
+        if (this.bLogStatus) {
+          this.showStatus_tab = false
+          this.showLogs_tab = true
+        }
+      },
+      show_status_tab  : function () {
+       if (this.showStatus) {
+           this.showStatus_tab = true
+           this.showLogs_tab = false
+       }
+     }
     }
 });
