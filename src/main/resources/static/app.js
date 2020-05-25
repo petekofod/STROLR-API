@@ -63,8 +63,7 @@ var vue_det = new Vue({
         showStatus:false,
         cell_class: 'table-danger',
         isActive: false,
-        showLogs_tab: false,
-        showStatus_tab: false
+        tabName: ''
     },
     created: function () {
         this.getUserName()
@@ -78,8 +77,6 @@ var vue_det = new Vue({
             evt.preventDefault()
 
             this.bLogStatus = true
-            this.showLogs_tab = true
-            this.showStatus_tab = false
             this.timer = setInterval(this.checkLogData, 1000)
 
             var xhr = new XMLHttpRequest()
@@ -244,21 +241,7 @@ var vue_det = new Vue({
            this.status_data.RadioInformation.RadioId="10944515"
            this.status_data.RadioInformation.EMPAddress="netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
 
-            this.showStatus = true
-            this.showStatus_tab = true
-            this.showLogs_tab = false
-         },
-      show_logs_tab  : function () {
-        if (this.bLogStatus) {
-          this.showStatus_tab = false
-          this.showLogs_tab = true
-        }
-      },
-      show_status_tab  : function () {
-       if (this.showStatus) {
-           this.showStatus_tab = true
-           this.showLogs_tab = false
-       }
-     }
+            this.tabName = "Locomotive System Status"
+           },
     }
 });
