@@ -221,7 +221,7 @@
                             </tr>
                             <th colspan="2" style="text-align:center;">Wifi Information</th>
                             <tr>
-                                <td>Wifi Client SSI D</td>
+                                <td>Wifi Client SSID</td>
                                 <td>{{status_data.WifiInformation.ClientId}} </td>
                             </tr>
                             <tr>
@@ -230,9 +230,9 @@
                                     {{status_data.WifiInformation.AccessPoint}}
                                 </td>
                             </tr>
-                            <th colspan="2" style="text-align:center;">I ETMS Gateway Information</th>
+                            <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
                             <tr>
-                                <td>I ETMS Client</td>
+                                <td>IETMS Client</td>
                                 <td>
                                     <span class="badge badge-success">
                                         {{status_data.GatewayInformation.ETMSClient}}
@@ -247,9 +247,9 @@
                                     </span>
                                 </td>
                             </tr>
-                            <th colspan="2" style="text-align:center;">I TCM Route Information</th>
+                            <th colspan="2" style="text-align:center;">ITCM Route Information</th>
                             <tr>
-                                <td>ATT I TCM Route</td>
+                                <td>ATT ITCM Route</td>
                                 <td>
                                     <span class="badge badge-success">
                                         {{status_data.RouteInformation.ATTRoute}}
@@ -257,7 +257,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Verizon I TCM Route</td>
+                                <td>Verizon ITCM Route</td>
                                 <td>
                                     <span class="badge badge-success">
                                         {{status_data.RouteInformation.VerizonRoute}}
@@ -265,7 +265,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Wifi I TCM Route</td>
+                                <td>Wifi ITCM Route</td>
                                 <td>
                                     <span class="badge badge-danger">
                                         {{status_data.RouteInformation.WifiRoute}}
@@ -294,7 +294,7 @@
                             </b-card-text>
                         </b-card-body>
                         <b-card-footer v-if="!showLinks">
-                            Log Server is currently processing request. Please do not close this window! You will be
+                            Locomotive System Status Server is currently processing request. Please do not close this window! You will be
                             shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
