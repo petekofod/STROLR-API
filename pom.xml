@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>net.railwaynet.logdelivery</groupId>
 	<artifactId>strolr2</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>strolr</name>
 	<description>Self-service Tool for Retrieving Onboard Logs for RailwayNet</description>
@@ -72,6 +72,14 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+			        <groupId>org.apache.maven.plugins</groupId>
+			        <artifactId>maven-surefire-plugin</artifactId>
+			        <version>3.0.0-M4</version>
+			        <configuration>
+				        <skipTests>true</skipTests>
+			        </configuration>
 			</plugin>
 		</plugins>
 	</build>
