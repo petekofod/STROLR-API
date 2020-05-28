@@ -9,7 +9,9 @@ var vue_det = new Vue({
             StartTime: null,
             EndTime: null,
             SCACMark: null,
-            RequestType: null
+            RequestType: null,
+            timeZone: 0,
+            dst: false,
         },
         lstFullTree: [{
             value: null,

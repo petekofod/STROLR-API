@@ -146,7 +146,7 @@
                             <div class="col">
                                 <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
                                 <!-- b-button type="submit" variant="primary" v-on:click="onGetStatus">Get System Status</b-button -->
-                                <b-button type="submit" v-model="form.RequestType"  name="request-type" value="get-status" variant="primary">Get System Status</b-button>
+                                <b-button type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
