@@ -88,6 +88,7 @@ public class RequestsController {
     }
 
     private String sendLogsRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+        logger.info("Handling logs retrieval request");
 
         String startDateTime=payloadMap.get(START_DATE) + ":" + payloadMap.get(START_TIME);
         String endDateTime=payloadMap.get(END_DATE) + ":" + payloadMap.get(END_TIME);
@@ -161,6 +162,7 @@ public class RequestsController {
     }
 
     private String sendStatusRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+        logger.info("Handling locomotive status request");
         return "1";
     }
 
@@ -169,7 +171,7 @@ public class RequestsController {
             method = RequestMethod.POST)
     public String requestLogs(Principal principal, @RequestBody String payload) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting logs");
+        logger.debug(currentUser.getUsername() + " sent a request:");
         logger.debug(payload);
 
         final Map<String, String> payloadMap;
