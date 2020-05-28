@@ -91,7 +91,20 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <div class="col-sm-9"></div>
+                            <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Time Zone</label>
+                            <div class="col-sm-3">
+                                <b-form-select id="selTimeZone" v-model="form.timeZone" :options="lstTimeZone" required
+                                               size="sm" @change1="onChange($event)"></b-form-select>
+                            </div>
+                            <div class="col-sm-1">
+                                <b-form-checkbox
+                                        id="chkDST"
+                                        v-model="form.dst"
+                                        name="chkDST"
+                                        :disabled="form.timeZone==0">
+                                    DST
+                                </b-form-checkbox>
+                            </div>
                             <div class="col-sm-3">
                                 <b-input-group size="sm" prepend="UTC clock">
                                     <b-form-input id="inpStartTime" v-model="timeUTC" type="text" size="sm" disabled="true">
@@ -131,8 +144,9 @@
                         <div class="form-group row">
                             <label class="col-sm-5 "> </label>
                             <div class="col">
-                                <b-button type="submit" variant="primary">Get Logs</b-button>
-                                <b-button type="submit" variant="primary" v-on:click="onGetStatus">Get System Status</b-button>
+                                <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
+                                <!-- b-button type="submit" variant="primary" v-on:click="onGetStatus">Get System Status</b-button -->
+                                <b-button type="submit" v-model="form.RequestType"  name="request-type" value="get-status" variant="primary">Get System Status</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>

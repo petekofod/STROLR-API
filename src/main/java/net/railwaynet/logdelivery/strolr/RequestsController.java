@@ -35,8 +35,8 @@ import java.util.Objects;
 @Configuration
 @RestController
 @Component
-public class LogsController {
-    private static final Logger logger = LoggerFactory.getLogger(LogsController.class);
+public class RequestsController {
+    private static final Logger logger = LoggerFactory.getLogger(RequestsController.class);
 
     @Autowired
     private Environment env;
@@ -78,7 +78,7 @@ public class LogsController {
     }
 
     @RequestMapping(
-            value = "/request-logs",
+            value = "/data-request",
             method = RequestMethod.POST)
     public String requestLogs(Principal principal, @RequestBody String payload) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
@@ -97,7 +97,13 @@ public class LogsController {
         }
         
         //Modify Start and End Date times for Timezones
-                     
+
+        if (!payloadMap.containsKey("timeZone") || payloadMap.get("timeZone").isEmpty()) {
+            logger.error("Time zone is not specified!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Time zone is not specified!");
+        }
+
         String startDateTime=payloadMap.get("StartDate") + ":" + payloadMap.get("StartTime");
         String endDateTime=payloadMap.get("EndDate") + ":" + payloadMap.get("EndTime");
         try {
@@ -121,16 +127,20 @@ public class LogsController {
 	        payloadMap.put("EndDate", sEndDate);
 	        payloadMap.put("EndTime", sEndTime);
 
-		} catch (ParseException e1) {
-			e1.printStackTrace();
+		} catch (ParseException e) {
+            logger.error("Can't parse the payload!", e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the payload!");
 		}
+
         //put payloadMap back in to payload
         try {
-			payload = objectMapper.writeValueAsString(payloadMap);
-		} catch (JsonProcessingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+            payload = objectMapper.writeValueAsString(payloadMap);
+        } catch (JsonProcessingException e) {
+            logger.error("Can't convert the data back to JSON!", e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't convert the data back to JSON!");
+        }
 
         messageAttributes.put("SCAC", new MessageAttributeValue()
                 .withDataType("String")
@@ -159,7 +169,6 @@ public class LogsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, e.getErrorMessage(), e);
         }
 
-
         logger.info("Message ID is " + result.getMessageId());
         return result.getMessageId();
     }
@@ -183,10 +192,12 @@ public class LogsController {
     public Date tzModifiedDate(Date unModifiedDate, String stringOffset, String stringDst) {
     	int offset = Integer.parseInt(stringOffset);
     	Boolean dst = Boolean.parseBoolean(stringDst);
+
     	//Apply DST to everything except UTC
     	if (dst==true && offset != 0) {
     		offset = offset - 1;    		
     	}
+
     	Calendar calendar = Calendar.getInstance();
         calendar.setTime(unModifiedDate);
         calendar.add(Calendar.HOUR_OF_DAY, offset);

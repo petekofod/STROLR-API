@@ -8,12 +8,21 @@ var vue_det = new Vue({
             EndDate: null,
             StartTime: null,
             EndTime: null,
-            SCACMark: null
+            SCACMark: null,
+            RequestType: null
         },
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
         }],
+        lstTimeZone:
+        		[
+            	{ text: 'Eastern' , value: 5},
+            	{ text: 'Central' , value: 6},
+            	{ text: 'Mountain' , value: 7},
+            	{ text: 'Pacific' , value: 8},
+            	{ text: 'UTC' , value: 0}
+            	],
         status_data: {
             TestTime: null,
             IpInformation: {
@@ -56,6 +65,7 @@ var vue_det = new Vue({
         sLogRequestStatus: '',
         timeUTC: '',
         userName: '',
+        formTZ: '',
         messageId: '',
         sFilesCount: 'Counting...',
         sTotalBytes: 'Checking log file...',
@@ -73,6 +83,9 @@ var vue_det = new Vue({
         this.timer = setInterval(this.getUTCTime, 5000)
     },
     methods: {
+        setRequestType(value) {
+            this.form.RequestType = value
+        },
         onSubmit(evt) {
             evt.preventDefault()
 
@@ -82,7 +95,7 @@ var vue_det = new Vue({
             var xhr = new XMLHttpRequest()
             var self = this
 
-            xhr.open('POST', 'request-logs')
+            xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
             xhr.onload = function () {
                 if (xhr.readyState === 4) {
@@ -90,8 +103,10 @@ var vue_det = new Vue({
                         self.sLogRequestStatus = "Request submitted successfully"
                         self.messageId = xhr.responseText
                     } else {
-                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + xhr.statusText
-                        console.error('error - ' + xhr.statusText);
+                        var errorMessage = JSON.parse(xhr.responseText).message
+                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                        console.error('error - ' + errorMessage)
+                        console.error(xhr.responseText)
                     }
                 }
             }
@@ -125,6 +140,15 @@ var vue_det = new Vue({
                 self.lstFullTree = self.lstFullTree.concat(dataSCAC.SCAC)
             }
             xhr.send()
+        },
+        getDstState: function () {
+        	var today = new Date();
+            var jan = new Date(today.getFullYear(), 0, 1);
+            var jul = new Date(today.getFullYear(), 6, 1);
+            var hiTZ = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+            if (today.getTimezoneOffset() < hiTZ){
+            	console.log("DST detected");
+            }
         },
         getUserName: function () {
             var xhr = new XMLHttpRequest()
