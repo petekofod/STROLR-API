@@ -60,7 +60,7 @@ public class StatusesService {
         return QUEUE_URL;
     }
 
-    private static final Map<String, Map<String, String>> statusUpdates = new HashMap<>();
+    private final Map<String, Map<String, String>> statusUpdates = new HashMap<>();
 
     @Async
     public void monitorResponseQueue() throws InterruptedException {
@@ -103,7 +103,7 @@ public class StatusesService {
         }
     }
 
-    private void putStatus(String messageId, Map<String, String> status) {
+    public void putStatus(String messageId, Map<String, String> status) {
         String statusText;
         switch (status.get("Status")) {
             case "1":

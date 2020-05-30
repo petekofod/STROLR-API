@@ -26,11 +26,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.security.Principal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 @RestController
@@ -163,6 +161,12 @@ public class RequestsController {
 
     private String sendStatusRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling locomotive status request");
+        statusesService.putStatus("1", Stream.of(new String[][] {
+                { "Status", "1" },
+                { "TestTime", "Tue Apr 21 11:14:02 EDT 2020" },
+        }).collect(Collectors.collectingAndThen(
+                Collectors.toMap(data -> data[0], data -> data[1]),
+                Collections::unmodifiableMap)));
         return "1";
     }
 
