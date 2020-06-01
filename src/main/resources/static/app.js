@@ -25,41 +25,7 @@ var vue_det = new Vue({
             	{ text: 'Pacific' , value: 8},
             	{ text: 'UTC' , value: 0}
             	],
-        status_data: {
-            TestTime: null,
-            IpInformation: {
-              isAvailable: false,
-              ATTModem: null,
-              VerizonModem: null
-            },
-            IpReachability: {
-               isAvailable: false,
-               ATTModemStatus: null,
-               VerizonModemStatus: null
-            },
-            WifiInformation: {
-               isAvailable: false,
-               ClientId: null,
-               AccessPoint: null
-            },
-            GatewayInformation: {
-               isAvailable: false,
-               ETMSClient: null,
-               MDMClient: null
-            },
-            RouteInformation: {
-               isAvailable: false,
-               ATTRoute: null,
-               VerizonRoute: null,
-               WifiRoute: null,
-               MHzRadio: null
-            },
-            RadioInformation: {
-              isAvailable: false,
-              RadioId: null,
-              EMPAddress: null
-            },
-        },
+        tab_data : [],
         show: true,
         bLogStatus: false,
         timerCheck: '',
@@ -86,6 +52,13 @@ var vue_det = new Vue({
     },
     methods: {
         setRequestType(value) {
+            console.log(this.tab_data)
+
+            new_status_data = this.fillGetStatusData()
+            index = this.tab_data.length
+            this.tab_data.push({id:index, title:"Locomotive System Status", LocoID: this.form.LocoID,
+               status_data: new_status_data})
+
             this.form.RequestType = value
         },
         onSubmit(evt) {
@@ -121,6 +94,7 @@ var vue_det = new Vue({
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
             this.show = false
+            this.tab_data = []
             this.$nextTick(() => {
                 this.show = true
             })
@@ -238,36 +212,52 @@ var vue_det = new Vue({
             return res
 
         },
-         onGetStatus(evt) {
-           this.status_data.TestTime = "Tue Apr 21 11:14:02 EDT 2020"
-           this.status_data.IpInformation.isAvailable = true;
-           this.status_data.IpInformation.ATTModem = "10.149.1.42"
-           this.status_data.IpInformation.VerizonModem = "10.148.0.33"
+         fillGetStatusData: function() {
 
-           this.status_data.IpReachability.isAvailable = true;
-           this.status_data.IpReachability.ATTModemStatus = "Online"
-           this.status_data.IpReachability.VerizonModemStatus = "Unreachable"
+           new_status_data = {}
+           new_status_data.TestTime = "Tue Apr 21 11:14:02 EDT 2020"
+           ipinfo = {}
+           ipinfo.isAvailable = true;
+           ipinfo.ATTModem = "10.149.1.42"
+           ipinfo = VerizonModem = "10.148.0.33"
+           new_status_data.IpInformation = ipinfo
 
-           if (this.status_data.IpReachability.VerizonModemStatus == "Unreachable")
+           ipreach = {}
+           ipreach.isAvailable = true;
+           ipreach.ATTModemStatus = "Online"
+           ipreach.VerizonModemStatus = "Unreachable"
+           new_status_data.IpReachability = ipreach
+
+           wifi_info = {}
+           wifi_info.ClientId = "NTD4873"
+           wifi_info.AccessPoint = "38:ED:18:E6:23"
+           new_status_data.WifiInformation = wifi_info
+
+           gate_info = {}
+           gate_info.ETMSClient= "Connected"
+           gate_info.MDMClient= "Connected"
+           new_status_data.GatewayInformation = gate_info
+
+           route_info = {}
+           route_info.ATTRoute="Connected"
+           route_info.VerizonRoute="Connected"
+           route_info.WifiRoute="Not connected"
+           route_info.MHzRadio="Connected"
+           new_status_data.RouteInformation = route_info
+
+           radio_info = {}
+           radio_info.RadioId="10944515"
+           radio_info.EMPAddress="netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
+           new_status_data.RadioInformation = radio_info
+           return new_status_data;
+           /*
+           if (this.tab_data[index].status_data.IpReachability.VerizonModemStatus == "Unreachable")
                this.cell_class = 'table-danger'
            else
                 this.cell_class = 'table-success'
 
-           this.status_data.WifiInformation.ClientId = "NTD4873"
-           this.status_data.WifiInformation.AccessPoint = "38:ED:18:E6:23"
+           this.tabName = "Locomotive System Status" */
 
-           this.status_data.GatewayInformation.ETMSClient= "Connected"
-           this.status_data.GatewayInformation.MDMClient= "Connected"
-
-           this.status_data.RouteInformation.ATTRoute="Connected"
-           this.status_data.RouteInformation.VerizonRoute="Connected"
-           this.status_data.RouteInformation.WifiRoute="Not connected"
-           this.status_data.RouteInformation.MHzRadio="Connected"
-
-           this.status_data.RadioInformation.RadioId="10944515"
-           this.status_data.RadioInformation.EMPAddress="netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
-
-            this.tabName = "Locomotive System Status"
            },
     }
 });

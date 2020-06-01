@@ -190,7 +190,8 @@
                     </b-card>
                 </v-tab>
 
-                <v-tab title="Locomotive System Status">
+                <div v-for="row in this.tab_data" :key="row.id">
+                <v-tab :title="row.title">
                     <b-card no-body>
                         <b-card-body>
                             <b-card-text>
@@ -201,27 +202,27 @@
                             <tbody>
                             <tr>
                                 <td>Locomotive</td>
-                                <td>{{form.LocoID}}</td>
+                                <td>{{row.LocoID}}</td>
                             </tr>
                             <tr>
                                 <td>Test time</td>
-                                <td>{{status_data.TestTime}}</td>
+                                <td>{{row.status_data.TestTime}}</td>
                             </tr>
                             <th colspan="2" style="text-align:center;">IP Information</th>
                             <tr>
                                 <td>ATT Modem</td>
-                                <td>{{status_data.IpInformation.ATTModem}}</td>
+                                <td>{{row.status_data.IpInformation.ATTModem}}</td>
                             </tr>
                             <tr>
                                 <td>Verizon Modem</td>
-                                <td>{{status_data.IpInformation.VerizonModem}}</td>
+                                <td>{{row.status_data.IpInformation.VerizonModem}}</td>
                             </tr>
                             <th colspan="2" style="text-align:center;">IP Reachability</th>
                             <tr>
                                 <td>ATT Modem Status</td>
                                 <td>
                                     <span class="badge badge-success">
-                                        {{status_data.IpReachability.ATTModemStatus}}
+                                        {{row.status_data.IpReachability.ATTModemStatus}}
                                     </span>
                                 </td>
                             </tr>
@@ -229,19 +230,19 @@
                                 <td>Verizon Modem Status</td>
                                 <td>
                                     <span class="badge badge-danger">
-                                        {{status_data.IpReachability.VerizonModemStatus}}
+                                        {{row.status_data.IpReachability.VerizonModemStatus}}
                                     </span>
                                 </td>
                             </tr>
                             <th colspan="2" style="text-align:center;">Wifi Information</th>
                             <tr>
                                 <td>Wifi Client SSID</td>
-                                <td>{{status_data.WifiInformation.ClientId}} </td>
+                                <td>{{row.status_data.WifiInformation.ClientId}} </td>
                             </tr>
                             <tr>
                                 <td>Access Point</td>
                                 <td>
-                                    {{status_data.WifiInformation.AccessPoint}}
+                                    {{row.status_data.WifiInformation.AccessPoint}}
                                 </td>
                             </tr>
                             <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
@@ -249,7 +250,7 @@
                                 <td>IETMS Client</td>
                                 <td>
                                     <span class="badge badge-success">
-                                        {{status_data.GatewayInformation.ETMSClient}}
+                                        {{row.status_data.GatewayInformation.ETMSClient}}
                                     </span>
                                 </td>
                             </tr>
@@ -257,7 +258,7 @@
                                 <td>MDM Client</td>
                                 <td>
                                     <span class="badge badge-success">
-                                        {{status_data.GatewayInformation.MDMClient}}
+                                        {{row.status_data.GatewayInformation.MDMClient}}
                                     </span>
                                 </td>
                             </tr>
@@ -266,7 +267,7 @@
                                 <td>ATT ITCM Route</td>
                                 <td>
                                     <span class="badge badge-success">
-                                        {{status_data.RouteInformation.ATTRoute}}
+                                        {{row.status_data.RouteInformation.ATTRoute}}
                                     </span>
                                 </td>
                             </tr>
@@ -274,7 +275,7 @@
                                 <td>Verizon ITCM Route</td>
                                 <td>
                                     <span class="badge badge-success">
-                                        {{status_data.RouteInformation.VerizonRoute}}
+                                        {{row.status_data.RouteInformation.VerizonRoute}}
                                     </span>
                                 </td>
                             </tr>
@@ -282,7 +283,7 @@
                                 <td>Wifi ITCM Route</td>
                                 <td>
                                     <span class="badge badge-danger">
-                                        {{status_data.RouteInformation.WifiRoute}}
+                                        {{row.status_data.RouteInformation.WifiRoute}}
                                     </span>
                                 </td>
                             </tr>
@@ -290,18 +291,18 @@
                                 <td>220 MHz Radio</td>
                                 <td>
                                     <span class="badge badge-success">
-                                        {{status_data.RouteInformation.MHzRadio}}
+                                        {{row.status_data.RouteInformation.MHzRadio}}
                                     </span>
                                 </td>
                             </tr>
                             <th colspan="2" style="text-align:center;">220 Base Station Radio Information</th>
                             <tr>
                                 <td>Radio Id</td>
-                                <td>{{status_data.RadioInformation.RadioId}} </td>
+                                <td>{{row.status_data.RadioInformation.RadioId}} </td>
                             </tr>
                             <tr>
                                 <td>EMP Address</td>
-                                <td>{{status_data.RadioInformation.EMPAddress}} </td>
+                                <td>{{row.status_data.RadioInformation.EMPAddress}} </td>
                             </tr>
                             </tbody>
                         </table>
@@ -313,6 +314,7 @@
                         </b-card-footer>
                     </b-card>
                 </v-tab>
+                </div>
             </vue-tabs>
         </div>
 
