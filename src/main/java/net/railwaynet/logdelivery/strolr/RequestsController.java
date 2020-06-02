@@ -164,10 +164,10 @@ public class RequestsController {
         statusesService.putStatus("1", Stream.of(new String[][] {
                 { "Status", "1" },
                 { "TestTime", "Tue Apr 21 11:14:02 EDT 2020" },
-        }).collect(Collectors.collectingAndThen(
-                Collectors.toMap(data -> data[0], data -> data[1]),
-                Collections::unmodifiableMap)));
-        return "1";
+        }).collect(Collectors.toMap(data -> data[0], data -> data[1])));
+        String testUUID = UUID.randomUUID().toString();
+        logger.debug("Return message ID = " + testUUID);
+        return testUUID;
     }
 
     @RequestMapping(
