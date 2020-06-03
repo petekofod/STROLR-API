@@ -125,6 +125,8 @@ public class StatusesService {
                 logger.warn("Unknown status of the message! Status = " + status);
         }
         status.put("statusText", statusText);
+        logger.debug("Adding status for " + messageId);
+        logger.debug("Status text is " + statusText);
         statusUpdates.put(messageId, status);
     }
 
@@ -132,6 +134,7 @@ public class StatusesService {
         if (!statusUpdates.containsKey(messageId))
             return null;
         Map<String, String> status = statusUpdates.get(messageId);
+        logger.debug("Removing status for MessageID = " + messageId);
         statusUpdates.remove(messageId);
         return objectMapper.writeValueAsString(status);
     }
