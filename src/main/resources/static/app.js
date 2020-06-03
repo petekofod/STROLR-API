@@ -86,14 +86,8 @@ var vue_det = new Vue({
                 xhr.send(JSON.stringify(this.form))
             }
             if (this.form.RequestType == "get-status"){
-               //new_status_data = this.fillGetStatusData()
-               //index = this.tab_data.length
-               //new_status_data.timer = setInterval(this.checkStatusData, 6000)
-               //this.tab_data[this.new_messageId]({id:index, title:"Locomotive System Status", LocoID: this.form.LocoID,
-               //                            status_data: new_status_data})
-
                var xhr = new XMLHttpRequest()
-                               var self = this
+               var self = this
 
                 xhr.open('POST', 'data-request')
                 xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
@@ -117,13 +111,13 @@ var vue_det = new Vue({
                       console.log("This is tab_data_array ", self.tab_data_Array)
 
                  } else {
-                                           var errorMessage = JSON.parse(xhr.responseText).message
-                                           self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
-                                           console.error('error - ' + errorMessage)
-                                           console.error(xhr.responseText)
-                                       }
+                       var errorMessage = JSON.parse(xhr.responseText).message
+                       self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                       console.error('error - ' + errorMessage)
+                       console.error(xhr.responseText)
                    }
                  }
+               }
                  xhr.send(JSON.stringify(this.form))
             } else {
                console.log("Unknown request. Do not know what to do with this yet")
