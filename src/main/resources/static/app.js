@@ -189,7 +189,9 @@ var vue_det = new Vue({
             xhr.onload = function () {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        statusUpdate = JSON.parse(xhr.responseText)
+                        var statusUpdate = JSON.parse(xhr.responseText)
+                        console.debug("Status for " + self.messageId)
+                        console.debug(statusUpdate)
                         if (statusUpdate.filesCount)
                             self.sFilesCount = statusUpdate.filesCount
                         if (statusUpdate.totalBytes)

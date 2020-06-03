@@ -161,12 +161,12 @@ public class RequestsController {
 
     private String sendStatusRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling locomotive status request");
-        statusesService.putStatus("1", Stream.of(new String[][] {
+        String testUUID = UUID.randomUUID().toString();
+        logger.debug("Return message ID = " + testUUID);
+        statusesService.putStatus(testUUID, Stream.of(new String[][] {
                 { "Status", "1" },
                 { "TestTime", "Tue Apr 21 11:14:02 EDT 2020" },
         }).collect(Collectors.toMap(data -> data[0], data -> data[1])));
-        String testUUID = UUID.randomUUID().toString();
-        logger.debug("Return message ID = " + testUUID);
         return testUUID;
     }
 
@@ -217,13 +217,16 @@ public class RequestsController {
         String status;
         try {
             status = statusesService.getStatus(messageId);
+            logger.debug("Status is " + status);
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate status update JSON", e);
         }
-        if (status == null)
+        if (status == null) {
+            logger.debug("No status available");
             throw new ResponseStatusException(
                     HttpStatus.NO_CONTENT, "No status update available");
+        }
         return status;
     }
     
