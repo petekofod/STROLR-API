@@ -165,7 +165,7 @@ public class RequestsController {
         logger.debug("Return message ID = " + testUUID);
         statusesService.putStatus(testUUID, Stream.of(new String[][] {
                 { "Status", "1" },
-                { "TestTime", "Tue Apr 21 11:14:02 EDT 2020" },
+                { "TestTime", new SimpleDateFormat(DATE_PATTERN).format(new Date()) },
         }).collect(Collectors.toMap(data -> data[0], data -> data[1])));
         return testUUID;
     }
