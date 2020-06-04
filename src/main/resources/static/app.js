@@ -25,7 +25,6 @@ var vue_det = new Vue({
             	{ text: 'Pacific' , value: 8},
             	{ text: 'UTC' , value: 0}
             	],
-        tab_data : new Map(),
         tab_data_Array: [],
         show: true,
         bLogStatus: false,
@@ -63,7 +62,7 @@ var vue_det = new Vue({
                 console.log("This is for GET LOGS request")
 
                 this.bLogStatus = true
-                this.timer = setInterval(this.checkLogData, 6000) //1000
+                this.timer = setInterval(this.checkLogData, 1000)
 
                 var xhr = new XMLHttpRequest()
                 var self = this
@@ -98,17 +97,14 @@ var vue_det = new Vue({
                       self.new_messageId = xhr.responseText
                       new_status_data = self.fillGetStatusData()
                       new_tab_item = {}
-                      new_tab_item.status_data = new_status_data
-                      new_tab_item.timer = setInterval(self.checkStatusData.bind(null, self.new_messageId), 6000)
-                      self.tab_data.set(self.new_messageId, new_tab_item)
-                      console.log(self.tab_data)
+                      new_tab_item.timer = setInterval(self.checkStatusData.bind(null, self.new_messageId), 1000)
                       console.log(self.new_messageId)
 
                       index = self.tab_data_Array.length
-                      self.tab_data_Array.push({id:index, title:"Locomotive System Status" + index, LocoID: self.form.LocoID, status_data: new_status_data,
-                          messageId: self.new_messageId})
-
-                      console.log("This is tab_data_array ", self.tab_data_Array)
+                      self.tab_data_Array.push({id:index, title:"Locomotive System Status {" + self.form.LocoID + "}",
+                          LocoID: self.form.LocoID, status_data: new_status_data,
+                          messageId: self.new_messageId, Status:"Loading locomotive system status...",
+                          timer: new_tab_item.timer})
 
                  } else {
                        var errorMessage = JSON.parse(xhr.responseText).message
@@ -130,7 +126,11 @@ var vue_det = new Vue({
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
             this.show = false
-            this.tab_data = []
+            // stop all timers
+            for (var i=0; i < this.tab_data_Array.length; i++) {
+               clearInterval(this.tab_data_Array[i].timer)
+            }
+            this.tab_data_Array = []
             this.$nextTick(() => {
                 this.show = true
             })
@@ -197,7 +197,7 @@ var vue_det = new Vue({
                         if (statusUpdate.totalBytes)
                             self.sTotalBytes = statusUpdate.totalBytes
                         if (statusUpdate.Status === "4") {
-                            self.cancelLogDataCheck()   // TODO
+                            self.cancelLogDataCheck()
                             self.showLinks = true
                         }
                         self.sStatus = statusUpdate.statusText
@@ -251,8 +251,7 @@ var vue_det = new Vue({
 
         },
         checkStatusData: function (ourMessageId) {
-            console.log("checkStatusData.... with ourMessageId ", ourMessageId)
-            console.log(this.tab_data)
+            console.log("checkStatusData.... with ourMessageId and count=", ourMessageId)
              var xhr = new XMLHttpRequest()
                     var self = this
                     xhr.open('GET', 'status-update/' + ourMessageId)
@@ -261,15 +260,18 @@ var vue_det = new Vue({
                         if (xhr.readyState === 4) {
                             if (xhr.status === 200) {
                                 statusUpdate = JSON.parse(xhr.responseText)
-                                if (statusUpdate.filesCount)
-                                    self.sFilesCount = statusUpdate.filesCount
-                                if (statusUpdate.totalBytes)
-                                    self.sTotalBytes = statusUpdate.totalBytes
-                                if (statusUpdate.Status === "1") {
-                                    self.cancelLogDataCheck()  // TODO
-                                    self.showLinks = true
+                                for (var i=0; i < self.tab_data_Array.length; i++) {
+                                  if (self.tab_data_Array[i].messageId === ourMessageId) {
+                                      console.log("Updating info according to response result")
+                                      if (statusUpdate.TestTime)
+                                        self.tab_data_Array[i].status_data.TestTime = statusUpdate.TestTime
+                                      if (statusUpdate.statusText)
+                                        self.tab_data_Array[i].Status = statusUpdate.statusText
+                                      // TODO process all other fields
+                                      // stop the timer as the response has been processed
+                                      clearInterval(self.tab_data_Array[i].timer)
+                                  }
                                 }
-                                self.sStatus = statusUpdate.statusText
                             } else if (xhr.status === 204) {
                                 // no update, try again later
                             }
@@ -318,13 +320,6 @@ var vue_det = new Vue({
            radio_info.EMPAddress="netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
            new_status_data.RadioInformation = radio_info
            return new_status_data;
-           /*
-           if (this.tab_data[index].status_data.IpReachability.VerizonModemStatus == "Unreachable")
-               this.cell_class = 'table-danger'
-           else
-                this.cell_class = 'table-success'
-
-           this.tabName = "Locomotive System Status" */
 
            },
     }
