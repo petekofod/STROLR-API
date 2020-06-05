@@ -38,7 +38,7 @@ var vue_det = new Vue({
         cell_class: 'table-danger',
         isActive: false,
         tabName: '',
-        active_tab: 0,
+        active_tab: '',
     },
     created: function () {
         this.getUserName()
@@ -61,40 +61,48 @@ var vue_det = new Vue({
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
-            xhr.onload = function () {
-            if (xhr.readyState === 4) {
-               if (xhr.status === 200) {
-                    self.new_messageId = xhr.responseText
-                    new_tab_item = {}
-                    new_tab_item.timer = setInterval(self.checkResponse.bind(null, self.new_messageId), 1000)
+            xhr.onload = async function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        self.new_messageId = xhr.responseText
+                        new_tab_item = {}
+                        new_tab_item.timer = setInterval(self.checkResponse.bind(null, self.new_messageId), 1000)
 
-                    index = self.tab_data_Array.length
-                    if (self.form.RequestType == "get-status") {
-                      new_status_data = self.fillGetStatusData()   // TODO this is test data just to show
-                      self.tab_data_Array.push({id:index, title:"Locomotive System Status {" + index + "}",
-                            LocoID: self.form.LocoID, status_data: new_status_data,
-                            messageId: self.new_messageId, Status:"Loading locomotive system status...",
-                            timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
-                            showFooter: false, isLogs: false, showLinks: false, isLogs:false})
+                        index = self.tab_data_Array.length
+                        var title = "(" + index + ") " + self.form.SCACMark + " " + self.form.LocoID
+                        if (self.form.RequestType == "get-status") {
+                            title = title + " status"
+                            new_status_data = self.fillGetStatusData()   // TODO this is test data just to show
+                            self.tab_data_Array.push({id:index,
+                                title: title,
+                                LocoID: self.form.LocoID, status_data: new_status_data,
+                                messageId: self.new_messageId, Status:"Loading locomotive system status...",
+                                timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
+                                showFooter: false, isLogs: false, showLinks: false, isLogs:false})
 
-                    } else if (self.form.RequestType == "get-logs") {
-                      self.tab_data_Array.push({id:index, title:"Logs Retrieval {" + index + "}",
-                           LocoID: self.form.LocoID,
-                           messageId: self.new_messageId, Status:"Loading locomotive logs...",
-                           timer: new_tab_item.timer,
-                           showFooter: true, isLogs: true, showLinks: false, isLogs:true,
-                           sFilesCount: "Counting...", sTotalBytes: "Checking log file...", sLogRequestStatus: "Request STATUS submitted successfully"})
-                           }
-                      } else {
-                            var errorMessage = JSON.parse(xhr.responseText).message
-                            self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
-                            console.error('error - ' + errorMessage)
-                            console.error(xhr.responseText)
-                      }
-                      self.active_tab = index
-                  }
+                        } else if (self.form.RequestType == "get-logs") {
+                            title = title + " logs"
+                            self.tab_data_Array.push({id:index,
+                                title: title,
+                                LocoID: self.form.LocoID,
+                                messageId: self.new_messageId, Status:"Loading locomotive logs...",
+                                timer: new_tab_item.timer,
+                                showFooter: true, isLogs: true, showLinks: false, isLogs:true,
+                                sFilesCount: "Counting...", sTotalBytes: "Checking log file...", sLogRequestStatus: "Request STATUS submitted successfully"})
+                        }
+                        self.$nextTick(function () {
+                            console.log("Title of the new tab is " + title)
+                            self.active_tab = title
+                        });
+                    } else {
+                                var errorMessage = JSON.parse(xhr.responseText).message
+                                self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                                console.error('error - ' + errorMessage)
+                                console.error(xhr.responseText)
+                    }
                 }
-                xhr.send(JSON.stringify(this.form))
+            }
+            xhr.send(JSON.stringify(this.form))
         },
         onReset(evt) {
             evt.preventDefault()

@@ -111,7 +111,7 @@ public class StatusesService {
                 break;
             case "2":
                 statusText = "Logs have been found";
-                status.put("filesCount", status.get("Info"));
+                status.put("filesCount", status.get("Info").isEmpty()?"0":status.get("Info"));
                 break;
             case "3":
                 statusText = "Logs have been archived";

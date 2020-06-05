@@ -163,55 +163,43 @@
                 </div>
             </div>
 
-            <!--<vue-tabs v-model="active_tab">
-                <v-tab title="Logs Retrieval">
-                    <b-card no-body>
+            <vue-tabs v-model="active_tab" style="margin-bottom: 20px;">
+                <v-tab v-for="tab in this.tab_data_Array" :key="tab.id" :title="tab.title">
+                    <b-card no-body v-if="tab.isLogs">
                         <b-card-body>
                             <b-card-sub-title class="mb-2">
-                                Loading locomotive logs...
+                                {{tab.Title}}
                             </b-card-sub-title>
                             <b-card-text>
-                                Number of Log Files Being Retrieved: {{sFilesCount}}<br>
-                                Size of Compressed Log File: {{sTotalBytes}}<br>
-                                {{sLogRequestStatus}} <br>
-                                {{sStatus}}
+                                Number of Log Files Being Retrieved: {{tab.sFilesCount}}<br>
+                                Size of Compressed Log File: {{tab.sTotalBytes}}<br>
+                                {{tab.sLogRequestStatus}} <br>
+                                {{tab.Status}}
                             </b-card-text>
-                            <b-card-title v-if="showLinks">Download links</b-card-title>
-                            <b-card-text v-if="showLinks">
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar.gz'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar.gz</a><br>
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar</a><br>
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.7z'">https://strolrdev.s3.amazonaws.com/{{messageId}}.7z</a><br>
+                            <b-card-title v-if="tab.showLinks">Download links</b-card-title>
+                            <b-card-text v-if="tab.showLinks">
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.tar.gz'" target="_blank">
+                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.tar.gz
+                                </a>
+                                <br>
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.tar'" target="_blank">
+                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.tar
+                                </a>
+                                <br>
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.7z'" target="_blank">
+                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.7z
+                                </a>
+                                <br>
                             </b-card-text>
                         </b-card-body>
-                        <b-card-footer v-if="!showLinks">
-                            Log Server is currently processing request. You will be
+                        <b-card-footer v-if="!tab.showLinks">
+                            Log Server is currently processing request. Please do not close this window! You will be
                             shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
-                </v-tab> -->
-            <vue-tabs v-model="active_tab">
-                <div v-for="tab in this.tab_data_Array" :key="tab.id">
-                <v-tab :title="tab.title">
-                    <b-card no-body>
+                    <b-card no-body v-if="!tab.isLogs">
                         <b-card-body>
-                                <b-card-sub-title class="mb-2">
-                                    {{tab.Title}}
-                                </b-card-sub-title>
-                                <b-card-text v-if="tab.isLogs">
-                                    Number of Log Files Being Retrieved: {{tab.sFilesCount}}<br>
-                                    Size of Compressed Log File: {{tab.sTotalBytes}}<br>
-                                    {{tab.sLogRequestStatus}} <br>
-                                    {{tab.Status}}
-                                </b-card-text>
-                                <b-card-title v-if="tab.showLinks">Download links</b-card-title>
-                                <b-card-text v-if="tab.showLinks">
-                                    <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar.gz'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar.gz</a><br>
-                                    <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar</a><br>
-                                    <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.7z'">https://strolrdev.s3.amazonaws.com/{{messageId}}.7z</a><br>
-                                </b-card-text>
-                                 <b-card-text>
-                                     <table class="table" v-if="!tab.isLogs">
-                            <tbody>
+                            <table class="table">
                             <tr>
                                 <td>Locomotive</td>
                                 <td>{{tab.LocoID}}</td>
@@ -219,106 +207,104 @@
                             <tr>
                                 <td>Test time</td>
                                 <td>{{tab.status_data.TestTime}}</td>
-                              </tr>
-                              <th colspan="2" style="text-align:center;">IP Information</th>
-                              <tr>
-                                  <td>ATT Modem</td>
-                                  <td>{{tab.status_data.IpInformation.ATTModem}}</td>
+                            </tr>
+                            <th colspan="2" style="text-align:center;">IP Information</th>
+                            <tr>
+                                <td>ATT Modem</td>
+                                <td>{{tab.status_data.IpInformation.ATTModem}}</td>
+                            </tr>
+                            <tr>
+                                <td>Verizon Modem</td>
+                                <td>{{tab.status_data.IpInformation.VerizonModem}}</td>
+                            </tr>
+                            <th colspan="2" style="text-align:center;">IP Reachability</th>
+                            <tr>
+                                 <td>ATT Modem Status</td>
+                                 <td>
+                                     <span class="badge badge-success">
+                                      {{tab.status_data.IpReachability.ATTModemStatus}}
+                                     </span>
+                                 </td>
+                            </tr>
+                            <tr>
+                                 <td>Verizon Modem Status</td>
+                                 <td>
+                                     <span class="badge badge-danger">
+                                       {{tab.status_data.IpReachability.VerizonModemStatus}}
+                                     </span>
+                                 </td>
+                            </tr>
+                            <th colspan="2" style="text-align:center;">Wifi Information</th>
+                            <tr>
+                                 <td>Wifi Client SSID</td>
+                                 <td>{{tab.status_data.WifiInformation.ClientId}} </td>
+                            </tr>
+                            <tr>
+                                 <td>Access Point</td>
+                                 <td>
+                                     {{tab.status_data.WifiInformation.AccessPoint}}
+                                 </td>
+                            </tr>
+                            <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
+                            <tr>
+                                <td>IETMS Client</td>
+                                <td>
+                                    <span class="badge badge-success">
+                                     {{tab.status_data.GatewayInformation.ETMSClient}}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>MDM Client</td>
+                                <td>
+                                    <span class="badge badge-success">
+                                     <!--  {{tab.status_data.GatewayInformation.MDMClient}} -->
+                                    </span>
+                                </td>
+                            </tr>
+                            <th colspan="2" style="text-align:center;">ITCM Route Information</th>
+                            <tr>
+                                <td>ATT ITCM Route</td>
+                                <td>
+                                     <span class="badge badge-success">
+                                         {{tab.status_data.RouteInformation.ATTRoute}}
+                                     </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Verizon ITCM Route</td>
+                                <td>
+                                    <span class="badge badge-success">
+                                        {{tab.status_data.RouteInformation.VerizonRoute}}
+                                    </span>
+                                </td>
+                            </tr>
+                               <tr>
+                                   <td>Wifi ITCM Route</td>
+                                   <td>
+                                       <span class="badge badge-danger">
+                                          {{tab.status_data.RouteInformation.WifiRoute}}
+                                       </span>
+                                   </td>
                                </tr>
                                <tr>
-                                   <td>Verizon Modem</td>
-                                   <td>{{tab.status_data.IpInformation.VerizonModem}}</td>
+                                   <td>220 MHz Radio</td>
+                                   <td>
+                                       <span class="badge badge-success">
+                                          {{tab.status_data.RouteInformation.MHzRadio}}
+                                       </span>
+                                   </td>
+                               </tr>
+                               <th colspan="2" style="text-align:center;">220 Base Station Radio Information</th>
+                               <tr>
+                                   <td>Radio Id</td>
+                                   <td>{{tab.status_data.RadioInformation.RadioId}} </td>
+                                </tr>
+                                <tr>
+                                    <td>EMP Address</td>
+                                    <td>{{tab.status_data.RadioInformation.EMPAddress}} </td>
                                  </tr>
-                                 <th colspan="2" style="text-align:center;">IP Reachability</th>
-                                 <tr>
-                                     <td>ATT Modem Status</td>
-                                     <td>
-                                         <span class="badge badge-success">
-                                          {{tab.status_data.IpReachability.ATTModemStatus}}
-                                         </span>
-                                     </td>
-                                 </tr>
-                                 <tr>
-                                     <td>Verizon Modem Status</td>
-                                     <td>
-                                         <span class="badge badge-danger">
-                                           {{tab.status_data.IpReachability.VerizonModemStatus}}
-                                         </span>
-                                     </td>
-                                 </tr>
-                                 <th colspan="2" style="text-align:center;">Wifi Information</th>
-                                 <tr>
-                                     <td>Wifi Client SSID</td>
-                                     <td>{{tab.status_data.WifiInformation.ClientId}} </td>
-                                 </tr>
-                                 <tr>
-                                     <td>Access Point</td>
-                                     <td>
-                                         {{tab.status_data.WifiInformation.AccessPoint}}
-                                       </td>
-                                   </tr>
-                                   <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
-                                   <tr>
-                                       <td>IETMS Client</td>
-                                       <td>
-                                           <span class="badge badge-success">
-                                             {{tab.status_data.GatewayInformation.ETMSClient}}
-                                           </span>
-                                       </td>
-                                   </tr>
-                                   <tr>
-                                       <td>MDM Client</td>
-                                       <td>
-                                           <span class="badge badge-success">
-                                             <!--  {{tab.status_data.GatewayInformation.MDMClient}} -->
-                                           </span>
-                                       </td>
-                                   </tr>
-                                   <th colspan="2" style="text-align:center;">ITCM Route Information</th>
-                                   <tr>
-                                       <td>ATT ITCM Route</td>
-                                       <td>
-                                           <span class="badge badge-success">
-                                             {{tab.status_data.RouteInformation.ATTRoute}}
-                                           </span>
-                                       </td>
-                                   </tr>
-                                   <tr>
-                                       <td>Verizon ITCM Route</td>
-                                       <td>
-                                           <span class="badge badge-success">
-                                              {{tab.status_data.RouteInformation.VerizonRoute}}
-                                           </span>
-                                       </td>
-                                   </tr>
-                                   <tr>
-                                       <td>Wifi ITCM Route</td>
-                                       <td>
-                                           <span class="badge badge-danger">
-                                              {{tab.status_data.RouteInformation.WifiRoute}}
-                                           </span>
-                                       </td>
-                                   </tr>
-                                   <tr>
-                                       <td>220 MHz Radio</td>
-                                       <td>
-                                           <span class="badge badge-success">
-                                              {{tab.status_data.RouteInformation.MHzRadio}}
-                                           </span>
-                                       </td>
-                                   </tr>
-                                   <th colspan="2" style="text-align:center;">220 Base Station Radio Information</th>
-                                   <tr>
-                                       <td>Radio Id</td>
-                                       <td>{{tab.status_data.RadioInformation.RadioId}} </td>
-                                    </tr>
-                                    <tr>
-                                        <td>EMP Address</td>
-                                        <td>{{tab.status_data.RadioInformation.EMPAddress}} </td>
-                                     </tr>
-                                     </tbody>
-                                 </table>
-                                 </b-card-text>
+                             </table>
                         </b-card-body>
                         <b-card-footer v-if="tab.showFooter">
                                      Locomotive System Status Server is currently processing request. You will be
@@ -326,14 +312,11 @@
                         </b-card-footer>
                     </b-card>
                 </v-tab>
+            </vue-tabs>
+        </div>
+    </div>
 
-                </div>
-                     </vue-tabs>
-                 </div>
+    <script src="app.js"></script>
+</body>
 
-             </div>
-
-             <script src="app.js"></script>
-         </body>
-
-         </html>
+</html>
