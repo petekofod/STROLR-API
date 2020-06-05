@@ -35,13 +35,10 @@ var vue_det = new Vue({
         userName: '',
         formTZ: '',
         messageId: '',
-        sFilesCount: 'Counting...',
-        sTotalBytes: 'Checking log file...',
-        showLinks: false,
-        showStatus:false,
         cell_class: 'table-danger',
         isActive: false,
         tabName: '',
+        active_tab: 0,
     },
     created: function () {
         this.getUserName()
@@ -58,66 +55,46 @@ var vue_det = new Vue({
         onSubmit(evt) {
             console.log(this.form.RequestType)
             evt.preventDefault()
-            if (this.form.RequestType == "get-logs") {
-                console.log("This is for GET LOGS request")
 
-                this.bLogStatus = true
-                this.timer = setInterval(this.checkLogData, 1000)
+            var xhr = new XMLHttpRequest()
+            var self = this
 
-                var xhr = new XMLHttpRequest()
-                var self = this
+            xhr.open('POST', 'data-request')
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+            xhr.onload = function () {
+            if (xhr.readyState === 4) {
+               if (xhr.status === 200) {
+                    self.new_messageId = xhr.responseText
+                    new_tab_item = {}
+                    new_tab_item.timer = setInterval(self.checkResponse.bind(null, self.new_messageId), 1000)
 
-                xhr.open('POST', 'data-request')
-                xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
-                xhr.onload = function () {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            self.sLogRequestStatus = "Request submitted successfully"
-                            self.messageId = xhr.responseText
-                        } else {
+                    index = self.tab_data_Array.length
+                    if (self.form.RequestType == "get-status") {
+                      new_status_data = self.fillGetStatusData()   // TODO this is test data just to show
+                      self.tab_data_Array.push({id:index, title:"Locomotive System Status {" + index + "}",
+                            LocoID: self.form.LocoID, status_data: new_status_data,
+                            messageId: self.new_messageId, Status:"Loading locomotive system status...",
+                            timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
+                            showFooter: false, isLogs: false, showLinks: false, isLogs:false})
+
+                    } else if (self.form.RequestType == "get-logs") {
+                      self.tab_data_Array.push({id:index, title:"Logs Retrieval {" + index + "}",
+                           LocoID: self.form.LocoID,
+                           messageId: self.new_messageId, Status:"Loading locomotive logs...",
+                           timer: new_tab_item.timer,
+                           showFooter: true, isLogs: true, showLinks: false, isLogs:true,
+                           sFilesCount: "Counting...", sTotalBytes: "Checking log file...", sLogRequestStatus: "Request STATUS submitted successfully"})
+                           }
+                      } else {
                             var errorMessage = JSON.parse(xhr.responseText).message
                             self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
                             console.error('error - ' + errorMessage)
                             console.error(xhr.responseText)
-                        }
-                    }
+                      }
+                      self.active_tab = index
+                  }
                 }
                 xhr.send(JSON.stringify(this.form))
-            }
-            if (this.form.RequestType == "get-status"){
-               var xhr = new XMLHttpRequest()
-               var self = this
-
-                xhr.open('POST', 'data-request')
-                xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
-                xhr.onload = function () {
-                if (xhr.readyState === 4) {
-                      if (xhr.status === 200) {
-                      self.sLogRequestStatus = "Request STATUS submitted successfully"
-                      self.new_messageId = xhr.responseText
-                      new_status_data = self.fillGetStatusData()
-                      new_tab_item = {}
-                      new_tab_item.timer = setInterval(self.checkStatusData.bind(null, self.new_messageId), 1000)
-                      console.log(self.new_messageId)
-
-                      index = self.tab_data_Array.length
-                      self.tab_data_Array.push({id:index, title:"Locomotive System Status {" + self.form.LocoID + "}",
-                          LocoID: self.form.LocoID, status_data: new_status_data,
-                          messageId: self.new_messageId, Status:"Loading locomotive system status...",
-                          timer: new_tab_item.timer})
-
-                 } else {
-                       var errorMessage = JSON.parse(xhr.responseText).message
-                       self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
-                       console.error('error - ' + errorMessage)
-                       console.error(xhr.responseText)
-                   }
-                 }
-               }
-                 xhr.send(JSON.stringify(this.form))
-            } else {
-               console.log("Unknown request. Do not know what to do with this yet")
-            }
         },
         onReset(evt) {
             evt.preventDefault()
@@ -181,39 +158,7 @@ var vue_det = new Vue({
             }
             xhr.send()
         },
-        checkLogData: function () {
-            var xhr = new XMLHttpRequest()
-            var self = this
 
-            xhr.open('GET', 'status-update/' + this.messageId)
-            xhr.onload = function () {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        var statusUpdate = JSON.parse(xhr.responseText)
-                        console.debug("Status for " + self.messageId)
-                        console.debug(statusUpdate)
-                        if (statusUpdate.filesCount)
-                            self.sFilesCount = statusUpdate.filesCount
-                        if (statusUpdate.totalBytes)
-                            self.sTotalBytes = statusUpdate.totalBytes
-                        if (statusUpdate.Status === "4") {
-                            self.cancelLogDataCheck()
-                            self.showLinks = true
-                        }
-                        self.sStatus = statusUpdate.statusText
-                    } else if (xhr.status === 204) {
-                        // no update, try again later
-                    }
-                    else {
-                        console.error('error - ' + xhr.statusText);
-                    }
-                }
-            }
-            xhr.send()
-        },
-        cancelLogDataCheck() {
-            clearInterval(this.timer)
-        },
         formatDate: function () {
             var d = new Date(),
                 month = '' + (d.getMonth() + 1),
@@ -250,8 +195,8 @@ var vue_det = new Vue({
             return res
 
         },
-        checkStatusData: function (ourMessageId) {
-            console.log("checkStatusData.... with ourMessageId and count=", ourMessageId)
+        checkResponse: function (ourMessageId) {
+            console.log("checkResponse.... with ourMessageId", ourMessageId)
              var xhr = new XMLHttpRequest()
                     var self = this
                     xhr.open('GET', 'status-update/' + ourMessageId)
@@ -263,13 +208,29 @@ var vue_det = new Vue({
                                 for (var i=0; i < self.tab_data_Array.length; i++) {
                                   if (self.tab_data_Array[i].messageId === ourMessageId) {
                                       console.log("Updating info according to response result")
+                                      self.tab_data_Array[i].showFooter = false
                                       if (statusUpdate.TestTime)
                                         self.tab_data_Array[i].status_data.TestTime = statusUpdate.TestTime
                                       if (statusUpdate.statusText)
                                         self.tab_data_Array[i].Status = statusUpdate.statusText
+
+                                      if (statusUpdate.filesCount)
+                                         self.tab_data_Array[i].sFilesCount = statusUpdate.filesCount
+                                      if (statusUpdate.totalBytes)
+                                          self.tab_data_Array[i].sTotalBytes = statusUpdate.totalBytes
+                                      if (statusUpdate.statusText)
+                                         self.tab_data_Array[i].Status = statusUpdate.statusText
+                                      console.log("going to  check status")
+                                      if ( (self.tab_data_Array[i].isLogs) && (statusUpdate.Status != "4")) {
+                                          console.log("We have some information for logs but not all yet, need more")
+                                      } else {
+                                         console.log("stop the timer as the response has been processed")
+                                         clearInterval(self.tab_data_Array[i].timer)
+                                         if (self.tab_data_Array[i].isLogs)
+                                            self.tab_data_Array[i].showLinks = true
+                                      }
                                       // TODO process all other fields
-                                      // stop the timer as the response has been processed
-                                      clearInterval(self.tab_data_Array[i].timer)
+
                                   }
                                 }
                             } else if (xhr.status === 204) {

@@ -163,7 +163,7 @@
                 </div>
             </div>
 
-            <vue-tabs v-model="tabName">
+            <!--<vue-tabs v-model="active_tab">
                 <v-tab title="Logs Retrieval">
                     <b-card no-body>
                         <b-card-body>
@@ -188,18 +188,29 @@
                             shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
-                </v-tab>
-
-
+                </v-tab> -->
+            <vue-tabs v-model="active_tab">
                 <div v-for="tab in this.tab_data_Array" :key="tab.id">
                 <v-tab :title="tab.title">
                     <b-card no-body>
                         <b-card-body>
-                            <b-card-text>
                                 <b-card-sub-title class="mb-2">
-                                    {{tab.Status}}
+                                    {{tab.Title}}
                                 </b-card-sub-title>
-                        <table class="table">
+                                <b-card-text v-if="tab.isLogs">
+                                    Number of Log Files Being Retrieved: {{tab.sFilesCount}}<br>
+                                    Size of Compressed Log File: {{tab.sTotalBytes}}<br>
+                                    {{tab.sLogRequestStatus}} <br>
+                                    {{tab.Status}}
+                                </b-card-text>
+                                <b-card-title v-if="tab.showLinks">Download links</b-card-title>
+                                <b-card-text v-if="tab.showLinks">
+                                    <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar.gz'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar.gz</a><br>
+                                    <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.tar'">https://strolrdev.s3.amazonaws.com/{{messageId}}.tar</a><br>
+                                    <a :href="'https://strolrdev.s3.amazonaws.com/' + messageId + '.7z'">https://strolrdev.s3.amazonaws.com/{{messageId}}.7z</a><br>
+                                </b-card-text>
+                                 <b-card-text>
+                                     <table class="table" v-if="!tab.isLogs">
                             <tbody>
                             <tr>
                                 <td>Locomotive</td>
@@ -307,16 +318,16 @@
                                      </tr>
                                      </tbody>
                                  </table>
-                                     </b-card-text>
-                                 </b-card-body>
-                                 <b-card-footer v-if="!showLinks">
+                                 </b-card-text>
+                        </b-card-body>
+                        <b-card-footer v-if="tab.showFooter">
                                      Locomotive System Status Server is currently processing request. You will be
                                      shown the information when the backend server provides it.
-                                 </b-card-footer>
-                             </b-card>
-                         </v-tab>
+                        </b-card-footer>
+                    </b-card>
+                </v-tab>
 
-                         </div>
+                </div>
                      </vue-tabs>
                  </div>
 
