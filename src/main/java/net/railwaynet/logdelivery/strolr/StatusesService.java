@@ -119,6 +119,7 @@ public class StatusesService {
                 break;
             case "4":
                 statusText = "The archive has been uploaded";
+                status.put("end", "1");
                 break;
             default:
                 statusText = "";

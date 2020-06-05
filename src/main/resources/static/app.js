@@ -196,7 +196,7 @@ var vue_det = new Vue({
                             self.sFilesCount = statusUpdate.filesCount
                         if (statusUpdate.totalBytes)
                             self.sTotalBytes = statusUpdate.totalBytes
-                        if (statusUpdate.Status === "4") {
+                        if (statusUpdate.end) {
                             self.cancelLogDataCheck()
                             self.showLinks = true
                         }
