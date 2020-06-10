@@ -33,7 +33,8 @@ public class StatusesService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private AmazonSQS SQS;
-    private String QUEUE_URL;
+    private String LOG_QUEUE_URL;
+    private String STATUS_QUEUE_URL;
 
     private void init() {
         BasicAWSCredentials bAWSc = new BasicAWSCredentials(
@@ -43,9 +44,12 @@ public class StatusesService {
                 .withRegion(Objects.requireNonNull(env.getProperty("aws.region")))
                 .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
                 .build();
-        String queueName = Objects.requireNonNull(env.getProperty("response.queue.name"));
-        logger.info("Initialing response queue: " + queueName);
-        QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
+        String logQueueName = Objects.requireNonNull(env.getProperty("response.queue.name"));
+        logger.info("Initialing logs response queue: " + logQueueName);
+        LOG_QUEUE_URL = SQS.getQueueUrl(logQueueName).getQueueUrl();
+        String statusQueueName = Objects.requireNonNull(env.getProperty("status.response.queue.name"));
+        logger.info("Initialing status response queue: " + statusQueueName);
+        STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
     }
 
     private AmazonSQS getSQS() {
@@ -54,37 +58,50 @@ public class StatusesService {
         return SQS;
     }
 
-    private String getQueueUrl() {
-        if (QUEUE_URL == null)
+    private String getLogQueueUrl() {
+        if (LOG_QUEUE_URL == null)
             init();
-        return QUEUE_URL;
+        return LOG_QUEUE_URL;
+    }
+
+    private String getStatusQueueUrl() {
+        if (STATUS_QUEUE_URL == null)
+            init();
+        return STATUS_QUEUE_URL;
     }
 
     private final Map<String, Map<String, String>> statusUpdates = new HashMap<>();
+
+    private void checkQueue(String queueUrl) {
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl)
+                .withWaitTimeSeconds(10)
+                .withMaxNumberOfMessages(10);
+
+        List<Message> sqsMessages = getSQS().receiveMessage(receiveMessageRequest).getMessages();
+        logger.info("Getting new messages: " + sqsMessages.size());
+
+        if (!sqsMessages.isEmpty()) {
+            for (Message m: sqsMessages) {
+                handleMessage(m, queueUrl);
+            }
+        }
+    }
 
     @Async
     public void monitorResponseQueue() throws InterruptedException {
         //noinspection InfiniteLoopStatement
         while (true) {
             Thread.sleep(1000); // sleep for 1 second
-            logger.info("Checking for new messages");
 
-            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(getQueueUrl())
-                    .withWaitTimeSeconds(10)
-                    .withMaxNumberOfMessages(10);
+            logger.info("Checking for new messages in logs queue");
+            checkQueue(getLogQueueUrl());
 
-            List<Message> sqsMessages = getSQS().receiveMessage(receiveMessageRequest).getMessages();
-            logger.info("Getting new messages: " + sqsMessages.size());
-
-            if (!sqsMessages.isEmpty()) {
-                for (Message m: sqsMessages) {
-                    handleMessage(m);
-                }
-            }
+            logger.info("Checking for new messages in status queue");
+            checkQueue(getStatusQueueUrl());
         }
     }
 
-    private void handleMessage(Message m) {
+    private void handleMessage(Message m, String queueUrl) {
         logger.debug("Handling message " + m.getBody());
 
         try {
@@ -98,7 +115,7 @@ public class StatusesService {
         } finally {
             logger.debug("Deleting the message");
             getSQS().deleteMessage(new DeleteMessageRequest()
-                    .withQueueUrl(getQueueUrl())
+                    .withQueueUrl(queueUrl)
                     .withReceiptHandle(m.getReceiptHandle()));
         }
     }
@@ -119,6 +136,44 @@ public class StatusesService {
                 break;
             case "4":
                 statusText = "The archive has been uploaded";
+                status.put("end", "1");
+                break;
+            case "1001":
+                statusText = "Verifying SCAC and MARK";
+                break;
+            case "1002":
+                statusText = "Looking for the locomotive";
+                status.put("TestTime", status.get("Info"));
+                break;
+            case "1003":
+                statusText = "Verizon modem address";
+                status.put("VerizonModem", status.get("Info"));
+                break;
+            case "1004":
+                statusText = "ATT modem address";
+                status.put("ATTModem", status.get("Info"));
+                break;
+            case "1005":
+                statusText = "Collecting IP Reachability Information";
+                break;
+            case "1006":
+                statusText = "ATT IP STATUS";
+                status.put("ATTModemStatus", status.get("Info"));
+                break;
+            case "1007":
+                statusText = "1007 VZW IP STATUS";
+                status.put("VerizonModemStatus", status.get("Info"));
+                break;
+            case "1008":
+                statusText = "Collecting WiFi Configuration";
+                break;
+            case "1998":
+                statusText = "Completed successfully";
+                status.put("end", "1");
+                break;
+            case "1999":
+                statusText = "An error detected";
+                status.put("error", status.get("Info"));
                 status.put("end", "1");
                 break;
             default:

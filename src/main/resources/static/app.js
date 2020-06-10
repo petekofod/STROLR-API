@@ -182,27 +182,19 @@ var vue_det = new Vue({
         },
 
         getUTCTime: function () {
-            // var str = 'AM'
             var d = new Date();
             var hr = d.getUTCHours();
             var min = d.getUTCMinutes();
             var res;
 
-            // if (hr == 0) {
-            //     hr = 12
-            // } else
-            // if (hr > 11) {
-            //     hr = hr - 11
-            //     str = 'PM'
-            // }
             if (hr < 10) hr = '0' + hr;
             if (min < 10) min = '0' + min;
 
-            res = hr + ":" + min // + " " + str
+            res = hr + ":" + min
             this.timeUTC = res
             return res
-
         },
+        
         checkResponse: function (ourMessageId) {
             console.log("checkResponse.... with ourMessageId", ourMessageId)
              var xhr = new XMLHttpRequest()
@@ -238,7 +230,7 @@ var vue_det = new Vue({
                                             self.tab_data_Array[i].showLinks = true
                                       }
                                       // TODO process all other fields
-
+                                      break
                                   }
                                 }
                             } else if (xhr.status === 204) {

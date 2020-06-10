@@ -56,6 +56,7 @@ public class RequestsController {
 
     private AmazonSQS SQS;
     private String QUEUE_URL;
+    private String STATUS_QUEUE_URL;
 
     @Autowired
     private StatusesService statusesService;
@@ -69,8 +70,11 @@ public class RequestsController {
                 .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
                 .build();
         String queueName = Objects.requireNonNull(env.getProperty("request.queue.name"));
+        String statusQueueName = Objects.requireNonNull(env.getProperty("status.request.queue.name"));
         logger.info("Initialing request queue: " + queueName);
         QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
+        logger.info("Initialing status request queue: " + statusQueueName);
+        STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
     }
 
     private AmazonSQS getSQS() {
@@ -83,6 +87,55 @@ public class RequestsController {
         if (QUEUE_URL == null)
             init();
         return QUEUE_URL;
+    }
+
+    private String getStatusQueueUrl() {
+        if (STATUS_QUEUE_URL == null)
+            init();
+        return STATUS_QUEUE_URL;
+    }
+
+    private String sendRequest (final Map<String, String> payloadMap, UserDetails currentUser, String queue) {
+
+        String payload;
+        try {
+            payload = objectMapper.writeValueAsString(payloadMap);
+        } catch (JsonProcessingException e) {
+            logger.error("Can't convert the data back to JSON!", e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't convert the data back to JSON!");
+        }
+
+        final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
+        messageAttributes.put(SCAC, new MessageAttributeValue()
+                .withDataType("String")
+                .withStringValue(railroadsService.getSCACbyMARK(currentUser.getUsername(), payloadMap.get(SCAC_MARK))));
+
+        for (Map.Entry<String, String> entry : payloadMap.entrySet()) {
+            messageAttributes.put(entry.getKey(), new MessageAttributeValue()
+                    .withDataType("String")
+                    .withStringValue(entry.getValue()));
+        }
+
+        SendMessageRequest send_msg_request = new SendMessageRequest()
+                .withQueueUrl(queue)
+                .withMessageBody(payload)
+                .withMessageAttributes(messageAttributes)
+                .withDelaySeconds(5);
+
+        SendMessageResult result;
+
+        try {
+            logger.debug("Send Message Request: " + send_msg_request.toString());
+            result = getSQS().sendMessage(send_msg_request);
+        } catch (AmazonSQSException e) {
+            logger.error("AmazonSQSException while sending the message! " + e.getErrorMessage(), e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, e.getErrorMessage(), e);
+        }
+
+        logger.info("Message ID is " + result.getMessageId());
+        return result.getMessageId();
     }
 
     private String sendLogsRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
@@ -117,57 +170,12 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the payload!");
         }
 
-        //put payloadMap back in to payload
-        String payload;
-        try {
-            payload = objectMapper.writeValueAsString(payloadMap);
-        } catch (JsonProcessingException e) {
-            logger.error("Can't convert the data back to JSON!", e);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't convert the data back to JSON!");
-        }
-
-        final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
-        messageAttributes.put(SCAC, new MessageAttributeValue()
-                .withDataType("String")
-                .withStringValue(railroadsService.getSCACbyMARK(currentUser.getUsername(), payloadMap.get(SCAC_MARK))));
-
-        for (Map.Entry<String, String> entry : payloadMap.entrySet()) {
-            messageAttributes.put(entry.getKey(), new MessageAttributeValue()
-                    .withDataType("String")
-                    .withStringValue(entry.getValue()));
-        }
-
-        SendMessageRequest send_msg_request = new SendMessageRequest()
-                .withQueueUrl(getQueueUrl())
-                .withMessageBody(payload)
-                .withMessageAttributes(messageAttributes)
-                .withDelaySeconds(5);
-
-        SendMessageResult result;
-
-        try {
-            logger.debug("Send Message Request: " + send_msg_request.toString());
-            result = getSQS().sendMessage(send_msg_request);
-        } catch (AmazonSQSException e) {
-            logger.error("AmazonSQSException while sending the message! " + e.getErrorMessage(), e);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getErrorMessage(), e);
-        }
-
-        logger.info("Message ID is " + result.getMessageId());
-        return result.getMessageId();
+        return sendRequest(payloadMap, currentUser, getQueueUrl());
     }
 
     private String sendStatusRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling locomotive status request");
-        String testUUID = UUID.randomUUID().toString();
-        logger.debug("Return message ID = " + testUUID);
-        statusesService.putStatus(testUUID, Stream.of(new String[][] {
-                { "Status", "1" },
-                { "TestTime", new SimpleDateFormat(DATE_PATTERN).format(new Date()) },
-        }).collect(Collectors.toMap(data -> data[0], data -> data[1])));
-        return testUUID;
+        return sendRequest(payloadMap, currentUser, getStatusQueueUrl());
     }
 
     @RequestMapping(

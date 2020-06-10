@@ -10,7 +10,7 @@ while :
 do
         log "Next polling loop"
 
-        message=$(receiveMessage "$INCOMING_QUEUE")
+        message=$(receiveMessage "$INCOMING_STATUS_QUEUE")
 
         if [[ -z "$message" ]]; then
                 log "No new messages"
@@ -23,16 +23,12 @@ do
         SCAC=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.SCAC.StringValue')
         mark=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.SCACMark.StringValue')
         locoID=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.LocoID.StringValue')
-        startDate=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.StartDate.StringValue')
-        startTime=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.StartTime.StringValue')
-        endDate=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.EndDate.StringValue')
-        endTime=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.EndTime.StringValue')
 
         if [[ "$SCAC" == "null" ]]; then
                 log "SCAC is empty, deleting the invalid message"
-                deleteMessage "$receiptHandle" "$INCOMING_QUEUE"
+                deleteMessage "$receiptHandle" "$INCOMING_STATUS_QUEUE"
         else
-                log "Getting logs for locomotive $locoID of $SCAC/$mark from $startDate $startTime till $endDate $endTime"
+                log "Getting status of locomotive $locoID of $SCAC/$mark"
 
                 jobsCount=$(jobs -r | wc -l)
                 log "Number of running jobs = $jobsCount"
@@ -44,9 +40,9 @@ do
                 fi
 
                 log "Starting a worker"
-                "workers/$SCAC" "$messageId" "$mark" "$locoID" "$startDate" "$startTime" "$endDate" "$endTime" &
+                workers/STATUS "$messageId" "$SCAC" "$mark" "$locoID" &
                 log "Deleting the incoming message"
-                deleteMessage "$receiptHandle" "$INCOMING_QUEUE"
+                deleteMessage "$receiptHandle" "$INCOMING_STATUS_QUEUE"
         fi
 
         sleep $POLL_TIMEOUT

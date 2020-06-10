@@ -1,6 +1,7 @@
 ### Configure the backend server for logs retrieval
 
-sudo yum install git
+sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo yum install -y git nano unzip jq p7zip
 git clone https://github.com/petekofod/strolr2.git
 cd strolr2/scripts
 sudo su
@@ -12,22 +13,18 @@ cd system/
 cp strolr2.conf /etc/
 cp strolr2.service /etc/systemd/system
 
-yum install nano
 # Use “nano /etc/strolr2.conf” to update the location of the logs.
 
+cd ../../../
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-yum install unzip
 unzip awscliv2.zip
-sudo ./aws/install
+./aws/install
 
 /usr/local/bin/aws --version
-aws-cli/2.0.17 Python/3.7.3 Linux/3.10.0-1062.12.1.el7.x86_64 botocore/2.0.0dev21
+Expected output is:
+    aws-cli/2.0.17 Python/3.7.3 Linux/3.10.0-1062.12.1.el7.x86_64 botocore/2.0.0dev21
 
 # Use “/usr/local/bin/aws configure” to set up the AWS client.
-
-yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum install jq
-yum install p7zip
 
 chmod +x /usr/bin/strolr2/STROLR2
 chmod +x /usr/bin/strolr2/workers/*

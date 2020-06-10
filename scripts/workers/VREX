@@ -21,7 +21,7 @@ packageId=${mark}.${locoID}.${messageId}
 pathstring=${VREX_DIR}/${mark}${locoID}/
 log "Path string is $pathstring"
 
-sendStatus $messageId 1 None
+sendStatus $messageId "$INCOMING_QUEUE" 1 None
 
 foundFiles=/tmp/sort.${messageId}.all
 sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "depart_test|fault_history|event_history|failure_history" | sort --key 4 --field-separator=. >${foundFiles}
