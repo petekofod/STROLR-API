@@ -30,3 +30,17 @@ chmod +x /usr/bin/strolr2/STROLR2
 chmod +x /usr/bin/strolr2/workers/*
 systemctl enable strolr2
 systemctl start strolr2
+
+# Status requests configuration
+
+cd strolr2/scripts/system
+cp stros.service /etc/systemd/system
+
+# Use “nano /etc/strolr2.conf” to update the SQS queues urls
+
+cd ..
+cp STROS /usr/bin/strolr2/
+chmod +x /usr/bin/strolr2/STROS
+
+systemctl enable stros
+systemctl start stros

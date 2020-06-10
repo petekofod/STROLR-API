@@ -7,6 +7,7 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,13 +31,15 @@ public class StatusesService {
     @Autowired
     private Environment env;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private AmazonSQS SQS;
     private String LOG_QUEUE_URL;
     private String STATUS_QUEUE_URL;
 
     private void init() {
+        objectMapper = new ObjectMapper();
+        objectMapper.enable(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER);
         BasicAWSCredentials bAWSc = new BasicAWSCredentials(
                 Objects.requireNonNull(env.getProperty("aws.api.key")),
                 Objects.requireNonNull(env.getProperty("aws.api.secret")));
@@ -120,7 +123,7 @@ public class StatusesService {
         }
     }
 
-    public void putStatus(String messageId, Map<String, String> status) {
+    synchronized public void putStatus(String messageId, Map<String, String> status) {
         String statusText;
         switch (status.get("Status")) {
             case "1":
@@ -183,10 +186,16 @@ public class StatusesService {
         status.put("statusText", statusText);
         logger.debug("Adding status for " + messageId);
         logger.debug("Status text is " + statusText);
-        statusUpdates.put(messageId, status);
+        if (statusUpdates.containsKey(messageId)) {
+            logger.debug("Adding new fields to the existing record");
+            Map<String, String> existingStatus = statusUpdates.get(messageId);
+            status.forEach((key,value) -> existingStatus.merge(key, value, (v1, v2) -> new String(v2)));
+        } else {
+            statusUpdates.put(messageId, status);
+        }
     }
 
-    public String getStatus(String messageId) throws JsonProcessingException {
+    synchronized public String getStatus(String messageId) throws JsonProcessingException {
         if (!statusUpdates.containsKey(messageId))
             return null;
         Map<String, String> status = statusUpdates.get(messageId);
