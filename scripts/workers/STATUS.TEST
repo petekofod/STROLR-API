@@ -1,0 +1,92 @@
+#!/bin/bash
+
+. ./functions-lib
+
+readConfig
+
+messageId=$1
+SCAC="${2,,}"
+MARK="${3^^}"
+LOCOID=$4
+
+log "status started"
+log "Message ID = $messageId, mark = $MARK"
+
+# Statuses:
+# 1001 Verifying SCAC and MARK
+# 1002 Looking for the locomotive
+#   Datetime
+# 1003 Verizon modem address
+#   IP Address
+# 1004 ATT modem address
+#   IP Address
+# 1005 Collecting IP Reachability Information
+# 1006 ATT IP STATUS
+#   ATT Modem Status: \t\t [UNREACHABLE]
+#   ATT Modem Status: \t\t [ONLINE]
+# 1007 VZW IP STATUS
+#   VZW Modem Status: \t\t [UNREACHABLE]
+#   VZW Modem Status: \t\t [ONLINE]
+# 1008 Collecting WiFi Configuration
+# 1998 End
+# 1999 Error
+#   Error description if any
+
+ERROR_STATUS=1999
+END_STATUS=1998
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1001 None
+
+RED='\033[0;31m'
+NC='\033[0m'
+
+test_date=`date`
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 "$test_date"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 "192.168.1.1"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1004 "192.168.1.2"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1005 None
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1006 "${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1007 "${RED}ATT Modem Status: \t\t [ONLINE]${NC}"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "NTD4873"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "38:ED:18:E6:23"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[NOT CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1015 None
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[UNSTABLE]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "[NOT CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "[CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "[CONNECTED]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "10944515"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "[GOOD]"
+sleep 10
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" $END_STATUS None
+exit 0
+
