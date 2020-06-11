@@ -5,7 +5,7 @@
 readConfig
 
 messageId=$1
-SCAC=$2
+SCAC="${2,,}"
 MARK="${3^^}"
 LOCOID=$4
 
@@ -35,7 +35,7 @@ log "Message ID = $messageId, mark = $MARK"
 ERROR_STATUS=1999
 END_STATUS=1998
 
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1 None
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1001 None
 
 ### VERSION 1.2
 ### AUG 14, 2018
@@ -82,12 +82,14 @@ if [[ " ${RWN_SCACS[@]} " =~ " ${SCAC} " ]]; then
     SCAC_MATCH=1
 fi
 if [ $SCAC_MATCH = 0 ]; then
-       echo -e  "${RED}${SCAC} is not a RailwayNet customer.  Treating it as a foreign locomotive.${NC}"
-       /home/railwaynet/aocscripts/check_foreign_loco.sh $SCAC $MARK $LOCOID
-       exit 0;
+       	echo -e  "${RED}${SCAC} is not a RailwayNet customer.  Treating it as a foreign locomotive.${NC}"
+       	/home/railwaynet/aocscripts/check_foreign_loco.sh $SCAC $MARK $LOCOID
+	sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" "$ERROR_STATUS" "${SCAC} is not a RailwayNet customer.  Treating it as a foreign locomotive."
+
+       	exit
 fi
 
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 2 None
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 None
 
 clear
 echo ""
@@ -97,14 +99,14 @@ echo -e "${BLUE}#######               START COPY RIGHT HERE                     
 echo "                                                                              "
 echo -e "Locomotive:  \t\t\t $MARK-$LOCOID"
 echo -e "Test Time: \t\t\t" `date`
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 2 $(date)
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 $(date)
 echo -e "${MAGENTA}IP INFORMATION${NC}"
 exec 3<<< $(curl ${AIS_URL} -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"query ($id: LocoIdSelector!) {  locoById(locoId: $id) { empArea   modems { carrier  ipAddress { value}  }  }}","variables":{"id":{"engineNumber":"'${LOCOID}'","mark":"'${MARK}'"}}}' --compressed --silent)
 EMP_AREA=$(jq -e '.data.locoById.empArea' </proc/self/fd/3 | tr -d \")
 #echo "Exit status $? EMP; ${EMP_AREA}"
 if [ $? != 0 ]; then
 	echo -e "${RED}The locomotive $MARK-$LOCOID is not in our database.${NC}"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" "$ERROR_STATUS" "The locomotive $MARK-$LOCOID is not in our database."
+	sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" "$ERROR_STATUS" "The locomotive $MARK-$LOCOID is not in our database."
 	exit
 fi
 MODEMS=($(jq '.data.locoById.modems[] | { carrier: .carrier, ip: .ipAddress.value } | .carrier, .ip' </proc/self/fd/3 | tr -d \"))
@@ -114,16 +116,16 @@ do
     if [[ ${MODEMS[$index]} = 'VERIZON' ]]; then
         IP_VZW=${MODEMS[$index+1]}
         echo -e "Verizon modem address: \t\t $IP_VZW"
-        sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 3 "$IP_VZW"
+        sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 "$IP_VZW"
     fi
     if [[ ${MODEMS[$index]} = 'ATT' ]]; then
         IP_ATT=${MODEMS[$index+1]}
         echo -e "ATT modem address: \t\t $IP_ATT"
-        sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 4 "$IP_ATT"
+        sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1004 "$IP_ATT"
     fi
 done
 
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 5 None
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1005 None
 
 echo -e "${MAGENTA}IP REACHABILITY INFORMATION"
 ATT_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_ATT &>/dev/null; do echo -e '${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}'; exit; done;  echo -e '${GREEN}ATT Modem Status: \t\t [ONLINE]${NC}'"
@@ -137,12 +139,13 @@ if [[ $ATT_OUTPUT = *'UNREACHABLE'* ]] && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; t
 fi
 
 echo -e $ATT_OUTPUT
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 6 "$ATT_OUTPUT"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1006 "$ATT_OUTPUT"
 
 echo -e $VZW_OUTPUT
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 7 "$VZW_OUTPUT"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1007 "$VZW_OUTPUT"
 
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" $END_STATUS None
+exit 0
 
 if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	ATT_IP_STATUS=true
