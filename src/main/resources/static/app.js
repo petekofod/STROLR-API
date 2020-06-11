@@ -209,11 +209,54 @@ var vue_det = new Vue({
                                   if (self.tab_data_Array[i].messageId === ourMessageId) {
                                       console.log("Updating info according to response result")
                                       self.tab_data_Array[i].showFooter = false
+                                      if (statusUpdate.statusText)
+                                        self.tab_data_Array[i].status_data.Status = statusUpdate.statusText
                                       if (statusUpdate.TestTime)
                                         self.tab_data_Array[i].status_data.TestTime = statusUpdate.TestTime
-                                      if (statusUpdate.statusText)
-                                        self.tab_data_Array[i].Status = statusUpdate.statusText
 
+                                      // ip information
+                                      if (statusUpdate.VerizonModem)
+                                         self.tab_data_Array[i].status_data.IpInformation.VerizonModem = statusUpdate.VerizonModem
+                                      if (statusUpdate.ATTModem)
+                                         self.tab_data_Array[i].status_data.IpInformation.ATTModem = statusUpdate.ATTModem
+
+                                      // Ip reachability
+                                      if (statusUpdate.ATTModemStatus)
+                                         self.tab_data_Array[i].status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
+                                      if (statusUpdate.VerizonModemStatus)
+                                         self.tab_data_Array[i].status_data.IpInformation.VerizonModemStatus = statusUpdate.VerizonModemStatus
+
+                                      // Wifi information
+                                      if (statusUpdate.WiFiClientStatus)
+                                         self.tab_data_Array[i].status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
+                                      if (statusUpdate.ClientId)
+                                         self.tab_data_Array[i].status_data.WifiInformation.ClientId = statusUpdate.ClientId
+                                      if (statusUpdate.AccessPoint)
+                                         self.tab_data_Array[i].status_data.WifiInformation.AccessPoint = statusUpdate.AccessPoint
+
+                                      // gateway information
+                                      if (statusUpdate.ETMSClient)
+                                         self.tab_data_Array[i].status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
+                                      if (statusUpdate.MDMClient)
+                                         self.tab_data_Array[i].status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
+
+                                      // route information
+                                      if (statusUpdate.ATTRoute)
+                                         self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
+                                      if (statusUpdate.VerizonRoute)
+                                         self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
+                                      if (statusUpdate.WifiRoute)
+                                         self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
+                                      if (statusUpdate.MHzRadio)
+                                         self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
+
+                                      // gateway information
+                                      if (statusUpdate.RadioId)
+                                         self.tab_data_Array[i].status_data.RadioInformation.RadioId = statusUpdate.RadioId
+                                      if (statusUpdate.EMPAddress)
+                                         self.tab_data_Array[i].status_data.RadioInformation.EMPAddress = statusUpdate.EMPAddress
+
+                                      // logs information
                                       if (statusUpdate.filesCount)
                                          self.tab_data_Array[i].sFilesCount = statusUpdate.filesCount
                                       if (statusUpdate.totalBytes)
@@ -244,39 +287,40 @@ var vue_det = new Vue({
          fillGetStatusData: function() {
 
            new_status_data = {}
-           new_status_data.TestTime = "Tue Apr 21 11:14:02 EDT 2020"
+           new_status_data.TestTime = ""
            ipinfo = {}
            ipinfo.isAvailable = true;
-           ipinfo.ATTModem = "10.149.1.42"
-           ipinfo = VerizonModem = "10.148.0.33"
+           ipinfo.ATTModem = ""
+           ipinfo = VerizonModem = ""
            new_status_data.IpInformation = ipinfo
 
            ipreach = {}
            ipreach.isAvailable = true;
-           ipreach.ATTModemStatus = "Online"
-           ipreach.VerizonModemStatus = "Unreachable"
+           ipreach.ATTModemStatus = ""
+           ipreach.VerizonModemStatus = ""
            new_status_data.IpReachability = ipreach
 
            wifi_info = {}
-           wifi_info.ClientId = "NTD4873"
-           wifi_info.AccessPoint = "38:ED:18:E6:23"
+           wifi_info.ClientId = ""
+           wifi_info.AccessPoint = ""
+           wifi_info.ClientStatus = ""
            new_status_data.WifiInformation = wifi_info
 
            gate_info = {}
-           gate_info.ETMSClient= "Connected"
-           gate_info.MDMClient= "Connected"
+           gate_info.ETMSClient= ""
+           gate_info.MDMClient= ""
            new_status_data.GatewayInformation = gate_info
 
            route_info = {}
-           route_info.ATTRoute="Connected"
-           route_info.VerizonRoute="Connected"
-           route_info.WifiRoute="Not connected"
-           route_info.MHzRadio="Connected"
+           route_info.ATTRoute=""
+           route_info.VerizonRoute=""
+           route_info.WifiRoute=""
+           route_info.MHzRadio=""
            new_status_data.RouteInformation = route_info
 
            radio_info = {}
-           radio_info.RadioId="10944515"
-           radio_info.EMPAddress="netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
+           radio_info.RadioId=""
+           radio_info.EMPAddress=""
            new_status_data.RadioInformation = radio_info
            return new_status_data;
 
