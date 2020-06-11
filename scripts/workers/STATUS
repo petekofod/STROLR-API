@@ -28,6 +28,47 @@ log "Message ID = $messageId, mark = $MARK"
 #   VZW Modem Status: \t\t [UNREACHABLE]
 #   VZW Modem Status: \t\t [ONLINE]
 # 1008 Collecting WiFi Configuration
+# 1009 Wi-Fi Client not connected
+#   [NOT CONNECTED]
+# 1010 Wifi Client SSID
+#   SSID
+# 1011 Access Point
+#   Access Point
+# 1012 IETMS GATEWAY INFORMATION
+# 1013 IETMS Client
+#   [UNREACHABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1014 MDM Client
+#   [UNREACHABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1015 ITCM ROUTE INFORMATION
+# 1016 ATT ITCM route
+#   [UNSTABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1017 Verizon ITCM route
+#   [UNSTABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1018 Sprint ITCM route
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1019 Wifi ITCM route
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1020 220 MHz Radio ITCM route
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1021 220 BASE STATION INFORMATION
+# 1022 Radio ID
+#   Id
+# 1023 Base Station EMP Address
+#   Owner
+# 1024 Cell Status
+#   [GOOD]
+#   [BAD]
 # 1998 End
 # 1999 Error
 #   Error description if any
@@ -89,8 +130,6 @@ if [ $SCAC_MATCH = 0 ]; then
        	exit
 fi
 
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 None
-
 clear
 echo ""
 echo ""
@@ -99,7 +138,7 @@ echo -e "${BLUE}#######               START COPY RIGHT HERE                     
 echo "                                                                              "
 echo -e "Locomotive:  \t\t\t $MARK-$LOCOID"
 echo -e "Test Time: \t\t\t" `date`
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 $(date)
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 $(date)
 echo -e "${MAGENTA}IP INFORMATION${NC}"
 exec 3<<< $(curl ${AIS_URL} -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"query ($id: LocoIdSelector!) {  locoById(locoId: $id) { empArea   modems { carrier  ipAddress { value}  }  }}","variables":{"id":{"engineNumber":"'${LOCOID}'","mark":"'${MARK}'"}}}' --compressed --silent)
 EMP_AREA=$(jq -e '.data.locoById.empArea' </proc/self/fd/3 | tr -d \")
@@ -157,35 +196,45 @@ if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
 
 	echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 8 None
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
 
 	if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
-                echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
-        else
-		SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
+    echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[NOT CONNECTED]"
+  else
+    SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
 		ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
-                echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+    echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "$SSID"
 		echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
-        fi
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "$ACCESSPOINT"
+  fi
 
 	echo -e "${MAGENTA}IETMS GATEWAY INFORMATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
 	AG_FLAG=TRUE
 	AG_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
 	AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
 	if [[ $AG_INPUT = "" ]]; then
-                echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
-                echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
-        else
+    echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
+    echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[UNREACHABLE]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[UNREACHABLE]"
+  else
 		if [[ $AG_INPUT = *"7001"* ]]; then
 			echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[CONNECTED]"
 		else
 			echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[NOT CONNECTED]"
 		fi
 		if [[ $AG_INPUT = *"7002"* ]]; then
-        		echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
-        	else
-                	echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
-        	fi
+      echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[CONNECTED]"
+    else
+      echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[NOT CONNECTED]"
+    fi
 	fi
 fi
 
@@ -196,46 +245,59 @@ fi
 
 if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
 
-        IW_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep ESSID'"
-        IA_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep Access'"
-        IF_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
-        IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
-        IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
-        IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
-        echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
-        if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
-                echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
-        else
-                SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
-                ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
-                echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
-                echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
-	fi
+  IW_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep ESSID'"
+  IA_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep Access'"
+  IF_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
+  IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
+  IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
+  IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
 
+  echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
 
+  if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
+    echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[NOT CONNECTED]"
+  else
+    SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
+    ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
+    echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "$SSID"
+    echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "$ACCESSPOINT"
+  fi
 
 	echo -e "${MAGENTA}IETMS GATEWAY INFORMATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
+
 	AG_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
-       AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
-       if [[ $AG_INPUT = "" ]]; then
-	        echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
-                echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+  AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+  if [[ $AG_INPUT = "" ]]; then
+    echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
+    echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[UNREACHABLE]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[UNREACHABLE]"
 	else
 		if [[ $AG_INPUT = *"7001"* ]]; then
-                	echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
-        	else
-                	echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
-        	fi
-        	if [[ $AG_INPUT = *"7002"* ]]; then
-                	echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
-        	else
-                	echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
-        	fi
+      echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[CONNECTED]"
+    else
+      echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[NOT CONNECTED]"
+    fi
+    if [[ $AG_INPUT = *"7002"* ]]; then
+      echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[CONNECTED]"
+    else
+      echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[NOT CONNECTED]"
+    fi
 	fi
 fi
 
 #oc login https://prod-openshift.railwaynet.internal:8443 -u rwn-support -p any > /dev/null
 echo -e "${MAGENTA}ITCM ROUTE INFORMATION:${NC}"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1015 None
 
 #ag=`oc get pods | grep ^${SCAC}-ag0 | head -n 1 | awk '{ print $1 }'`
 
@@ -251,65 +313,85 @@ echo $ITCMROUTE >> /tmp/itcmroute
 
 if [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'UNREACHABLE'* ]]; then
 	echo -e "${RED}ATT ITCM route \t\t\t [UNSTABLE]${NC}"
-
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[UNSTABLE]"
 elif [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	echo -e "${GREEN}ATT ITCM route \t\t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[CONNECTED]"
 	ATT_ITCM_STATUS=true
 else
-      	echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"
+  echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[NOT CONNECTED]"
 fi
+
 if [[ $ITCMROUTE = *"vzw"* ]]  && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
-        echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
+  echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[UNSTABLE]"
 fi
+
 if [[ $ITCMROUTE = *"vzw"* ]] && [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
 	echo -e "${GREEN}Verizon ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[CONNECTED]"
 	VZW_ITCM_STATUS=true
 else
-        echo -e "${RED}Verizon ITCM route \t\t [NOT CONNECTED]${NC}"
+  echo -e "${RED}Verizon ITCM route \t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[NOT CONNECTED]"
 fi
 
 if [[ $ITCMROUTE = *"spr"* ]]; then
-        echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
+  echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "[CONNECTED]"
 else
-        echo -e "${RED}Sprint ITCM route \t\t [NOT CONNECTED]${NC}"
+  echo -e "${RED}Sprint ITCM route \t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "[NOT CONNECTED]"
 fi
 
 if [[ $ITCMROUTE = *"wifi"* ]]; then
-        echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
+  echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "[CONNECTED]"
 else
-        echo -e "${RED}Wifi ITCM route \t\t [NOT CONNECTED]${NC}"
+  echo -e "${RED}Wifi ITCM route \t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "[NOT CONNECTED]"
 fi
 
 if [[ $ITCMROUTE = *"Radio220"* ]]; then
-        echo -e "${GREEN}Radio ITCM route \t\t [CONNECTED]${NC}"
-echo -e "${MAGENTA}220 BASE STATION INFORMATION${NC}"
+
+  echo -e "${GREEN}Radio ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "[CONNECTED]"
+  echo -e "${MAGENTA}220 BASE STATION INFORMATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
+
 	txtarray=(${ITCMROUTE// / })
+
 	for item in "${txtarray[@]}"
 	do
-
-                if [[ $item = *"RadioId"* ]]; then
-                        id=$(echo $item | awk -F':' '{print substr($2, 1, length($2)-2);}' )
-                        echo -e "${GREEN}Radio ID \t\t\t [$id]${NC}"
-                fi
+    if [[ $item = *"RadioId"* ]]; then
+      id=$(echo $item | awk -F':' '{print substr($2, 1, length($2)-2);}' )
+      echo -e "${GREEN}Radio ID \t\t\t [$id]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "$id"
+    fi
 
 		if [[ $item = *"Radio220"* ]]; then
 			owner=$(echo $item | tr -d '\n' | tr -d '"')
 			owner=$(echo $owner | sed 's/.*://' | sed 's/^[[:space:]]*//g' | sed 's/\t\n\r//')
 			#echo -e "${GREEN}BASE STATION RADIO OWNER \t\t [$owner]${NC}"
 			#echo $owner | od -An -vtu1
-			echo -e "${GREEN}Base Station EMP Address \t [${owner//[$'\t\r\n'}]${NC}"
-
+			owner_string=${owner//[$'\t\r\n'}
+			echo -e "${GREEN}Base Station EMP Address \t [${owner_string}]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "$owner_string"
 		fi
 	done
 
 else
-        echo -e "${RED}220 MHz Radio ITCM route \t [NOT CONNECTED${NC}]"
+  echo -e "${RED}220 MHz Radio ITCM route \t [NOT CONNECTED${NC}]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "[NOT CONNECTED]"
 fi
 
 if ( $ATT_IP_STATUS && $ATT_ITCM_STATUS ) || ( $VZW_IP_STATUS && $VZW_ITCM_STATUS  ); then
 	echo -e "${GREEN}Cell Status \t\t\t [GOOD]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "[GOOD]"
 else
-        echo -e "${RED}Cell Status \t\t\t [BAD]${NC}"
+  echo -e "${RED}Cell Status \t\t\t [BAD]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "[BAD]"
 fi
 
 ## ACTION STEPS --- COMMENTED OUT 11/01/18 BY PETE KOFOD ###

@@ -169,6 +169,64 @@ public class StatusesService {
                 break;
             case "1008":
                 statusText = "Collecting WiFi Configuration";
+                status.put("WiFiClientStatus", status.get("Info"));
+                break;
+            case "1009":
+                statusText = "Wi-Fi Client not connected";
+                status.put("WiFiClientStatus", status.get("Info"));
+                break;
+            case "1010":
+                statusText = "Wifi Client SSID";
+                status.put("ClientId", status.get("Info"));
+                break;
+            case "1011":
+                statusText = "Access Point";
+                status.put("AccessPoint", status.get("Info"));
+                break;
+            case "1012":
+                statusText = "IETMS GATEWAY INFORMATION";
+                break;
+            case "1013":
+                statusText = "IETMS Client";
+                status.put("ETMSClient", status.get("Info"));
+                break;
+            case "1014":
+                statusText = "MDM Client";
+                status.put("MDMClient", status.get("Info"));
+                break;
+            case "1015":
+                statusText = "ITCM ROUTE INFORMATION";
+                break;
+            case "1016":
+                statusText = "ATT ITCM route";
+                status.put("ATTRoute", status.get("Info"));
+                break;
+            case "1017":
+                statusText = "Verizon ITCM route";
+                status.put("VerizonRoute", status.get("Info"));
+                break;
+            case "1018":
+                statusText = "Sprint ITCM route";
+                status.put("SprintRoute", status.get("Info"));
+                break;
+            case "1019":
+                statusText = "Wifi ITCM route";
+                status.put("WifiRoute", status.get("Info"));
+                break;
+            case "1020":
+                statusText = "220 MHz Radio ITCM route";
+                status.put("MHzRadio", status.get("Info"));
+                break;
+            case "1021":
+                statusText = "220 BASE STATION INFORMATION";
+                break;
+            case "1022":
+                statusText = "Radio ID";
+                status.put("RadioId", status.get("Info"));
+                break;
+            case "1023":
+                statusText = "Base Station EMP Address";
+                status.put("EMPAddress", status.get("Info"));
                 break;
             case "1998":
                 statusText = "Completed successfully";
@@ -184,6 +242,7 @@ public class StatusesService {
                 logger.warn("Unknown status of the message! Status = " + status);
         }
         status.put("statusText", statusText);
+        status.remove("Info");
         logger.debug("Adding status for " + messageId);
         logger.debug("Status text is " + statusText);
         if (statusUpdates.containsKey(messageId)) {
