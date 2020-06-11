@@ -28,6 +28,7 @@ import java.util.Objects;
 public class StatusesService {
 
     private static final Logger logger = LoggerFactory.getLogger(StatusesService.class);
+    public static final String INFO_ATTR = "Info";
 
     @Autowired
     private Environment env;
@@ -100,6 +101,7 @@ public class StatusesService {
     public void monitorResponseQueue() throws InterruptedException {
         //noinspection InfiniteLoopStatement
         while (true) {
+            //noinspection BusyWait
             Thread.sleep(1000); // sleep for 1 second
 
             logger.info("Checking for new messages in logs queue");
@@ -137,11 +139,11 @@ public class StatusesService {
                 break;
             case "2":
                 statusText = "Logs have been found";
-                status.put("filesCount", status.get("Info").isEmpty()?"0":status.get("Info"));
+                status.put("filesCount", status.get(INFO_ATTR).isEmpty()?"0":status.get(INFO_ATTR));
                 break;
             case "3":
                 statusText = "Logs have been archived";
-                status.put("totalBytes", status.get("Info"));
+                status.put("totalBytes", status.get(INFO_ATTR));
                 break;
             case "4":
                 statusText = "The archive has been uploaded";
@@ -152,91 +154,91 @@ public class StatusesService {
                 break;
             case "1002":
                 statusText = "Looking for the locomotive";
-                status.put("TestTime", status.get("Info"));
+                status.put("TestTime", status.get(INFO_ATTR));
                 break;
             case "1003":
-                statusText = "Verizon modem address";
-                status.put("VerizonModem", status.get("Info"));
+                statusText = "Found verizon modem address";
+                status.put("VerizonModem", status.get(INFO_ATTR));
                 break;
             case "1004":
-                statusText = "ATT modem address";
-                status.put("ATTModem", status.get("Info"));
+                statusText = "Found ATT modem address";
+                status.put("ATTModem", status.get(INFO_ATTR));
                 break;
             case "1005":
                 statusText = "Collecting IP Reachability Information";
                 break;
             case "1006":
-                statusText = "ATT IP STATUS";
-                status.put("ATTModemStatus", status.get("Info"));
+                statusText = "Received ATT IP Status";
+                status.put("ATTModemStatus", status.get(INFO_ATTR));
                 break;
             case "1007":
-                statusText = "1007 VZW IP STATUS";
-                status.put("VerizonModemStatus", status.get("Info"));
+                statusText = "Received VZW IP Status";
+                status.put("VerizonModemStatus", status.get(INFO_ATTR));
                 break;
             case "1008":
                 statusText = "Collecting WiFi Configuration";
-                status.put("WiFiClientStatus", status.get("Info"));
+                status.put("WiFiClientStatus", status.get(INFO_ATTR));
                 break;
             case "1009":
                 statusText = "Wi-Fi Client not connected";
-                status.put("WiFiClientStatus", status.get("Info"));
+                status.put("WiFiClientStatus", status.get(INFO_ATTR));
                 break;
             case "1010":
-                statusText = "Wifi Client SSID";
-                status.put("ClientId", status.get("Info"));
+                statusText = "Found Wifi Client SSID";
+                status.put("ClientId", status.get(INFO_ATTR));
                 break;
             case "1011":
-                statusText = "Access Point";
-                status.put("AccessPoint", status.get("Info"));
+                statusText = "Found Access Point";
+                status.put("AccessPoint", status.get(INFO_ATTR));
                 break;
             case "1012":
-                statusText = "IETMS GATEWAY INFORMATION";
+                statusText = "Collecting IETMS Gateway Information";
                 break;
             case "1013":
-                statusText = "IETMS Client";
-                status.put("ETMSClient", status.get("Info"));
+                statusText = "Received IETMS Client status";
+                status.put("ETMSClient", status.get(INFO_ATTR));
                 break;
             case "1014":
-                statusText = "MDM Client";
-                status.put("MDMClient", status.get("Info"));
+                statusText = "Received MDM Client status";
+                status.put("MDMClient", status.get(INFO_ATTR));
                 break;
             case "1015":
-                statusText = "ITCM ROUTE INFORMATION";
+                statusText = "Collecting ITCM route information";
                 break;
             case "1016":
-                statusText = "ATT ITCM route";
-                status.put("ATTRoute", status.get("Info"));
+                statusText = "Received ATT ITCM route status";
+                status.put("ATTRoute", status.get(INFO_ATTR));
                 break;
             case "1017":
-                statusText = "Verizon ITCM route";
-                status.put("VerizonRoute", status.get("Info"));
+                statusText = "Received Verizon ITCM route status";
+                status.put("VerizonRoute", status.get(INFO_ATTR));
                 break;
             case "1018":
-                statusText = "Sprint ITCM route";
-                status.put("SprintRoute", status.get("Info"));
+                statusText = "Received Sprint ITCM route status";
+                status.put("SprintRoute", status.get(INFO_ATTR));
                 break;
             case "1019":
-                statusText = "Wifi ITCM route";
-                status.put("WifiRoute", status.get("Info"));
+                statusText = "Received Wifi ITCM route status";
+                status.put("WifiRoute", status.get(INFO_ATTR));
                 break;
             case "1020":
-                statusText = "220 MHz Radio ITCM route";
-                status.put("MHzRadio", status.get("Info"));
+                statusText = "Received 220 MHz Radio ITCM route status";
+                status.put("MHzRadio", status.get(INFO_ATTR));
                 break;
             case "1021":
-                statusText = "220 BASE STATION INFORMATION";
+                statusText = "Retrieving 220 Base Station Information";
                 break;
             case "1022":
-                statusText = "Radio ID";
-                status.put("RadioId", status.get("Info"));
+                statusText = "Found Radio ID";
+                status.put("RadioId", status.get(INFO_ATTR));
                 break;
             case "1023":
-                statusText = "Base Station EMP Address";
-                status.put("EMPAddress", status.get("Info"));
+                statusText = "Found Base Station EMP Address";
+                status.put("EMPAddress", status.get(INFO_ATTR));
                 break;
             case "1024":
-                statusText = "Cell Status";
-                status.put("CellStatus", status.get("Info"));
+                statusText = "Received Cell Status";
+                status.put("CellStatus", status.get(INFO_ATTR));
                 break;
             case "1998":
                 statusText = "Completed successfully";
@@ -244,7 +246,7 @@ public class StatusesService {
                 break;
             case "1999":
                 statusText = "An error detected";
-                status.put("error", status.get("Info"));
+                status.put("error", status.get(INFO_ATTR));
                 status.put("end", "1");
                 break;
             default:
@@ -252,7 +254,7 @@ public class StatusesService {
                 logger.warn("Unknown status of the message! Status = " + status);
         }
         status.put("statusText", statusText);
-        status.remove("Info");
+        status.remove(INFO_ATTR);
         logger.debug("Adding status for " + messageId);
         logger.debug("Status text is " + statusText);
         if (statusUpdates.containsKey(messageId)) {
