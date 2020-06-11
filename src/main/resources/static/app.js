@@ -194,7 +194,7 @@ var vue_det = new Vue({
             this.timeUTC = res
             return res
         },
-        
+
         checkResponse: function (ourMessageId) {
             console.log("checkResponse.... with ourMessageId", ourMessageId)
              var xhr = new XMLHttpRequest()
@@ -221,9 +221,7 @@ var vue_det = new Vue({
                                       if (statusUpdate.statusText)
                                          self.tab_data_Array[i].Status = statusUpdate.statusText
                                       console.log("going to  check status")
-                                      if ( (self.tab_data_Array[i].isLogs) && (statusUpdate.Status != "4")) {
-                                          console.log("We have some information for logs but not all yet, need more")
-                                      } else {
+                                      if (statusUpdate.end) {
                                          console.log("stop the timer as the response has been processed")
                                          clearInterval(self.tab_data_Array[i].timer)
                                          if (self.tab_data_Array[i].isLogs)
