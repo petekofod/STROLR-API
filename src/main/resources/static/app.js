@@ -224,7 +224,7 @@ var vue_det = new Vue({
                                       if (statusUpdate.ATTModemStatus)
                                          self.tab_data_Array[i].status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
                                       if (statusUpdate.VerizonModemStatus)
-                                         self.tab_data_Array[i].status_data.IpInformation.VerizonModemStatus = statusUpdate.VerizonModemStatus
+                                         self.tab_data_Array[i].status_data.IpReachability.VerizonModemStatus = statusUpdate.VerizonModemStatus
 
                                       // Wifi information
                                       if (statusUpdate.WiFiClientStatus)
@@ -291,7 +291,7 @@ var vue_det = new Vue({
            ipinfo = {}
            ipinfo.isAvailable = true;
            ipinfo.ATTModem = ""
-           ipinfo = VerizonModem = ""
+           ipinfo.VerizonModem = ""
            new_status_data.IpInformation = ipinfo
 
            ipreach = {}
