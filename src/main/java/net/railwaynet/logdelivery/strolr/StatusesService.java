@@ -248,7 +248,7 @@ public class StatusesService {
         if (statusUpdates.containsKey(messageId)) {
             logger.debug("Adding new fields to the existing record");
             Map<String, String> existingStatus = statusUpdates.get(messageId);
-            status.forEach((key,value) -> existingStatus.merge(key, value, (v1, v2) -> new String(v2)));
+            status.forEach((key,value) -> existingStatus.merge(key, value, (v1, v2) -> v2));
         } else {
             statusUpdates.put(messageId, status);
         }
