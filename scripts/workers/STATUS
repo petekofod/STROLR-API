@@ -30,6 +30,7 @@ log "Message ID = $messageId, mark = $MARK"
 # 1008 Collecting WiFi Configuration
 # 1009 Wi-Fi Client not connected
 #   [NOT CONNECTED]
+#   [CONNECTED]
 # 1010 Wifi Client SSID
 #   SSID
 # 1011 Access Point
@@ -183,9 +184,6 @@ sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1006 "$ATT_OUTPUT"
 echo -e $VZW_OUTPUT
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1007 "$VZW_OUTPUT"
 
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" $END_STATUS None
-exit 0
-
 if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	ATT_IP_STATUS=true
 	IW_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep ESSID'"
@@ -202,6 +200,7 @@ if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
     echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
     sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[NOT CONNECTED]"
   else
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[CONNECTED]"
     SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
 		ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
     echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
@@ -405,3 +404,6 @@ fi
 #else
 #	echo -e "${RED}Action \t\t\t\t [Open Amtrak Work Order]${NC}"
 #fi
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" $END_STATUS None
+exit 0

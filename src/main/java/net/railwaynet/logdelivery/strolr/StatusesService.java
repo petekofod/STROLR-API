@@ -228,6 +228,10 @@ public class StatusesService {
                 statusText = "Base Station EMP Address";
                 status.put("EMPAddress", status.get("Info"));
                 break;
+            case "1024":
+                statusText = "Cell Status";
+                status.put("CellStatus", status.get("Info"));
+                break;
             case "1998":
                 statusText = "Completed successfully";
                 status.put("end", "1");
