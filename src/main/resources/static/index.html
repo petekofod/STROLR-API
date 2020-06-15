@@ -201,7 +201,7 @@
                                     <td>{{tab.LocoID}}</td>
                                 </tr>
                                 <tr>
-                                    <td>Test time</td>
+                                    <td>Start time</td>
                                     <td>{{tab.status_data.TestTime}}</td>
                                 </tr>
                                 <th colspan="2" style="text-align:center;">IP Information</th>
@@ -240,11 +240,12 @@
                                 <tr>
                                      <td>Wifi Client SSID</td>
                                     <td>
+                                       {{tab.status_data.WifiInformation.ClientId}}
                                        <span v-if="tab.status_data.WifiInformation.showConnected" class="badge badge-success">
-                                          {{tab.status_data.WifiInformation.ClientId}}
+                                            CONNECTED
                                        </span>
                                        <span v-if="tab.status_data.WifiInformation.showNotConnected" class="badge badge-danger">
-                                          {{tab.status_data.WifiInformation.ClientId}}
+                                           NOT CONNECTED
                                        </span>
                                     </td>
                                 </tr>

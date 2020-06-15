@@ -75,7 +75,8 @@ var vue_det = new Vue({
                             new_status_data = self.fillGetStatusData()   // TODO this is test data just to show
                             self.tab_data_Array.push({id:index,
                                 title: title,
-                                LocoID: self.form.LocoID, status_data: new_status_data,
+                                LocoID: self.form.SCACMark + " " + self.form.LocoID,
+                                status_data: new_status_data,
                                 messageId: self.new_messageId, messages:["Loading locomotive system status"],
                                 timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
                                 showFooter: false, isLogs: false, showLinks: false, isLogs:false})
