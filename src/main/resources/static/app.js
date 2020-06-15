@@ -221,17 +221,29 @@ var vue_det = new Vue({
                                          self.tab_data_Array[i].status_data.IpInformation.ATTModem = statusUpdate.ATTModem
 
                                       // Ip reachability
-                                      if (statusUpdate.ATTModemStatus)
+                                      if (statusUpdate.ATTModemStatus) {
                                          self.tab_data_Array[i].status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
-                                      if (statusUpdate.VerizonModemStatus)
+                                         if ( (statusUpdate.ATTModemStatus.toLowerCase()).includes("unreach") )
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedATTNotConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedATTConnected = true
+                                      }
+                                      if (statusUpdate.VerizonModemStatus) {
                                          self.tab_data_Array[i].status_data.IpReachability.VerizonModemStatus = statusUpdate.VerizonModemStatus
+                                         if ( (statusUpdate.VerizonModemStatus.toLowerCase()).includes("online") )
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonNotConnected = true
+                                      }
 
                                       // Wifi information
                                       if (statusUpdate.WiFiClientStatus)
                                       {
                                          self.tab_data_Array[i].status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
-                                         self.tab_data_Array[i].status_data.WifiInformation.showConnected = !(statusUpdate.WiFiClientStatus.toLowerCase()).includes("not connected")
-
+                                         if ( (statusUpdate.WiFiClientStatus.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.WifiInformation.showNotConnected = true
+                                         else
+                                           self.tab_data_Array[i].status_data.WifiInformation.showConnected = true
                                       }
                                       if (statusUpdate.ClientId)
                                          self.tab_data_Array[i].status_data.WifiInformation.ClientId = statusUpdate.ClientId
@@ -241,30 +253,48 @@ var vue_det = new Vue({
                                       // gateway information
                                       if (statusUpdate.ETMSClient) {
                                          self.tab_data_Array[i].status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
-                                         self.tab_data_Array[i].status_data.GatewayInformation.showConnected = !(statusUpdate.ETMSClient.toLowerCase()).includes("not connected")
+                                         if ( (statusUpdate.ETMSClient.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.GatewayInformation.showNotConnected = true
+                                         else
+                                           self.tab_data_Array[i].status_data.GatewayInformation.showConnected = true
                                       }
                                       if (statusUpdate.MDMClient)
                                       {
                                          self.tab_data_Array[i].status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
-                                         self.tab_data_Array[i].status_data.GatewayInformation.showConnectedMSC = !(statusUpdate.MDMClient.toLowerCase()).includes("not connected")
+                                         if ((statusUpdate.MDMClient.toLowerCase()).includes("not connected"))
+                                            self.tab_data_Array[i].status_data.GatewayInformation.showNotConnectedMSC = true
+                                         else
+                                            self.tab_data_Array[i].status_data.GatewayInformation.showConnectedMSC = true
                                       }
 
                                       // route information
                                       if (statusUpdate.ATTRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.showConnected = !(statusUpdate.ATTRoute.toLowerCase()).includes("not connected")
+                                         if ( (statusUpdate.ATTRoute.toLowerCase()).includes("not connected") )
+                                            self.tab_data_Array[i].status_data.RouteInformation.showNotConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.RouteInformation.showConnected = true
                                       }
                                       if (statusUpdate.VerizonRoute){
                                          self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.showStable = !(statusUpdate.VerizonRoute.toLowerCase()).includes("unstable")
+                                         if ( (statusUpdate.VerizonRoute.toLowerCase()).includes("unstable") )
+                                           self.tab_data_Array[i].status_data.RouteInformation.showNotStable = true
+                                         else
+                                           self.tab_data_Array[i].status_data.RouteInformation.showStable = true
                                       }
                                       if (statusUpdate.WifiRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected = !(statusUpdate.WifiRoute.toLowerCase()).includes("not connected")
+                                         if ((statusUpdate.WifiRoute.toLowerCase()).includes("not connected"))
+                                            self.tab_data_Array[i].status_data.RouteInformation.showRouteNotConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected = true
                                       }
                                       if (statusUpdate.MHzRadio) {
                                          self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
-                                         self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected = !(statusUpdate.MHzRadio.toLowerCase()).includes("not connected")
+                                         if ( !(statusUpdate.MHzRadio.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected = true
+                                         else
+                                           self.tab_data_Array[i].status_data.RouteInformation.showRadioNotConnected = true
                                       }
 
                                       // gateway information
@@ -315,19 +345,26 @@ var vue_det = new Vue({
            ipreach.isAvailable = true;
            ipreach.ATTModemStatus = ""
            ipreach.VerizonModemStatus = ""
+           ipreach.showConnectedVerizonConnected = false
+           ipreach.showConnectedVerizonNotConnected = false
+           ipreach.showConnectedATTConnected = false
+           ipreach.showConnectedATTNotConnected = false
            new_status_data.IpReachability = ipreach
 
            wifi_info = {}
            wifi_info.ClientId = ""
            wifi_info.AccessPoint = ""
-           wifi_info.ClientStatus = ""
            wifi_info.showConnected = false
+           wifi_info.showNotConnected = false
+           wifi_info.ClientStatus = ""
            new_status_data.WifiInformation = wifi_info
 
            gate_info = {}
            gate_info.ETMSClient= ""
            gate_info.showConnected = false
+           gate_info.showNotConnected = false
            gate_info.showConnectedMSC = false
+           gate_info.showNotConnectedMSC = false
            gate_info.MDMClient= ""
            new_status_data.GatewayInformation = gate_info
 
@@ -337,9 +374,13 @@ var vue_det = new Vue({
            route_info.WifiRoute=""
            route_info.MHzRadio=""
            route_info.showConnected = false
+           route_info.showNotConnected = false
            route_info.showStable= false
+           route_info.showNotStable= false
            route_info.showRouteConnected = false
+           route_info.showRouteNotConnected = false
            route_info.showRadioConnected = false
+           route_info.showRadioNotConnected = false
            new_status_data.RouteInformation = route_info
 
            radio_info = {}
