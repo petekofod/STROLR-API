@@ -332,6 +332,18 @@
                                         <td>EMP Address</td>
                                         <td>{{tab.status_data.RadioInformation.EMPAddress}} </td>
                                      </tr>
+                                    <th colspan="2" style="text-align:center;">Cell status</th>
+                                    <tr>
+                                        <td>Cell Status</td>
+                                        <td>
+                                            <span v-if="tab.status_data.CellStatus.showGood" class="badge badge-success">
+                                              {{tab.status_data.CellStatus.status}}
+                                            </span>
+                                            <span v-if="tab.status_data.CellStatus.showBad" class="badge badge-danger">
+                                              {{tab.status_data.CellStatus.status}}
+                                            </span>
+                                        </td>
+                                    </tr>
                                  </table>
                                 </div>
                                 <div class="col-sm-6>">

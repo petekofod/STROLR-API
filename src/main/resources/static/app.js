@@ -309,6 +309,14 @@ var vue_det = new Vue({
                                       if (statusUpdate.EMPAddress)
                                          self.tab_data_Array[i].status_data.RadioInformation.EMPAddress = statusUpdate.EMPAddress
 
+                                      if (statusUpdate.CellStatus) {
+                                         self.tab_data_Array[i].status_data.CellStatus.status = statusUpdate.CellStatus
+                                         if ( statusUpdate.CellStatus.toLowerCase().includes("good") )
+                                           self.tab_data_Array[i].status_data.CellStatus.showGood = true
+                                         else
+                                           self.tab_data_Array[i].status_data.RouteInformation.showBad = true
+                                      }
+
                                       // logs information
                                       if (statusUpdate.filesCount)
                                          self.tab_data_Array[i].sFilesCount = statusUpdate.filesCount
@@ -397,6 +405,13 @@ var vue_det = new Vue({
            radio_info.EMPAddress=""
 
            new_status_data.RadioInformation = radio_info
+
+           cell_status = {}
+           cell_status.status = ""
+           cell_status.showGood = false
+           cell_status.showBad = false
+
+           new_status_data.CellStatus = cell_status
            return new_status_data;
 
            },
