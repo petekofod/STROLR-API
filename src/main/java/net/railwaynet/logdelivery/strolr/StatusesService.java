@@ -40,7 +40,7 @@ public class StatusesService {
     private String STATUS_QUEUE_URL = null;
 
     private void init() {
-        objectMapper = JsonMapper.builder().enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS).build();
+        objectMapper = JsonMapper.builder().enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).build();
         BasicAWSCredentials bAWSc = new BasicAWSCredentials(
                 Objects.requireNonNull(env.getProperty("aws.api.key")),
                 Objects.requireNonNull(env.getProperty("aws.api.secret")));
@@ -180,7 +180,7 @@ public class StatusesService {
                 status.put("WiFiClientStatus", status.get(INFO_ATTR));
                 break;
             case "1009":
-                statusText = "Wi-Fi Client not connected";
+                statusText = "Received Wi-Fi Client status";
                 status.put("WiFiClientStatus", status.get(INFO_ATTR));
                 break;
             case "1010":
