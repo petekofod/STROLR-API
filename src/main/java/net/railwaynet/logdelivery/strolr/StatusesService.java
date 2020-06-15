@@ -29,6 +29,7 @@ public class StatusesService {
 
     private static final Logger logger = LoggerFactory.getLogger(StatusesService.class);
     public static final String INFO_ATTR = "Info";
+    public static final String STATUS_TEXT = "statusText";
 
     @Autowired
     private Environment env;
@@ -253,13 +254,16 @@ public class StatusesService {
                 statusText = "";
                 logger.warn("Unknown status of the message! Status = " + status);
         }
-        status.put("statusText", statusText);
+        status.put(STATUS_TEXT, statusText);
         status.remove(INFO_ATTR);
         logger.debug("Adding status for " + messageId);
         logger.debug("Status text is " + statusText);
         if (statusUpdates.containsKey(messageId)) {
             logger.debug("Adding new fields to the existing record");
             Map<String, String> existingStatus = statusUpdates.get(messageId);
+            String combinedStatus = existingStatus.get(STATUS_TEXT) + ";" + status.get(STATUS_TEXT);
+            logger.debug("Updating old status with combined status: " + combinedStatus);
+            status.put(STATUS_TEXT, combinedStatus);
             status.forEach((key,value) -> existingStatus.merge(key, value, (v1, v2) -> v2));
         } else {
             statusUpdates.put(messageId, status);

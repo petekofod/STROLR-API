@@ -76,7 +76,7 @@ var vue_det = new Vue({
                             self.tab_data_Array.push({id:index,
                                 title: title,
                                 LocoID: self.form.LocoID, status_data: new_status_data,
-                                messageId: self.new_messageId, Status:"Loading locomotive system status...",
+                                messageId: self.new_messageId, messages:["Loading locomotive system status"],
                                 timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
                                 showFooter: false, isLogs: false, showLinks: false, isLogs:false})
 
@@ -209,8 +209,13 @@ var vue_det = new Vue({
                                   if (self.tab_data_Array[i].messageId === ourMessageId) {
                                       console.log("Updating info according to response result")
                                       self.tab_data_Array[i].showFooter = false
-                                      if (statusUpdate.statusText)
+                                      if (statusUpdate.statusText) {
                                         self.tab_data_Array[i].status_data.Status = statusUpdate.statusText
+                                        var newMessages = statusUpdate.statusText.split(";")
+                                        newMessages.forEach(function (m, index) {
+                                          self.tab_data_Array[i].messages.push(m)
+                                        })
+                                      }
                                       if (statusUpdate.TestTime)
                                         self.tab_data_Array[i].status_data.TestTime = statusUpdate.TestTime
 
@@ -334,6 +339,9 @@ var vue_det = new Vue({
          fillGetStatusData: function() {
 
            new_status_data = {}
+
+           new_status_data.messages = []
+
            new_status_data.TestTime = ""
            ipinfo = {}
            ipinfo.isAvailable = true;

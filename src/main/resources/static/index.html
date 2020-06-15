@@ -193,144 +193,154 @@
                     </b-card>
                     <b-card no-body v-if="!tab.isLogs">
                         <b-card-body>
-                            <table class="table">
-                            <tr>
-                                <td>Locomotive</td>
-                                <td>{{tab.LocoID}}</td>
-
-                                <td>Status</td>
-                                <td>{{tab.Status}}</td>
-                            </tr>
-                            <tr>
-                                <td>Test time</td>
-                                <td>{{tab.status_data.TestTime}}</td>
-                            </tr>
-                            <th colspan="2" style="text-align:center;">IP Information</th>
-                            <tr>
-                                <td>ATT Modem</td>
-                                <td>{{tab.status_data.IpInformation.ATTModem}}</td>
-                            </tr>
-                            <tr>
-                                <td>Verizon Modem</td>
-                                <td>{{tab.status_data.IpInformation.VerizonModem}}</td>
-                            </tr>
-                            <th colspan="2" style="text-align:center;">IP Reachability</th>
-                            <tr>
-                                 <td>ATT Modem Status</td>
-                                 <td>
-                                     <span v-if="tab.status_data.IpReachability.showConnectedATTConnected" class="badge badge-success">
-                                      {{tab.status_data.IpReachability.ATTModemStatus}}
-                                     </span>
-                                     <span v-if="tab.status_data.IpReachability.showConnectedATTNotConnected" class="badge badge-danger">
-                                      {{tab.status_data.IpReachability.ATTModemStatus}}
-                                     </span>
-                                 </td>
-                            </tr>
-                            <tr>
-                                 <td>Verizon Modem Status</td>
-                                 <td>
-                                     <span v-if="tab.status_data.IpReachability.showConnectedVerizonConnected" class="badge badge-success">
-                                       {{tab.status_data.IpReachability.VerizonModemStatus}}
-                                     </span>
-                                     <span v-if="tab.status_data.IpReachability.showConnectedVerizonNotConnected" class="badge badge-danger">
-                                       {{tab.status_data.IpReachability.VerizonModemStatus}}
-                                     </span>
-                                 </td>
-                            </tr>
-                            <th colspan="2" style="text-align:center;">Wifi Information</th>
-                            <tr>
-                                 <td>Wifi Client SSID</td>
-                                   <span v-if="tab.status_data.WifiInformation.showConnected" class="badge badge-success">
-                                      <td>{{tab.status_data.WifiInformation.ClientId}} </td>
-                                   </span>
-                                   <span v-if="tab.status_data.WifiInformation.showNotConnected" class="badge badge-danger">
-                                      <td>{{tab.status_data.WifiInformation.ClientId}} </td>
-                                   </span>
-                            </tr>
-                            <tr>
-                                 <td>Access Point</td>
-                                 <td>
-                                     {{tab.status_data.WifiInformation.AccessPoint}}
-                                 </td>
-                            </tr>
-                            <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
-                            <tr>
-                                <td>IETMS Client</td>
-                                <td>
-                                    <span v-if="tab.status_data.GatewayInformation.showConnected" class="badge badge-success">
-                                     {{tab.status_data.GatewayInformation.ETMSClient}}
-                                    </span>
-                                    <span v-if="tab.status_data.GatewayInformation.showNotConnected" class="badge badge-danger">
-                                     {{tab.status_data.GatewayInformation.ETMSClient}}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>MDM Client</td>
-                                <td>
-                                    <span v-if="tab.status_data.GatewayInformation.showConnectedMSC" class="badge badge-success">
-                                      {{tab.status_data.GatewayInformation.MDMClient}}
-                                    </span>
-                                    <span v-if="tab.status_data.GatewayInformation.showNotConnectedMSC" class="badge badge-danger">
-                                      {{tab.status_data.GatewayInformation.MDMClient}}
-                                    </span>
-                                </td>
-                            </tr>
-                            <th colspan="2" style="text-align:center;">ITCM Route Information</th>
-                            <tr>
-                                <td>ATT ITCM Route</td>
-                                <td>
-                                     <span v-if="tab.status_data.RouteInformation.showConnected" class="badge badge-success">
-                                         {{tab.status_data.RouteInformation.ATTRoute}}
-                                     </span>
-                                    <span v-if="tab.status_data.RouteInformation.showNotConnected" class="badge badge-danger">
-                                         {{tab.status_data.RouteInformation.ATTRoute}}
-                                     </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Verizon ITCM Route</td>
-                                <td>
-                                    <span v-if="tab.status_data.RouteInformation.showStable" class="badge badge-success">
-                                        {{tab.status_data.RouteInformation.VerizonRoute}}
-                                    </span>
-                                    <span v-if="tab.status_data.RouteInformation.showNotStable" class="badge badge-danger">
-                                        {{tab.status_data.RouteInformation.VerizonRoute}}
-                                    </span>
-                                </td>
-                            </tr>
-                               <tr>
-                                   <td>Wifi ITCM Route</td>
-                                   <td>
-                                       <span v-if="tab.status_data.RouteInformation.showRouteConnected" class="badge badge-success">
-                                          {{tab.status_data.RouteInformation.WifiRoute}}
-                                       </span>
-                                       <span v-if="tab.status_data.RouteInformation.showRouteNotConnected" class="badge badge-danger">
-                                          {{tab.status_data.RouteInformation.WifiRoute}}
-                                       </span>
-                                   </td>
-                               </tr>
-                               <tr>
-                                   <td>220 MHz Radio</td>
-                                   <td>
-                                       <span v-if="tab.status_data.RouteInformation.showRadioConnected" class="badge badge-success">
-                                          {{tab.status_data.RouteInformation.MHzRadio}}
-                                       </span>
-                                       <span v-if="tab.status_data.RouteInformation.showRadioNotConnected" class="badge badge-danger">
-                                          {{tab.status_data.RouteInformation.MHzRadio}}
-                                       </span>
-                                   </td>
-                               </tr>
-                               <th colspan="2" style="text-align:center;">220 Base Station Radio Information</th>
-                               <tr>
-                                   <td>Radio Id</td>
-                                   <td>{{tab.status_data.RadioInformation.RadioId}} </td>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <table class="table">
+                                <tr>
+                                    <td>Locomotive</td>
+                                    <td>{{tab.LocoID}}</td>
                                 </tr>
                                 <tr>
-                                    <td>EMP Address</td>
-                                    <td>{{tab.status_data.RadioInformation.EMPAddress}} </td>
-                                 </tr>
-                             </table>
+                                    <td>Test time</td>
+                                    <td>{{tab.status_data.TestTime}}</td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">IP Information</th>
+                                <tr>
+                                    <td>ATT Modem</td>
+                                    <td>{{tab.status_data.IpInformation.ATTModem}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Verizon Modem</td>
+                                    <td>{{tab.status_data.IpInformation.VerizonModem}}</td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">IP Reachability</th>
+                                <tr>
+                                     <td>ATT Modem Status</td>
+                                     <td>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedATTConnected" class="badge badge-success">
+                                          {{tab.status_data.IpReachability.ATTModemStatus}}
+                                         </span>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedATTNotConnected" class="badge badge-danger">
+                                          {{tab.status_data.IpReachability.ATTModemStatus}}
+                                         </span>
+                                     </td>
+                                </tr>
+                                <tr>
+                                     <td>Verizon Modem Status</td>
+                                     <td>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedVerizonConnected" class="badge badge-success">
+                                           {{tab.status_data.IpReachability.VerizonModemStatus}}
+                                         </span>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedVerizonNotConnected" class="badge badge-danger">
+                                           {{tab.status_data.IpReachability.VerizonModemStatus}}
+                                         </span>
+                                     </td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">Wifi Information</th>
+                                <tr>
+                                     <td>Wifi Client SSID</td>
+                                    <td>
+                                       <span v-if="tab.status_data.WifiInformation.showConnected" class="badge badge-success">
+                                          {{tab.status_data.WifiInformation.ClientId}}
+                                       </span>
+                                       <span v-if="tab.status_data.WifiInformation.showNotConnected" class="badge badge-danger">
+                                          {{tab.status_data.WifiInformation.ClientId}}
+                                       </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                     <td>Access Point</td>
+                                     <td>
+                                         {{tab.status_data.WifiInformation.AccessPoint}}
+                                     </td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
+                                <tr>
+                                    <td>IETMS Client</td>
+                                    <td>
+                                        <span v-if="tab.status_data.GatewayInformation.showConnected" class="badge badge-success">
+                                         {{tab.status_data.GatewayInformation.ETMSClient}}
+                                        </span>
+                                        <span v-if="tab.status_data.GatewayInformation.showNotConnected" class="badge badge-danger">
+                                         {{tab.status_data.GatewayInformation.ETMSClient}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MDM Client</td>
+                                    <td>
+                                        <span v-if="tab.status_data.GatewayInformation.showConnectedMSC" class="badge badge-success">
+                                          {{tab.status_data.GatewayInformation.MDMClient}}
+                                        </span>
+                                        <span v-if="tab.status_data.GatewayInformation.showNotConnectedMSC" class="badge badge-danger">
+                                          {{tab.status_data.GatewayInformation.MDMClient}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">ITCM Route Information</th>
+                                <tr>
+                                    <td>ATT ITCM Route</td>
+                                    <td>
+                                         <span v-if="tab.status_data.RouteInformation.showConnected" class="badge badge-success">
+                                             {{tab.status_data.RouteInformation.ATTRoute}}
+                                         </span>
+                                        <span v-if="tab.status_data.RouteInformation.showNotConnected" class="badge badge-danger">
+                                             {{tab.status_data.RouteInformation.ATTRoute}}
+                                         </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Verizon ITCM Route</td>
+                                    <td>
+                                        <span v-if="tab.status_data.RouteInformation.showStable" class="badge badge-success">
+                                            {{tab.status_data.RouteInformation.VerizonRoute}}
+                                        </span>
+                                        <span v-if="tab.status_data.RouteInformation.showNotStable" class="badge badge-danger">
+                                            {{tab.status_data.RouteInformation.VerizonRoute}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                   <tr>
+                                       <td>Wifi ITCM Route</td>
+                                       <td>
+                                           <span v-if="tab.status_data.RouteInformation.showRouteConnected" class="badge badge-success">
+                                              {{tab.status_data.RouteInformation.WifiRoute}}
+                                           </span>
+                                           <span v-if="tab.status_data.RouteInformation.showRouteNotConnected" class="badge badge-danger">
+                                              {{tab.status_data.RouteInformation.WifiRoute}}
+                                           </span>
+                                       </td>
+                                   </tr>
+                                   <tr>
+                                       <td>220 MHz Radio</td>
+                                       <td>
+                                           <span v-if="tab.status_data.RouteInformation.showRadioConnected" class="badge badge-success">
+                                              {{tab.status_data.RouteInformation.MHzRadio}}
+                                           </span>
+                                           <span v-if="tab.status_data.RouteInformation.showRadioNotConnected" class="badge badge-danger">
+                                              {{tab.status_data.RouteInformation.MHzRadio}}
+                                           </span>
+                                       </td>
+                                   </tr>
+                                   <th colspan="2" style="text-align:center;">220 Base Station Radio Information</th>
+                                   <tr>
+                                       <td>Radio Id</td>
+                                       <td>{{tab.status_data.RadioInformation.RadioId}} </td>
+                                    </tr>
+                                    <tr>
+                                        <td>EMP Address</td>
+                                        <td>{{tab.status_data.RadioInformation.EMPAddress}} </td>
+                                     </tr>
+                                 </table>
+                                </div>
+                                <div class="col-sm-6>">
+                                    <ul>
+                                        <li style="list-style: none;" v-for="status_message in tab.messages">
+                                            {{ status_message }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </b-card-body>
                         <b-card-footer v-if="tab.showFooter">
                                      Locomotive System Status Server is currently processing request. You will be
