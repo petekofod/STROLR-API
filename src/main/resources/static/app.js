@@ -228,27 +228,44 @@ var vue_det = new Vue({
 
                                       // Wifi information
                                       if (statusUpdate.WiFiClientStatus)
+                                      {
                                          self.tab_data_Array[i].status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
+                                         self.tab_data_Array[i].status_data.WifiInformation.showConnected = !(statusUpdate.WiFiClientStatus.toLowerCase()).includes("not connected")
+
+                                      }
                                       if (statusUpdate.ClientId)
                                          self.tab_data_Array[i].status_data.WifiInformation.ClientId = statusUpdate.ClientId
                                       if (statusUpdate.AccessPoint)
                                          self.tab_data_Array[i].status_data.WifiInformation.AccessPoint = statusUpdate.AccessPoint
 
                                       // gateway information
-                                      if (statusUpdate.ETMSClient)
+                                      if (statusUpdate.ETMSClient) {
                                          self.tab_data_Array[i].status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
+                                         self.tab_data_Array[i].status_data.GatewayInformation.showConnected = !(statusUpdate.ETMSClient.toLowerCase()).includes("not connected")
+                                      }
                                       if (statusUpdate.MDMClient)
+                                      {
                                          self.tab_data_Array[i].status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
+                                         self.tab_data_Array[i].status_data.GatewayInformation.showConnectedMSC = !(statusUpdate.MDMClient.toLowerCase()).includes("not connected")
+                                      }
 
                                       // route information
-                                      if (statusUpdate.ATTRoute)
+                                      if (statusUpdate.ATTRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
-                                      if (statusUpdate.VerizonRoute)
+                                         self.tab_data_Array[i].status_data.RouteInformation.showConnected = !(statusUpdate.ATTRoute.toLowerCase()).includes("not connected")
+                                      }
+                                      if (statusUpdate.VerizonRoute){
                                          self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
-                                      if (statusUpdate.WifiRoute)
+                                         self.tab_data_Array[i].status_data.RouteInformation.showStable = !(statusUpdate.VerizonRoute.toLowerCase()).includes("unstable")
+                                      }
+                                      if (statusUpdate.WifiRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
-                                      if (statusUpdate.MHzRadio)
+                                         self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected = !(statusUpdate.WifiRoute.toLowerCase()).includes("not connected")
+                                      }
+                                      if (statusUpdate.MHzRadio) {
                                          self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
+                                         self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected = !(statusUpdate.MHzRadio.toLowerCase()).includes("not connected")
+                                      }
 
                                       // gateway information
                                       if (statusUpdate.RadioId)
@@ -304,10 +321,13 @@ var vue_det = new Vue({
            wifi_info.ClientId = ""
            wifi_info.AccessPoint = ""
            wifi_info.ClientStatus = ""
+           wifi_info.showConnected = false
            new_status_data.WifiInformation = wifi_info
 
            gate_info = {}
            gate_info.ETMSClient= ""
+           gate_info.showConnected = false
+           gate_info.showConnectedMSC = false
            gate_info.MDMClient= ""
            new_status_data.GatewayInformation = gate_info
 
@@ -316,11 +336,16 @@ var vue_det = new Vue({
            route_info.VerizonRoute=""
            route_info.WifiRoute=""
            route_info.MHzRadio=""
+           route_info.showConnected = false
+           route_info.showStable= false
+           route_info.showRouteConnected = false
+           route_info.showRadioConnected = false
            new_status_data.RouteInformation = route_info
 
            radio_info = {}
            radio_info.RadioId=""
            radio_info.EMPAddress=""
+
            new_status_data.RadioInformation = radio_info
            return new_status_data;
 

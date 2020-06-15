@@ -77,7 +77,7 @@
                         <div class="form-group row">
                             <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
                             <div class="col">
-                                <b-form-select id="selSCACMark" v-model="form.SCACMark" :options="lstFullTree" required
+                                <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree" required
                                     size="sm" @change1="onChange($event)"></b-form-select>
                             </div>
                         </div>
@@ -152,12 +152,6 @@
                         </div>
                     </b-form>
 
-                    <!-- <b-form @status_get="onGetStatus" v-if="showStatus">
-
-                    </b-form> -->
-                    <!-- <b-card class="mt-3" header="Form Data Result">
-                        <pre class="m-0">{{ form }}</pre>
-                    </b-card> -->
                 </div>
                 <div class="col-sm-3">
                 </div>
@@ -235,12 +229,20 @@
                                      <span class="badge badge-danger">
                                        {{tab.status_data.IpReachability.VerizonModemStatus}}
                                      </span>
+                                     <span v-if="tab.status_data.IpReachability.ATTModemStatus=='Connected'" class="badge badge-success">
+                                       {{tab.status_data.IpReachability.VerizonModemStatus}}
+                                     </span>
                                  </td>
                             </tr>
                             <th colspan="2" style="text-align:center;">Wifi Information</th>
                             <tr>
                                  <td>Wifi Client SSID</td>
-                                 <td>{{tab.status_data.WifiInformation.ClientId}} </td>
+                                   <span v-if="tab.status_data.WifiInformation.showConnected" class="badge badge-success">
+                                      <td>{{tab.status_data.WifiInformation.ClientId}} </td>
+                                   </span>
+                                   <span v-if="!tab.status_data.WifiInformation.showConnected" class="badge badge-danger">
+                                      <td>{{tab.status_data.WifiInformation.ClientId}} </td>
+                                   </span>
                             </tr>
                             <tr>
                                  <td>Access Point</td>
@@ -252,7 +254,10 @@
                             <tr>
                                 <td>IETMS Client</td>
                                 <td>
-                                    <span class="badge badge-success">
+                                    <span v-if="tab.status_data.GatewayInformation.showConnected" class="badge badge-success">
+                                     {{tab.status_data.GatewayInformation.ETMSClient}}
+                                    </span>
+                                    <span v-if="!tab.status_data.GatewayInformation.showConnected" class="badge badge-danger">
                                      {{tab.status_data.GatewayInformation.ETMSClient}}
                                     </span>
                                 </td>
@@ -260,7 +265,10 @@
                             <tr>
                                 <td>MDM Client</td>
                                 <td>
-                                    <span class="badge badge-success">
+                                    <span v-if="tab.status_data.GatewayInformation.showConnectedMSC" class="badge badge-success">
+                                      {{tab.status_data.GatewayInformation.MDMClient}}
+                                    </span>
+                                    <span v-if="!tab.status_data.GatewayInformation.showConnectedMSC" class="badge badge-danger">
                                       {{tab.status_data.GatewayInformation.MDMClient}}
                                     </span>
                                 </td>
@@ -269,7 +277,10 @@
                             <tr>
                                 <td>ATT ITCM Route</td>
                                 <td>
-                                     <span class="badge badge-success">
+                                     <span v-if="tab.status_data.RouteInformation.showConnected" class="badge badge-success">
+                                         {{tab.status_data.RouteInformation.ATTRoute}}
+                                     </span>
+                                    <span v-if="!tab.status_data.RouteInformation.showConnected" class="badge badge-danger">
                                          {{tab.status_data.RouteInformation.ATTRoute}}
                                      </span>
                                 </td>
@@ -277,7 +288,10 @@
                             <tr>
                                 <td>Verizon ITCM Route</td>
                                 <td>
-                                    <span class="badge badge-success">
+                                    <span v-if="tab.status_data.RouteInformation.showStable" class="badge badge-success">
+                                        {{tab.status_data.RouteInformation.VerizonRoute}}
+                                    </span>
+                                    <span v-if="!tab.status_data.RouteInformation.showStable" class="badge badge-danger">
                                         {{tab.status_data.RouteInformation.VerizonRoute}}
                                     </span>
                                 </td>
@@ -285,7 +299,10 @@
                                <tr>
                                    <td>Wifi ITCM Route</td>
                                    <td>
-                                       <span class="badge badge-danger">
+                                       <span v-if="tab.status_data.RouteInformation.showRouteConnected" class="badge badge-success">
+                                          {{tab.status_data.RouteInformation.WifiRoute}}
+                                       </span>
+                                       <span v-if="!tab.status_data.RouteInformation.showRouteConnected" class="badge badge-danger">
                                           {{tab.status_data.RouteInformation.WifiRoute}}
                                        </span>
                                    </td>
@@ -293,7 +310,10 @@
                                <tr>
                                    <td>220 MHz Radio</td>
                                    <td>
-                                       <span class="badge badge-success">
+                                       <span v-if="tab.status_data.RouteInformation.showRadioConnected" class="badge badge-success">
+                                          {{tab.status_data.RouteInformation.MHzRadio}}
+                                       </span>
+                                       <span v-if="!tab.status_data.RouteInformation.showRadioConnected" class="badge badge-danger">
                                           {{tab.status_data.RouteInformation.MHzRadio}}
                                        </span>
                                    </td>
