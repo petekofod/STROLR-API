@@ -168,14 +168,14 @@ done
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1005 None
 
 echo -e "${MAGENTA}IP REACHABILITY INFORMATION"
-ATT_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_ATT &>/dev/null; do echo -e '${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}'; exit; done;  echo -e '${GREEN}ATT Modem Status: \t\t [ONLINE]${NC}'"
-VZW_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_VZW &>/dev/null; do echo -e '${RED}Verizon Modem Status: \t\t [UNREACHABLE]${NC}'; exit; done; echo -e  '${GREEN}Verizon Modem Status: \t\t [ONLINE]${NC}'"
+ATT_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_ATT &>/dev/null; do echo -e 'UNREACHABLE'; exit; done;  echo -e 'ONLINE'"
+VZW_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_VZW &>/dev/null; do echo -e 'UNREACHABLE'; exit; done; echo -e  'ONLINE'"
 
 ATT_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$ATT_STRING"`
 VZW_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$VZW_STRING"`
 if [[ $ATT_OUTPUT = *'UNREACHABLE'* ]] && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
-	ATT_OUTPUT="${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}"
-	VZW_OUTPUT="${RED}Verizon Modem Status: \t\t [UNREACHABLE]${NC}"
+	ATT_OUTPUT="UNREACHABLE"
+	VZW_OUTPUT="UNREACHABLE"
 fi
 
 echo -e $ATT_OUTPUT
@@ -198,9 +198,9 @@ if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 
 	if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
     echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[NOT CONNECTED]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "NOT CONNECTED"
   else
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[CONNECTED]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "CONNECTED"
     SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
 		ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
     echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
@@ -217,22 +217,22 @@ if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	if [[ $AG_INPUT = "" ]]; then
     echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
     echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[UNREACHABLE]"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[UNREACHABLE]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "UNREACHABLE"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "UNREACHABLE"
   else
 		if [[ $AG_INPUT = *"7001"* ]]; then
 			echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "CONNECTED"
 		else
 			echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[NOT CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "NOT CONNECTED"
 		fi
 		if [[ $AG_INPUT = *"7002"* ]]; then
       echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "CONNECTED"
     else
       echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[NOT CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "NOT CONNECTED"
     fi
 	fi
 fi
@@ -256,7 +256,7 @@ if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
 
   if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
     echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[NOT CONNECTED]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "NOT CONNECTED"
   else
     SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
     ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
@@ -274,22 +274,22 @@ if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
   if [[ $AG_INPUT = "" ]]; then
     echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
     echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[UNREACHABLE]"
-    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[UNREACHABLE]"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "UNREACHABLE"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "UNREACHABLE"
 	else
 		if [[ $AG_INPUT = *"7001"* ]]; then
       echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "CONNECTED"
     else
       echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[NOT CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "NOT CONNECTED"
     fi
     if [[ $AG_INPUT = *"7002"* ]]; then
       echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "CONNECTED"
     else
       echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[NOT CONNECTED]"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "NOT CONNECTED"
     fi
 	fi
 fi
@@ -312,50 +312,50 @@ echo $ITCMROUTE >> /tmp/itcmroute
 
 if [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'UNREACHABLE'* ]]; then
 	echo -e "${RED}ATT ITCM route \t\t\t [UNSTABLE]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[UNSTABLE]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "UNSTABLE"
 elif [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	echo -e "${GREEN}ATT ITCM route \t\t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "CONNECTED"
 	ATT_ITCM_STATUS=true
 else
   echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[NOT CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "NOT CONNECTED"
 fi
 
 if [[ $ITCMROUTE = *"vzw"* ]]  && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
   echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[UNSTABLE]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "UNSTABLE"
 fi
 
 if [[ $ITCMROUTE = *"vzw"* ]] && [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
 	echo -e "${GREEN}Verizon ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "CONNECTED"
 	VZW_ITCM_STATUS=true
 else
   echo -e "${RED}Verizon ITCM route \t\t [NOT CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[NOT CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "NOT CONNECTED"
 fi
 
 if [[ $ITCMROUTE = *"spr"* ]]; then
   echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "[CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "CONNECTED"
 else
   echo -e "${RED}Sprint ITCM route \t\t [NOT CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "[NOT CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "NOT CONNECTED"
 fi
 
 if [[ $ITCMROUTE = *"wifi"* ]]; then
   echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "[CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "CONNECTED"
 else
   echo -e "${RED}Wifi ITCM route \t\t [NOT CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "[NOT CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "NOT CONNECTED"
 fi
 
 if [[ $ITCMROUTE = *"Radio220"* ]]; then
 
   echo -e "${GREEN}Radio ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "[CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "CONNECTED"
   echo -e "${MAGENTA}220 BASE STATION INFORMATION${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
 
@@ -382,15 +382,15 @@ if [[ $ITCMROUTE = *"Radio220"* ]]; then
 
 else
   echo -e "${RED}220 MHz Radio ITCM route \t [NOT CONNECTED${NC}]"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "[NOT CONNECTED]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "NOT CONNECTED"
 fi
 
 if ( $ATT_IP_STATUS && $ATT_ITCM_STATUS ) || ( $VZW_IP_STATUS && $VZW_ITCM_STATUS  ); then
 	echo -e "${GREEN}Cell Status \t\t\t [GOOD]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "[GOOD]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "GOOD"
 else
   echo -e "${RED}Cell Status \t\t\t [BAD]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "[BAD]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "BAD"
 fi
 
 ## ACTION STEPS --- COMMENTED OUT 11/01/18 BY PETE KOFOD ###
