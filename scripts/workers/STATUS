@@ -384,9 +384,9 @@ if [ -n "$radio_route" ]; then
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
   sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1029 "$radio_route"
 
-  radio_value=$(echo "$radio_route" | jq .radio)
-  radio_id=$(echo $radio_value | jq .RadioId)
-  radio_emp_address=$(echo "$radio_route" | jq .route)
+  radio_value=$(echo "$radio_route" | jq -r .radio)
+  radio_id=$(echo $radio_value | jq --raw-input -r 'match("RadioId:(.*)}") | .captures[0].string')
+  radio_emp_address=$(echo "$radio_route" | jq -r .route)
 
   if [ -n "$radio_id" ]; then
     echo -e "${GREEN}Radio ID \t\t\t [$radio_id]${NC}"
