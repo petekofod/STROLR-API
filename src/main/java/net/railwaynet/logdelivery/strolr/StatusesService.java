@@ -178,7 +178,6 @@ public class StatusesService {
                 break;
             case "1008":
                 statusText = "Collecting WiFi Configuration";
-                status.put("WiFiClientStatus", status.get(INFO_ATTR));
                 break;
             case "1009":
                 statusText = "Received Wi-Fi Client status";
