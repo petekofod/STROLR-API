@@ -28,6 +28,58 @@ log "Message ID = $messageId, mark = $MARK"
 #   VZW Modem Status: \t\t [UNREACHABLE]
 #   VZW Modem Status: \t\t [ONLINE]
 # 1008 Collecting WiFi Configuration
+# 1009 Wi-Fi Client not connected
+#   [NOT CONNECTED]
+#   [CONNECTED]
+# 1010 Wifi Client SSID
+#   SSID
+# 1011 Access Point
+#   Access Point
+# 1012 IETMS GATEWAY INFORMATION
+# 1013 IETMS Client
+#   [UNREACHABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1014 MDM Client
+#   [UNREACHABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1015 ITCM ROUTE INFORMATION
+# 1016 ATT ITCM route
+#   [UNSTABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1017 Verizon ITCM route
+#   [UNSTABLE]
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1018 Sprint ITCM route
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1019 Wifi ITCM route
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1020 220 MHz Radio ITCM route
+#   [CONNECTED]
+#   [NOT CONNECTED]
+# 1021 220 BASE STATION INFORMATION
+# 1022 Radio ID
+#   Id
+# 1023 Base Station EMP Address
+#   Owner
+# 1024 Cell Status
+#   [GOOD]
+#   [BAD]
+# 1025 ATT Route time stamp
+#   Date/time
+# 1026 Verizon Route time stamp
+#   Date/time
+# 1027 Sprint Route time stamp
+#   Date/time
+# 1028 WiFi Route time stamp
+#   Date/time
+# 1029 Radio Route time stamp
+#   Date/time
 # 1998 End
 # 1999 Error
 #   Error description if any
@@ -37,56 +89,337 @@ END_STATUS=1998
 
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1001 None
 
-RED='\033[0;31m'
-NC='\033[0m'
+### VERSION 1.2
+### AUG 14, 2018
+### PETE KOFOD
 
-test_date=`date`
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 "$test_date"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 "192.168.1.1"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1004 "192.168.1.2"
-sleep 10
+### CHANGELOG
+### Checks for Mark and Loco in Database and warns if not in DB
+### 1.2 Query AIS instead of csv file for loco info, IP addresses.
+### 1.1 Added SCAC Capability
+### 1.0 Initial version
+
+#export IFS=","
+#MODEM_LIST="/home/railwaynet/amtk.modem.list.csv"
+#MODEM_LIST="/home/railwaynet/modem.list.csv"
+AIS_URL="http://${SCAC}-ais.prod.railwaynet.internal/graphql"
+JUMP_BOX=10.102.10.35
+#CARRIER=$3
+VZW_SOURCE=10.102.10.35
+SPR_SOURCE=10.102.10.36
+ATT_SOURCE=10.102.10.37
+#KEY_PATH="/home/railwaynet/.ssh/id_rsa_rwn"
+JUMP_BOX_PORT=22
+JUMP_BOX_KEY_PATH="/home/railwaynet/amtktestkeys/sample"
+AMTK_KEY_STORE_PATH="./cml/keystore/b.amtk/b.amtk_keys"
+WAN_PORT=22222
+RED='\033[0;31m'
+ORANGE='\033[0;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+AG_FLAG=FALSE
+MARK_COUNT=0
+LOCO_COUNT=0
+ATT_IP_STATUS=false
+VZW_IP_STATUS=false
+ATT_ITCM_STATUS=false
+VZW_ITCM_STATUS=false
+RWN_SCACS=(amtk vrex csao sepa njtr iais nysw)
+#
+SCAC_MATCH=0
+if [[ " ${RWN_SCACS[@]} " =~ " ${SCAC} " ]]; then
+    SCAC_MATCH=1
+fi
+if [ $SCAC_MATCH = 0 ]; then
+       	echo -e  "${RED}${SCAC} is not a RailwayNet customer.  Treating it as a foreign locomotive.${NC}"
+       	/home/railwaynet/aocscripts/check_foreign_loco.sh $SCAC $MARK $LOCOID
+	sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" "$ERROR_STATUS" "${SCAC} is not a RailwayNet customer.  Treating it as a foreign locomotive."
+
+       	exit
+fi
+
+clear
+echo ""
+echo ""
+echo -e "${BLUE}##############################################################################${NC}"
+echo -e "${BLUE}#######               START COPY RIGHT HERE                            #######${NC}"
+echo "                                                                              "
+echo -e "Locomotive:  \t\t\t $MARK-$LOCOID"
+echo -e "Test Time: \t\t\t" `date`
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 $(date)
+echo -e "${MAGENTA}IP INFORMATION${NC}"
+exec 3<<< $(curl ${AIS_URL} -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"query ($id: LocoIdSelector!) {  locoById(locoId: $id) { empArea   modems { carrier  ipAddress { value}  }  }}","variables":{"id":{"engineNumber":"'${LOCOID}'","mark":"'${MARK}'"}}}' --compressed --silent)
+EMP_AREA=$(jq -e '.data.locoById.empArea' </proc/self/fd/3 | tr -d \")
+#echo "Exit status $? EMP; ${EMP_AREA}"
+if [ $? != 0 ]; then
+	echo -e "${RED}The locomotive $MARK-$LOCOID is not in our database.${NC}"
+	sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" "$ERROR_STATUS" "The locomotive $MARK-$LOCOID is not in our database."
+	exit
+fi
+MODEMS=($(jq '.data.locoById.modems[] | { carrier: .carrier, ip: .ipAddress.value } | .carrier, .ip' </proc/self/fd/3 | tr -d \"))
+#echo $MODEMS
+for index in ${!MODEMS[*]}
+do
+    if [[ ${MODEMS[$index]} = 'VERIZON' ]]; then
+        IP_VZW=${MODEMS[$index+1]}
+        echo -e "Verizon modem address: \t\t $IP_VZW"
+        sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 "$IP_VZW"
+    fi
+    if [[ ${MODEMS[$index]} = 'ATT' ]]; then
+        IP_ATT=${MODEMS[$index+1]}
+        echo -e "ATT modem address: \t\t $IP_ATT"
+        sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1004 "$IP_ATT"
+    fi
+done
+
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1005 None
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1006 "${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1007 "${RED}ATT Modem Status: \t\t [ONLINE]${NC}"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "[CONNECTED]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "NTD4873"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "38:ED:18:E6:23"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "[CONNECTED]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "[NOT CONNECTED]"
-sleep 10
+
+echo -e "${MAGENTA}IP REACHABILITY INFORMATION"
+ATT_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_ATT &>/dev/null; do echo -e 'UNREACHABLE'; exit; done;  echo -e 'ONLINE'"
+VZW_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_VZW &>/dev/null; do echo -e 'UNREACHABLE'; exit; done; echo -e  'ONLINE'"
+
+ATT_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$ATT_STRING"`
+VZW_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$VZW_STRING"`
+if [[ $ATT_OUTPUT = *'UNREACHABLE'* ]] && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
+	ATT_OUTPUT="UNREACHABLE"
+	VZW_OUTPUT="UNREACHABLE"
+fi
+
+echo -e $ATT_OUTPUT
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1006 "$ATT_OUTPUT"
+
+echo -e $VZW_OUTPUT
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1007 "$VZW_OUTPUT"
+
+if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
+	ATT_IP_STATUS=true
+	IW_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep ESSID'"
+	IA_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep Access'"
+	IF_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
+	IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
+	IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
+	IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
+
+	echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
+
+	if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
+    echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "NOT CONNECTED"
+  else
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "CONNECTED"
+    SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
+		ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
+    echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "$SSID"
+		echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "$ACCESSPOINT"
+  fi
+
+	echo -e "${MAGENTA}IETMS GATEWAY INFORMATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
+	AG_FLAG=TRUE
+	AG_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
+	AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+	if [[ $AG_INPUT = "" ]]; then
+    echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
+    echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "UNREACHABLE"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "UNREACHABLE"
+  else
+		if [[ $AG_INPUT = *"7001"* ]]; then
+			echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "CONNECTED"
+		else
+			echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "NOT CONNECTED"
+		fi
+		if [[ $AG_INPUT = *"7002"* ]]; then
+      echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "CONNECTED"
+    else
+      echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "NOT CONNECTED"
+    fi
+	fi
+fi
+
+VZW_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$VZW_STRING"`
+if [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
+	VZW_IP_STATUS=true
+fi
+
+if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
+
+  IW_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep ESSID'"
+  IA_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep Access'"
+  IF_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
+  IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
+  IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
+  IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
+
+  echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
+
+  if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
+    echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "NOT CONNECTED"
+  else
+    SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
+    ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
+    echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "$SSID"
+    echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "$ACCESSPOINT"
+  fi
+
+	echo -e "${MAGENTA}IETMS GATEWAY INFORMATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
+
+	AG_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
+  AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+  if [[ $AG_INPUT = "" ]]; then
+    echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
+    echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "UNREACHABLE"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "UNREACHABLE"
+	else
+		if [[ $AG_INPUT = *"7001"* ]]; then
+      echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "CONNECTED"
+    else
+      echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "NOT CONNECTED"
+    fi
+    if [[ $AG_INPUT = *"7002"* ]]; then
+      echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "CONNECTED"
+    else
+      echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
+      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "NOT CONNECTED"
+    fi
+	fi
+fi
+
+#oc login https://prod-openshift.railwaynet.internal:8443 -u rwn-support -p any > /dev/null
+echo -e "${MAGENTA}ITCM ROUTE INFORMATION:${NC}"
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1015 None
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "[CONNECTED]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "[UNSTABLE]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "[NOT CONNECTED]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "[CONNECTED]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "[CONNECTED]"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "10944515"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "netx. TNS_ELM+0.I. ant k.ant k+63. Radio o220"
-sleep 10
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "[GOOD]"
-sleep 10
+
+#ag=`oc get pods | grep ^${SCAC}-ag0 | head -n 1 | awk '{ print $1 }'`
+
+#ITCMROUTE=`oc rsh ${ag} itcm-get-route-map -a ${SCAC}-as-0:8000 -c 0 --key-store-path /etc/ITCM/key_store/b.${SCAC} ${SCAC}.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.`
+
+#if [[ $SCAC = "amtk" ]]; then
+#  ITCMROUTE="$(ssh -i ~/.ssh/aoc-itcmdh aoc@anpitcmdh01 itcm-get-route-map -a 10.103.3.59:8000 -c 0 --timeout 60 --key-store-path ${AMTK_KEY_STORE_PATH} amtk.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.)"
+ITCMROUTE='[ { "classes": "11111111", "cost": 40, "disableFragmentation": "0", "radio": "NoValue", "route": "amtk.TNS+5.l.amtk.amtk+2.att", "timestamp": 1592345097041 }, { "classes": "11111111", "cost": 40, "disableFragmentation": "0", "radio": "NoValue", "route": "amtk.TNS+0.l.amtk.amtk+2.vzw", "timestamp": 1592390958486 }, { "classes": "00111111", "cost": 50, "disableFragmentation": "0", "radio": "{ElmId:0, RadioId:3680102}", "route": "ns.rtns2.l.amtk.amtk+2.Radio220", "timestamp": 1592391786902 } ]'
+
+
+echo $ITCMROUTE >> /tmp/itcmroute
+
+att_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("att"))')
+vzw_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("vzw"))')
+spr_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("spr"))')
+wifi_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("wifi"))')
+radio_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("Radio220"))')
+
+if [ -z "$att_route" ]; then
+  echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "NOT CONNECTED"
+else
+  if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
+    echo -e "${GREEN}ATT ITCM route \t\t\t [CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "CONNECTED"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1025 "$att_route"
+    ATT_ITCM_STATUS=true
+  else
+    echo -e "${RED}ATT ITCM route \t\t\t [UNSTABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "UNSTABLE"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1025 "$att_route"
+  fi
+fi
+
+if [ -z "$vzw_route" ]; then
+  echo -e "${RED}Verizon ITCM route \t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "NOT CONNECTED"
+else
+  if [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
+  	echo -e "${GREEN}Verizon ITCM route \t\t [CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "CONNECTED"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1026 "$vzw_route"
+  	VZW_ITCM_STATUS=true
+  else
+    echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "UNSTABLE"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1026 "$vzw_route"
+  fi
+fi
+
+if [ -z "$spr_route" ]; then
+  echo -e "${RED}Sprint ITCM route \t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "NOT CONNECTED"
+else
+  echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "CONNECTED"
+  sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1027 "$spr_route"
+fi
+
+if [ -z "$wifi_route" ]; then
+  echo -e "${RED}Wifi ITCM route \t\t [NOT CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "NOT CONNECTED"
+else
+  echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "CONNECTED"
+  sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1028 "$wifi_route"
+fi
+
+if [ -n "$radio_route" ]; then
+
+  echo -e "${GREEN}Radio ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "CONNECTED"
+  echo -e "${MAGENTA}220 BASE STATION INFORMATION${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
+  sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1029 "$radio_route"
+
+  radio_value=$(echo "$radio_route" | jq .radio)
+  radio_id=$(echo $radio_value | jq .RadioId)
+  radio_emp_address=$(echo "$radio_route" | jq .route)
+
+  if [ -n "$radio_id" ]; then
+    echo -e "${GREEN}Radio ID \t\t\t [$radio_id]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "$radio_id"
+  fi
+
+  if [ -n "$radio_emp_address" ]; then
+    echo -e "${GREEN}Base Station EMP Address \t [${radio_emp_address}]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "$radio_emp_address"
+  fi
+else
+  echo -e "${RED}220 MHz Radio ITCM route \t [NOT CONNECTED${NC}]"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "NOT CONNECTED"
+fi
+
+if ( $ATT_IP_STATUS && $ATT_ITCM_STATUS ) || ( $VZW_IP_STATUS && $VZW_ITCM_STATUS  ); then
+	echo -e "${GREEN}Cell Status \t\t\t [GOOD]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "GOOD"
+else
+  echo -e "${RED}Cell Status \t\t\t [BAD]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "BAD"
+fi
+
+## ACTION STEPS --- COMMENTED OUT 11/01/18 BY PETE KOFOD ###
+##
+#if ( $ATT_IP_STATUS  && ! ${ATT_ITCM_STATUS} ) || ( $VZW_IP_STATUS && ! ${VZW_ITCM_STATUS} ); then
+#	echo -e "${ORANGE}Action \t\t\t\t [Contact Rockwell SME]${NC}"
+#elif ( ! ${ATT_IP_STATUS}  && $ATT_ITCM_STATUS ) || ( ! ${VZW_IP_STATUS} && $VZW_ITCM_STATUS ); then
+#        echo -e "${ORANGE}Action \t\t\t\t [Contact Rockwell SME]${NC}"
+#elif ( $ATT_IP_STATUS && $ATT_ITCM_STATUS ) || ( $VZW_IP_STATUS && $VZW_ITCM_STATUS  ); then
+#        echo -e "${GREEN}Action \t\t\t\t [Locomotive Communications Confirmed]${NC}"
+#else
+#	echo -e "${RED}Action \t\t\t\t [Open Amtrak Work Order]${NC}"
+#fi
+
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" $END_STATUS None
 exit 0
-

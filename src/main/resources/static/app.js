@@ -281,6 +281,10 @@ var vue_det = new Vue({
                                          else
                                             self.tab_data_Array[i].status_data.RouteInformation.showConnected = true
                                       }
+                                      if (statusUpdate.ATTRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.ATTRouteTimestamp = statusUpdate.ATTRouteTimestamp
+                                      }
+
                                       if (statusUpdate.VerizonRoute){
                                          self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
                                          if ( (statusUpdate.VerizonRoute.toLowerCase()).includes("unstable") )
@@ -288,6 +292,21 @@ var vue_det = new Vue({
                                          else
                                            self.tab_data_Array[i].status_data.RouteInformation.showStable = true
                                       }
+                                      if (statusUpdate.VerizonRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.VerizonRouteTimestamp = statusUpdate.VerizonRouteTimestamp
+                                      }
+
+                                      if (statusUpdate.SprintRoute){
+                                         self.tab_data_Array[i].status_data.RouteInformation.SprintRoute = statusUpdate.SprintRoute
+                                         if ( (statusUpdate.SprintRoute.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.RouteInformation.showSprintNotStable = true
+                                         else
+                                           self.tab_data_Array[i].status_data.RouteInformation.showSprintStable = true
+                                      }
+                                      if (statusUpdate.SprintRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.SprintRouteTimestamp = statusUpdate.SprintRouteTimestamp
+                                      }
+
                                       if (statusUpdate.WifiRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
                                          if ((statusUpdate.WifiRoute.toLowerCase()).includes("not connected"))
@@ -295,12 +314,19 @@ var vue_det = new Vue({
                                          else
                                             self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected = true
                                       }
+                                      if (statusUpdate.WiFiRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.WiFiRouteTimestamp = statusUpdate.WiFiRouteTimestamp
+                                      }
+
                                       if (statusUpdate.MHzRadio) {
                                          self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
                                          if ( !(statusUpdate.MHzRadio.toLowerCase()).includes("not connected") )
                                            self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected = true
                                          else
                                            self.tab_data_Array[i].status_data.RouteInformation.showRadioNotConnected = true
+                                      }
+                                      if (statusUpdate.RadioRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.RadioRouteTimestamp = statusUpdate.RadioRouteTimestamp
                                       }
 
                                       // gateway information
@@ -388,8 +414,14 @@ var vue_det = new Vue({
            route_info = {}
            route_info.ATTRoute=""
            route_info.VerizonRoute=""
+           route_info.SprintRoute=""
            route_info.WifiRoute=""
            route_info.MHzRadio=""
+           route_info.ATTRouteTimestamp=""
+           route_info.VerizonRouteTimestamp=""
+           route_info.SprintRouteTimestamp=""
+           route_info.WifiRouteTimestamp=""
+           route_info.MHzRadioTimestamp=""
            route_info.showConnected = false
            route_info.showNotConnected = false
            route_info.showStable= false
@@ -398,6 +430,8 @@ var vue_det = new Vue({
            route_info.showRouteNotConnected = false
            route_info.showRadioConnected = false
            route_info.showRadioNotConnected = false
+           route_info.showSprintNotStable = false
+           route_info.showSprintStable = false
            new_status_data.RouteInformation = route_info
 
            radio_info = {}

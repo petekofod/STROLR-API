@@ -14,6 +14,15 @@ readConfig()
         . /etc/strolr2.conf
 }
 
+sendRouteTimestamp()
+{
+        log "Sending route date and time as status $3"
+        route_ts=$(echo $4 | jq .timestamp)
+        route_datetime=$(date -d@${route_ts%???})
+        log "Date and time is $route_datetime"
+
+        sendStatus $1 $2 $3 $route_datetime
+}
 
 sendStatus()
 {

@@ -70,6 +70,16 @@ log "Message ID = $messageId, mark = $MARK"
 # 1024 Cell Status
 #   [GOOD]
 #   [BAD]
+# 1025 ATT Route time stamp
+#   Date/time
+# 1026 Verizon Route time stamp
+#   Date/time
+# 1027 Sprint Route time stamp
+#   Date/time
+# 1028 WiFi Route time stamp
+#   Date/time
+# 1029 Radio Route time stamp
+#   Date/time
 # 1998 End
 # 1999 Error
 #   Error description if any
@@ -310,76 +320,83 @@ ITCMROUTE="$(ssh -i ~/.ssh/aoc-itcmdh aoc@anpitcmdh01 itcm-get-route-map -a 10.1
 #fi
 echo $ITCMROUTE >> /tmp/itcmroute
 
-if [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'UNREACHABLE'* ]]; then
-	echo -e "${RED}ATT ITCM route \t\t\t [UNSTABLE]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "UNSTABLE"
-elif [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
-	echo -e "${GREEN}ATT ITCM route \t\t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "CONNECTED"
-	ATT_ITCM_STATUS=true
-else
+att_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("att"))')
+vzw_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("vzw"))')
+spr_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("spr"))')
+wifi_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("wifi"))')
+radio_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("Radio220"))')
+
+if [ -z "$att_route" ]; then
   echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "NOT CONNECTED"
-fi
-
-if [[ $ITCMROUTE = *"vzw"* ]]  && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
-  echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "UNSTABLE"
-fi
-
-if [[ $ITCMROUTE = *"vzw"* ]] && [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
-	echo -e "${GREEN}Verizon ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "CONNECTED"
-	VZW_ITCM_STATUS=true
 else
+  if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
+    echo -e "${GREEN}ATT ITCM route \t\t\t [CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "CONNECTED"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1025 "$att_route"
+    ATT_ITCM_STATUS=true
+  else
+    echo -e "${RED}ATT ITCM route \t\t\t [UNSTABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "UNSTABLE"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1025 "$att_route"
+  fi
+fi
+
+if [ -z "$vzw_route" ]; then
   echo -e "${RED}Verizon ITCM route \t\t [NOT CONNECTED]${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "NOT CONNECTED"
+else
+  if [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
+  	echo -e "${GREEN}Verizon ITCM route \t\t [CONNECTED]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "CONNECTED"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1026 "$vzw_route"
+  	VZW_ITCM_STATUS=true
+  else
+    echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "UNSTABLE"
+    sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1026 "$vzw_route"
+  fi
 fi
 
-if [[ $ITCMROUTE = *"spr"* ]]; then
-  echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "CONNECTED"
-else
+if [ -z "$spr_route" ]; then
   echo -e "${RED}Sprint ITCM route \t\t [NOT CONNECTED]${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "NOT CONNECTED"
+else
+  echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "CONNECTED"
+  sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1027 "$spr_route"
 fi
 
-if [[ $ITCMROUTE = *"wifi"* ]]; then
-  echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
-  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "CONNECTED"
-else
+if [ -z "$wifi_route" ]; then
   echo -e "${RED}Wifi ITCM route \t\t [NOT CONNECTED]${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "NOT CONNECTED"
+else
+  echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
+  sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "CONNECTED"
+  sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1028 "$wifi_route"
 fi
 
-if [[ $ITCMROUTE = *"Radio220"* ]]; then
+if [ -n "$radio_route" ]; then
 
   echo -e "${GREEN}Radio ITCM route \t\t [CONNECTED]${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "CONNECTED"
   echo -e "${MAGENTA}220 BASE STATION INFORMATION${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
+  sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1029 "$radio_route"
 
-	txtarray=(${ITCMROUTE// / })
+  radio_value=$(echo "$radio_route" | jq .radio)
+  radio_id=$(echo $radio_value | jq .RadioId)
+  radio_emp_address=$(echo "$radio_route" | jq .route)
 
-	for item in "${txtarray[@]}"
-	do
-    if [[ $item = *"RadioId"* ]]; then
-      id=$(echo $item | awk -F':' '{print substr($2, 1, length($2)-2);}' )
-      echo -e "${GREEN}Radio ID \t\t\t [$id]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "$id"
-    fi
+  if [ -n "$radio_id" ]; then
+    echo -e "${GREEN}Radio ID \t\t\t [$radio_id]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "$radio_id"
+  fi
 
-		if [[ $item = *"Radio220"* ]]; then
-			owner=$(echo $item | tr -d '\n' | tr -d '"')
-			owner=$(echo $owner | sed 's/.*://' | sed 's/^[[:space:]]*//g' | sed 's/\t\n\r//')
-			#echo -e "${GREEN}BASE STATION RADIO OWNER \t\t [$owner]${NC}"
-			#echo $owner | od -An -vtu1
-			owner_string=${owner//[$'\t\r\n'}
-			echo -e "${GREEN}Base Station EMP Address \t [${owner_string}]${NC}"
-      sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "$owner_string"
-		fi
-	done
-
+  if [ -n "$radio_emp_address" ]; then
+    echo -e "${GREEN}Base Station EMP Address \t [${radio_emp_address}]${NC}"
+    sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "$radio_emp_address"
+  fi
 else
   echo -e "${RED}220 MHz Radio ITCM route \t [NOT CONNECTED${NC}]"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "NOT CONNECTED"

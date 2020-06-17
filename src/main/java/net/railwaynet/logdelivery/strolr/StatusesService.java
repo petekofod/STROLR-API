@@ -240,6 +240,26 @@ public class StatusesService {
                 statusText = "Received Cell Status";
                 status.put("CellStatus", status.get(INFO_ATTR));
                 break;
+            case "1025":
+                statusText = "Received ATT route timestamp";
+                status.put("ATTRouteTimestamp", status.get(INFO_ATTR));
+                break;
+            case "1026":
+                statusText = "Received Verizon route timestamp";
+                status.put("VerizonRouteTimestamp", status.get(INFO_ATTR));
+                break;
+            case "1027":
+                statusText = "Received Sprint route timestamp";
+                status.put("SprintRouteTimestamp", status.get(INFO_ATTR));
+                break;
+            case "1028":
+                statusText = "Received WiFi route timestamp";
+                status.put("WiFiRouteTimestamp", status.get(INFO_ATTR));
+                break;
+            case "1029":
+                statusText = "Received Radio route timestamp";
+                status.put("RadioRouteTimestamp", status.get(INFO_ATTR));
+                break;
             case "1998":
                 statusText = "Completed successfully";
                 status.put("end", "1");
