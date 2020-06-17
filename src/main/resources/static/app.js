@@ -340,7 +340,7 @@ var vue_det = new Vue({
                                          if ( statusUpdate.CellStatus.toLowerCase().includes("good") )
                                            self.tab_data_Array[i].status_data.CellStatus.showGood = true
                                          else
-                                           self.tab_data_Array[i].status_data.RouteInformation.showBad = true
+                                           self.tab_data_Array[i].status_data.CellStatus.showBad = true
                                       }
 
                                       // logs information

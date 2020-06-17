@@ -21,7 +21,7 @@ sendRouteTimestamp()
         route_datetime=$(date -d@${route_ts%???})
         log "Date and time is $route_datetime"
 
-        sendStatus $1 $2 $3 $route_datetime
+        sendStatus $1 $2 $3 "$route_datetime"
 }
 
 sendStatus()
