@@ -1,7 +1,7 @@
-<html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 
 <head>
-    <title>Collins Aerospace</title>
+    <title>Rockwell Collins</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
     <script type="text/javascript" src1="https://cdn.jsdelivr.net/npm/vue"></script>
 
@@ -19,6 +19,9 @@
     <!-- Load the following for BootstrapVueIcons support -->
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
 
+    <link rel="stylesheet" href="https://unpkg.com/vue-nav-tabs/themes/vue-tabs.css">
+    <script src="https://unpkg.com/vue-nav-tabs/dist/vue-tabs.js"></script>
+
     <style>
         [v-cloak] {
             display: none;
@@ -29,45 +32,39 @@
 <body>
     <div id="MainApp" v-cloak>
         <b-alert show >
-            <h1>Collins</h1>
+            <h1>Rockwell Collins</h1>
         </b-alert>
 
-        <div class="container" v-if="!bLogStatus">
+        <div class="container">
             <div class="row">
                 <div class="col m-3">
                     <b-card no-body>
-                        
+                        <b-card-footer>
+                            <h4>Hello {{userName}}!</h4>
+                        </b-card-footer>
                         <b-card-body>
-                            <b-card-title></b-card-title>
-                            <b-card-sub-title class="mb-2">Welcome to <strong>STROLR</strong>, the <strong>Self Service
-                                    Tool
-                                    for Railwaynet Onboard Log Retrieval</strong>. Based on your assigned SCAC
-                                <strong>{{userName}}</strong>, you have access to logs from locomotives with the following SCAC
-                                Mark
-                                combinations</b-card-sub-title>
-                            <b-card-text>
-                                <b-collapse id="collapse-1">
-                                    <pre>
-                                <strong>    SCAC	Mark</strong>
+                            <b-card-sub-title class="mb-2">Welcome to <strong>STROLR</strong>,
+                                the <strong>Self Service Tool for Railwaynet Onboard Log Retrieval</strong>.
+                            </b-card-sub-title>
+                            <b-collapse id="collapse-1">
+                                Based on your assigned SCAC <strong>RCAX</strong>,
+                                you have access to logs from locomotives with the following SCAC Mark combinations
+                                <pre style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                                    <strong>SCAC	Mark</strong>
                                     AMTK	AMTK
                                     AMTK	CDTX
                                     AMTK	WDTX
                                     AMTK	IDTX
                                     AMTK	RNCX
-                                    VREX	VREX
-                                </pre>
-                                </b-collapse>
-                            </b-card-text>
+                                    VREX	VREX</pre>
+                                To obtain the latest log file for a locomotive, select the SCAC, Mark and enter the locomotive
+                                ID. If the locomotive exists in our database, you will receive a link that points the current
+                                log files for that locomotive on the MDM. Please note that it may take up to 5 minutes for the
+                                log file to be available for download.
+                                <br>
+                                You can also request the locomotive status report.
+                            </b-collapse>
                         </b-card-body>
-                        <b-card-footer>
-                            To obtain the latest log file for a locomotive, select the SCAC, Mark and enter the
-                            locomotive
-                            ID. If the locomotive exists in our database, you will receive a link that points the
-                            current
-                            log files for that locomotive on the MDM. Please note that it may take up to 5 minutes for
-                            the
-                            log file to be available for download.
-                        </b-card-footer>
                     </b-card>
                     <b-link v-b-toggle.collapse-1 class="float-right m-1" variant="outline-info">Hide / Show
                     </b-link>
@@ -80,7 +77,7 @@
                         <div class="form-group row">
                             <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
                             <div class="col">
-                                <b-form-select id="selSCACMark" v-model="form.SCACMark" :options="lstFullTree" required
+                                <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree" required
                                     size="sm" @change1="onChange($event)"></b-form-select>
                             </div>
                         </div>
@@ -97,20 +94,17 @@
                             <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Time Zone</label>
                             <div class="col-sm-3">
                                 <b-form-select id="selTimeZone" v-model="form.timeZone" :options="lstTimeZone" required
-                                    size="sm" @change1="onChange($event)"></b-form-select>
-                            </div>   
+                                               size="sm" @change1="onChange($event)"></b-form-select>
+                            </div>
                             <div class="col-sm-1">
                                 <b-form-checkbox
-								      id="chkDST"
-								      v-model="form.dst"
-								      name="chkDST"
-								      :disabled="form.timeZone==0"								     
-								    >
-								      DST
-								    </b-form-checkbox>
-								    </div>
-                            
-                                                     
+                                        id="chkDST"
+                                        v-model="form.dst"
+                                        name="chkDST"
+                                        :disabled="form.timeZone==0">
+                                    DST
+                                </b-form-checkbox>
+                            </div>
                             <div class="col-sm-3">
                                 <b-input-group size="sm" prepend="UTC clock">
                                     <b-form-input id="inpStartTime" v-model="timeUTC" type="text" size="sm" disabled="true">
@@ -126,7 +120,7 @@
                                     ></b-form-input>
                             </div>
                             <div class="col-sm-3">
-                                <b-input-group size="sm" append="">
+                                <b-input-group size="sm" append="UTC">
                                     <b-form-input id="inpStartTime" v-model="form.StartTime" type="time" size="sm">
                                     </b-form-input>
                                 </b-input-group>
@@ -140,7 +134,7 @@
                                 </b-form-input>
                             </div>
                             <div class="col-sm-3">
-                                <b-input-group size="sm" append="">
+                                <b-input-group size="sm" append="UTC">
                                     <b-form-input id="inpEndTime" v-model="form.EndTime" type="time" size="sm">
                                     </b-form-input>
                                 </b-input-group>
@@ -150,54 +144,254 @@
                         <div class="form-group row">
                             <label class="col-sm-5 "> </label>
                             <div class="col">
-                                <b-button type="submit" variant="primary">Get Logs</b-button>
+                                <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
+                                <!-- b-button type="submit" variant="primary" v-on:click="onGetStatus">Get System Status</b-button -->
+                                <b-button type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
-
                     </b-form>
 
-
-                    <!-- <b-card class="mt-3" header="Form Data Result">
-                        <pre class="m-0">{{ form }}</pre>
-                    </b-card> -->
                 </div>
                 <div class="col-sm-3">
                 </div>
             </div>
 
-        </div>
-
-        <div class="container" v-if="bLogStatus">
-            <div class="row">
-                <div class="col m-3">
-                    <b-card no-body>
-                        <b-card-footer>
-                            <h4>Log File Retrieval Status</h4>
-                        </b-card-footer>
+            <vue-tabs v-model="active_tab" style="margin-bottom: 20px;">
+                <v-tab v-for="tab in this.tab_data_Array" :key="tab.id" :title="tab.title">
+                    <b-card no-body v-if="tab.isLogs">
                         <b-card-body>
-                            <b-card-title>Status</b-card-title>
-                            <b-card-sub-title class="mb-2"></b-card-sub-title>
+                            <b-card-sub-title class="mb-2">
+                                {{tab.Title}}
+                            </b-card-sub-title>
                             <b-card-text>
-                                Number of Log Files Being Retrieved: {{sFilesCount}}<br>
-                                Size of Compressed Log File: {{sTotalBytes}}<br>
-                                {{sLogRequestStatus}} <br>
-                                {{sStatus}}
+                                Number of Log Files Being Retrieved: {{tab.sFilesCount}}<br>
+                                Size of Compressed Log File: {{tab.sTotalBytes}}<br>
+                                {{tab.sLogRequestStatus}} <br>
+                                {{tab.Status}}
                             </b-card-text>
-                            <b-card-title v-if="showLinks">Download links</b-card-title>
-                            <b-card-text v-if="showLinks">
-                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + messageId + '.tar.gz'">https://s3.amazonaws.com/rwn.strolr2/{{messageId}}.tar.gz</a><br>
-                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + messageId + '.tar'">https://s3.amazonaws.com/rwn.strolr2/{{messageId}}.tar</a><br>
-                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + messageId + '.7z'">https://s3.amazonaws.com/rwn.strolr2/{{messageId}}.7z</a><br>
+                            <b-card-title v-if="tab.showLinks">Download links</b-card-title>
+                            <b-card-text v-if="tab.showLinks">
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.tar.gz'" target="_blank">
+                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.tar.gz
+                                </a>
+                                <br>
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.tar'" target="_blank">
+                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.tar
+                                </a>
+                                <br>
+                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.7z'" target="_blank">
+                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.7z
+                                </a>
+                                <br>
                             </b-card-text>
                         </b-card-body>
-                        <b-card-footer v-if="!showLinks">
+                        <b-card-footer v-if="!tab.showLinks">
                             Log Server is currently processing request. Please do not close this window! You will be
                             shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
-                </div>
-            </div>
+                    <b-card no-body v-if="!tab.isLogs">
+                        <b-card-body>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <table class="table">
+                                <tr>
+                                    <td>Locomotive</td>
+                                    <td>{{tab.LocoID}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Start time</td>
+                                    <td>{{tab.status_data.TestTime}}</td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">IP Information</th>
+                                <tr>
+                                    <td>ATT Modem</td>
+                                    <td>{{tab.status_data.IpInformation.ATTModem}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Verizon Modem</td>
+                                    <td>{{tab.status_data.IpInformation.VerizonModem}}</td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">IP Reachability</th>
+                                <tr>
+                                     <td>ATT Modem Status</td>
+                                     <td>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedATTConnected" class="badge badge-success">
+                                          {{tab.status_data.IpReachability.ATTModemStatus}}
+                                         </span>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedATTNotConnected" class="badge badge-danger">
+                                          {{tab.status_data.IpReachability.ATTModemStatus}}
+                                         </span>
+                                     </td>
+                                </tr>
+                                <tr>
+                                     <td>Verizon Modem Status</td>
+                                     <td>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedVerizonConnected" class="badge badge-success">
+                                           {{tab.status_data.IpReachability.VerizonModemStatus}}
+                                         </span>
+                                         <span v-if="tab.status_data.IpReachability.showConnectedVerizonNotConnected" class="badge badge-danger">
+                                           {{tab.status_data.IpReachability.VerizonModemStatus}}
+                                         </span>
+                                     </td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">Wifi Information</th>
+                                <tr>
+                                     <td>Wifi Client SSID</td>
+                                    <td>
+                                       {{tab.status_data.WifiInformation.ClientId}}
+                                       <span v-if="tab.status_data.WifiInformation.showConnected" class="badge badge-success">
+                                            CONNECTED
+                                       </span>
+                                       <span v-if="tab.status_data.WifiInformation.showNotConnected" class="badge badge-danger">
+                                           NOT CONNECTED
+                                       </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                     <td>Access Point</td>
+                                     <td>
+                                         {{tab.status_data.WifiInformation.AccessPoint}}
+                                     </td>
+                                </tr>
+                                <th colspan="2" style="text-align:center;">IETMS Gateway Information</th>
+                                <tr>
+                                    <td>IETMS Client</td>
+                                    <td>
+                                        <span class="badge"
+                                              v-if="tab.status_data.GatewayInformation.ETMSClient.length > 0"
+                                              v-bind:class="tab.status_data.GatewayInformation.ETMSConnected?'badge-success':'badge-danger'">
+                                            {{tab.status_data.GatewayInformation.ETMSClient}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MDM Client</td>
+                                    <td>
+                                        <span class="badge"
+                                              v-if="tab.status_data.GatewayInformation.MDMClient.length > 0"
+                                              v-bind:class="tab.status_data.GatewayInformation.MDMConnected?'badge-success':'badge-danger'">
+                                            {{tab.status_data.GatewayInformation.MDMClient}}
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <th colspan="2" style="text-align:center;">ITCM Route Information</th>
+
+                                        <tr>
+                                            <td>ATT ITCM Route</td>
+                                            <td>
+                                                <span class="badge"
+                                                      v-if="tab.status_data.RouteInformation.ATTRoute.length > 0"
+                                                      v-bind:class="tab.status_data.RouteInformation.isATTStable?'badge-success':'badge-danger'">
+                                                    {{tab.status_data.RouteInformation.ATTRoute}}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>ATT Route Timestamp</td>
+                                            <td>{{tab.status_data.RouteInformation.ATTRouteTimestamp}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Verizon ITCM Route</td>
+                                            <td>
+                                                <span class="badge"
+                                                      v-if="tab.status_data.RouteInformation.VerizonRoute.length > 0"
+                                                      v-bind:class="tab.status_data.RouteInformation.isVerizonStable?'badge-success':'badge-danger'">
+                                                    {{tab.status_data.RouteInformation.VerizonRoute}}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Verizon Route Timestamp</td>
+                                            <td>{{tab.status_data.RouteInformation.VerizonRouteTimestamp}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sprint ITCM Route</td>
+                                            <td>
+                                                <span v-if="tab.status_data.RouteInformation.showSprintStable" class="badge badge-success">
+                                                    {{tab.status_data.RouteInformation.SprintRoute}}
+                                                </span>
+                                                <span v-if="tab.status_data.RouteInformation.showSprintNotStable" class="badge badge-danger">
+                                                    {{tab.status_data.RouteInformation.SprintRoute}}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sprint Route Timestamp</td>
+                                            <td>{{tab.status_data.RouteInformation.SprintRouteTimestamp}}</td>
+                                        </tr>
+                                       <tr>
+                                           <td>Wifi ITCM Route</td>
+                                           <td>
+                                               <span v-if="tab.status_data.RouteInformation.showRouteConnected" class="badge badge-success">
+                                                  {{tab.status_data.RouteInformation.WifiRoute}}
+                                               </span>
+                                               <span v-if="tab.status_data.RouteInformation.showRouteNotConnected" class="badge badge-danger">
+                                                  {{tab.status_data.RouteInformation.WifiRoute}}
+                                               </span>
+                                           </td>
+                                       </tr>
+                                        <tr>
+                                            <td>WiFi Route Timestamp</td>
+                                            <td>{{tab.status_data.RouteInformation.WiFiRouteTimestamp}}</td>
+                                        </tr>
+                                       <tr>
+                                           <td>220 MHz Radio</td>
+                                           <td>
+                                               <span v-if="tab.status_data.RouteInformation.showRadioConnected" class="badge badge-success">
+                                                  {{tab.status_data.RouteInformation.MHzRadio}}
+                                               </span>
+                                               <span v-if="tab.status_data.RouteInformation.showRadioNotConnected" class="badge badge-danger">
+                                                  {{tab.status_data.RouteInformation.MHzRadio}}
+                                               </span>
+                                           </td>
+                                       </tr>
+                                        <tr>
+                                            <td>Radio Route Timestamp</td>
+                                            <td>{{tab.status_data.RouteInformation.RadioRouteTimestamp}}</td>
+                                        </tr>
+
+                                   <th colspan="2" style="text-align:center;">220 Base Station Radio Information</th>
+                                   <tr>
+                                       <td>Radio Id</td>
+                                       <td>{{tab.status_data.RadioInformation.RadioId}} </td>
+                                    </tr>
+                                    <tr>
+                                        <td>EMP Address</td>
+                                        <td>{{tab.status_data.RadioInformation.EMPAddress}} </td>
+                                     </tr>
+                                    <th colspan="2" style="text-align:center;">Cell status</th>
+                                    <tr>
+                                        <td>Cell Status</td>
+                                        <td>
+                                            <span v-if="tab.status_data.CellStatus.showGood" class="badge badge-success">
+                                              {{tab.status_data.CellStatus.status}}
+                                            </span>
+                                            <span v-if="tab.status_data.CellStatus.showBad" class="badge badge-danger">
+                                              {{tab.status_data.CellStatus.status}}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                 </table>
+                                </div>
+                                <div class="col-sm-6>">
+                                    <ul>
+                                        <li style="list-style: none;" v-for="status_message in tab.messages">
+                                            {{ status_message }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </b-card-body>
+                        <b-card-footer v-if="tab.showFooter">
+                                     Locomotive System Status Server is currently processing request. You will be
+                                     shown the information when the backend server provides it.
+                        </b-card-footer>
+                    </b-card>
+                </v-tab>
+            </vue-tabs>
         </div>
     </div>
 

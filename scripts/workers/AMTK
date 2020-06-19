@@ -22,7 +22,7 @@ packageId=${mark}.${locoID}.${messageId}
 pathstring=${AMTK_DIR}/amtk.l.${mark}.${locoID}:mdm/
 log "Path string is ${pathstring}"
 
-sendStatus ${messageId} 1 None
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1 None
 
 foundFiles=/tmp/sort.${messageId}.all
 sudo find "${pathstring}" -type f -name "*.log.gz" | egrep -v "install|depart_test|fault_history|event_history" | sort --key 7 --field-separator=. >${foundFiles}

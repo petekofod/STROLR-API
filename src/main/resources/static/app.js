@@ -1,3 +1,4 @@
+Vue.config.devtools = true
 var vue_det = new Vue({
     el: '#MainApp',
     data: {
@@ -8,23 +9,23 @@ var vue_det = new Vue({
             StartTime: null,
             EndTime: null,
             SCACMark: null,
+            RequestType: null,
             timeZone: 0,
             dst: false,
-
         },
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
         }],
-        lstTimeZone: 
+        lstTimeZone:
         		[
             	{ text: 'Eastern' , value: 5},
             	{ text: 'Central' , value: 6},
             	{ text: 'Mountain' , value: 7},
-            	{ text: 'Pacific' , value: 8}, 
-            	{ text: 'UTC' , value: 0}            	            	
-            	]
-        ,
+            	{ text: 'Pacific' , value: 8},
+            	{ text: 'UTC' , value: 0}
+            	],
+        tab_data_Array: [],
         show: true,
         bLogStatus: false,
         timerCheck: '',
@@ -33,50 +34,74 @@ var vue_det = new Vue({
         timeUTC: '',
         userName: '',
         formTZ: '',
-        
         messageId: '',
-        sFilesCount: 'Counting...',
-        sTotalBytes: 'Checking log file...',
-        showLinks: false,
+        cell_class: 'table-danger',
+        isActive: false,
+        tabName: '',
+        active_tab: '',
     },
     created: function () {
         this.getUserName()
-        this.getDstState()
         this.fetchData()
         this.initDateTime()
         this.timeUTC = this.getUTCTime()
         this.timer = setInterval(this.getUTCTime, 5000)
     },
     methods: {
+        setRequestType(value) {
+            this.form.RequestType = value
+        },
         onSubmit(evt) {
             evt.preventDefault()
-
-            this.bLogStatus = true
-            this.timer = setInterval(this.checkLogData, 1000)
 
             var xhr = new XMLHttpRequest()
             var self = this
 
-            xhr.open('POST', 'request-logs')
+            xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
-            xhr.onload = function () {
+            xhr.onload = async function () {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        self.sLogRequestStatus = "Request submitted successfully"
-                        self.messageId = xhr.responseText
+                        self.new_messageId = xhr.responseText
+                        new_tab_item = {}
+                        new_tab_item.timer = setInterval(self.checkResponse.bind(null, self.new_messageId), 1000)
+
+                        index = self.tab_data_Array.length
+                        var title = "(" + index + ") " + self.form.SCACMark + " " + self.form.LocoID
+                        if (self.form.RequestType == "get-status") {
+                            title = title + " status"
+                            new_status_data = self.fillGetStatusData()   // TODO this is test data just to show
+                            self.tab_data_Array.push({id:index,
+                                title: title,
+                                LocoID: self.form.SCACMark + " " + self.form.LocoID,
+                                status_data: new_status_data,
+                                messageId: self.new_messageId, messages:["Loading locomotive system status"],
+                                timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
+                                showFooter: false, isLogs: false, showLinks: false, isLogs:false})
+
+                        } else if (self.form.RequestType == "get-logs") {
+                            title = title + " logs"
+                            self.tab_data_Array.push({id:index,
+                                title: title,
+                                LocoID: self.form.LocoID,
+                                messageId: self.new_messageId, Status:"Loading locomotive logs...",
+                                timer: new_tab_item.timer,
+                                showFooter: true, isLogs: true, showLinks: false, isLogs:true,
+                                sFilesCount: "Counting...", sTotalBytes: "Checking log file...", sLogRequestStatus: "Request STATUS submitted successfully"})
+                        }
+                        self.$nextTick(function () {
+                            self.active_tab = title
+                        });
                     } else {
-                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + xhr.statusText
-                        console.error('error - ' + xhr.statusText);
+                                var errorMessage = JSON.parse(xhr.responseText).message
+                                self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                                console.error('error - ' + errorMessage)
+                                console.error(xhr.responseText)
                     }
                 }
             }
             xhr.send(JSON.stringify(this.form))
         },
-        onChange(evt) {
-            console.log(evt.target.value)
-        },
-        
-        
         onReset(evt) {
             evt.preventDefault()
             this.form.LocoID = null
@@ -84,6 +109,11 @@ var vue_det = new Vue({
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
             this.show = false
+            // stop all timers
+            for (var i=0; i < this.tab_data_Array.length; i++) {
+               clearInterval(this.tab_data_Array[i].timer)
+            }
+            this.tab_data_Array = []
             this.$nextTick(() => {
                 this.show = true
             })
@@ -113,11 +143,8 @@ var vue_det = new Vue({
             var hiTZ = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
             if (today.getTimezoneOffset() < hiTZ){
             	console.log("DST detected");
-
             }
-        	
         },
-              
         getUserName: function () {
             var xhr = new XMLHttpRequest()
             var self = this
@@ -137,37 +164,7 @@ var vue_det = new Vue({
             }
             xhr.send()
         },
-        checkLogData: function () {
-            var xhr = new XMLHttpRequest()
-            var self = this
 
-            xhr.open('GET', 'status-update/' + this.messageId)
-            xhr.onload = function () {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        statusUpdate = JSON.parse(xhr.responseText)
-                        if (statusUpdate.filesCount)
-                            self.sFilesCount = statusUpdate.filesCount
-                        if (statusUpdate.totalBytes)
-                            self.sTotalBytes = statusUpdate.totalBytes
-                        if (statusUpdate.Status === "4") {
-                            self.cancelLogDataCheck()
-                            self.showLinks = true
-                        }
-                        self.sStatus = statusUpdate.statusText
-                    } else if (xhr.status === 204) {
-                        // no update, try again later
-                    }
-                    else {
-                        console.error('error - ' + xhr.statusText);
-                    }
-                }
-            }
-            xhr.send()
-        },
-        cancelLogDataCheck() {
-            clearInterval(this.timer)
-        },
         formatDate: function () {
             var d = new Date(),
                 month = '' + (d.getMonth() + 1),
@@ -183,34 +180,250 @@ var vue_det = new Vue({
         },
 
         getUTCTime: function () {
-            // var str = 'AM'
             var d = new Date();
             var hr = d.getUTCHours();
             var min = d.getUTCMinutes();
             var res;
 
-            // if (hr == 0) {
-            //     hr = 12
-            // } else
-            // if (hr > 11) {
-            //     hr = hr - 11
-            //     str = 'PM'
-            // }
             if (hr < 10) hr = '0' + hr;
             if (min < 10) min = '0' + min;
 
-            res = hr + ":" + min // + " " + str
+            res = hr + ":" + min
             this.timeUTC = res
             return res
-
         },
-        
-        getLocalTimeZone: function () {
-        	var zone = new Date().toLocaleTimeString('en-us',{timeZoneName:'short'}).split(' ')[2]
-        	return zone
-        }
-        
-        
 
+        checkResponse: function (ourMessageId) {
+             var xhr = new XMLHttpRequest()
+                    var self = this
+                    xhr.open('GET', 'status-update/' + ourMessageId)
+                    xhr.onload = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                statusUpdate = JSON.parse(xhr.responseText)
+                                for (var i=0; i < self.tab_data_Array.length; i++) {
+                                  if (self.tab_data_Array[i].messageId === ourMessageId) {
+                                      self.tab_data_Array[i].showFooter = false
+                                      if (statusUpdate.statusText) {
+                                        self.tab_data_Array[i].status_data.Status = statusUpdate.statusText
+                                        var newMessages = statusUpdate.statusText.split(";")
+                                        newMessages.forEach(function (m, index) {
+                                          self.tab_data_Array[i].messages.push(m)
+                                        })
+                                      }
+                                      if (statusUpdate.TestTime)
+                                        self.tab_data_Array[i].status_data.TestTime = statusUpdate.TestTime
+
+                                      // ip information
+                                      if (statusUpdate.VerizonModem)
+                                         self.tab_data_Array[i].status_data.IpInformation.VerizonModem = statusUpdate.VerizonModem
+                                      if (statusUpdate.ATTModem)
+                                         self.tab_data_Array[i].status_data.IpInformation.ATTModem = statusUpdate.ATTModem
+
+                                      // Ip reachability
+                                      if (statusUpdate.ATTModemStatus) {
+                                         self.tab_data_Array[i].status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
+                                         if ( (statusUpdate.ATTModemStatus.toLowerCase()).includes("unreach") )
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedATTNotConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedATTConnected = true
+                                      }
+                                      if (statusUpdate.VerizonModemStatus) {
+                                         self.tab_data_Array[i].status_data.IpReachability.VerizonModemStatus = statusUpdate.VerizonModemStatus
+                                         if ( (statusUpdate.VerizonModemStatus.toLowerCase()).includes("online") )
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonNotConnected = true
+                                      }
+
+                                      // Wifi information
+                                      if (statusUpdate.WiFiClientStatus)
+                                      {
+                                         self.tab_data_Array[i].status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
+                                         if ( (statusUpdate.WiFiClientStatus.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.WifiInformation.showNotConnected = true
+                                         else
+                                           self.tab_data_Array[i].status_data.WifiInformation.showConnected = true
+                                      }
+                                      if (statusUpdate.ClientId)
+                                         self.tab_data_Array[i].status_data.WifiInformation.ClientId = statusUpdate.ClientId
+                                      if (statusUpdate.AccessPoint)
+                                         self.tab_data_Array[i].status_data.WifiInformation.AccessPoint = statusUpdate.AccessPoint
+
+                                      // gateway information
+                                      if (statusUpdate.ETMSClient) {
+                                         self.tab_data_Array[i].status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
+                                         self.tab_data_Array[i].status_data.GatewayInformation.ETMSConnected = statusUpdate.ETMSClient.toLowerCase() === "connected"
+                                      }
+                                      if (statusUpdate.MDMClient)
+                                      {
+                                         self.tab_data_Array[i].status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
+                                         self.tab_data_Array[i].status_data.GatewayInformation.MDMConnected = statusUpdate.MDMClient.toLowerCase() === "connected"
+                                      }
+
+                                      // route information
+                                      if (statusUpdate.ATTRoute) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
+                                         self.tab_data_Array[i].status_data.RouteInformation.isATTStable = statusUpdate.ATTRoute.toLowerCase() === "connected"
+                                      }
+                                      if (statusUpdate.ATTRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.ATTRouteTimestamp = statusUpdate.ATTRouteTimestamp
+                                      }
+
+                                      if (statusUpdate.VerizonRoute){
+                                         self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
+                                         self.tab_data_Array[i].status_data.RouteInformation.isVerizonStable = statusUpdate.VerizonRoute.toLowerCase() === "connected"
+                                      }
+                                      if (statusUpdate.VerizonRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.VerizonRouteTimestamp = statusUpdate.VerizonRouteTimestamp
+                                      }
+
+                                      if (statusUpdate.SprintRoute){
+                                         self.tab_data_Array[i].status_data.RouteInformation.SprintRoute = statusUpdate.SprintRoute
+                                         if ( (statusUpdate.SprintRoute.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.RouteInformation.showSprintNotStable = true
+                                         else
+                                           self.tab_data_Array[i].status_data.RouteInformation.showSprintStable = true
+                                      }
+                                      if (statusUpdate.SprintRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.SprintRouteTimestamp = statusUpdate.SprintRouteTimestamp
+                                      }
+
+                                      if (statusUpdate.WifiRoute) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
+                                         if ((statusUpdate.WifiRoute.toLowerCase()).includes("not connected"))
+                                            self.tab_data_Array[i].status_data.RouteInformation.showRouteNotConnected = true
+                                         else
+                                            self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected = true
+                                      }
+                                      if (statusUpdate.WiFiRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.WiFiRouteTimestamp = statusUpdate.WiFiRouteTimestamp
+                                      }
+
+                                      if (statusUpdate.MHzRadio) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
+                                         if ( !(statusUpdate.MHzRadio.toLowerCase()).includes("not connected") )
+                                           self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected = true
+                                         else
+                                           self.tab_data_Array[i].status_data.RouteInformation.showRadioNotConnected = true
+                                      }
+                                      if (statusUpdate.RadioRouteTimestamp) {
+                                         self.tab_data_Array[i].status_data.RouteInformation.RadioRouteTimestamp = statusUpdate.RadioRouteTimestamp
+                                      }
+
+                                      // gateway information
+                                      if (statusUpdate.RadioId)
+                                         self.tab_data_Array[i].status_data.RadioInformation.RadioId = statusUpdate.RadioId
+                                      if (statusUpdate.EMPAddress)
+                                         self.tab_data_Array[i].status_data.RadioInformation.EMPAddress = statusUpdate.EMPAddress
+
+                                      if (statusUpdate.CellStatus) {
+                                         self.tab_data_Array[i].status_data.CellStatus.status = statusUpdate.CellStatus
+                                         if ( statusUpdate.CellStatus.toLowerCase().includes("good") )
+                                           self.tab_data_Array[i].status_data.CellStatus.showGood = true
+                                         else
+                                           self.tab_data_Array[i].status_data.CellStatus.showBad = true
+                                      }
+
+                                      // logs information
+                                      if (statusUpdate.filesCount)
+                                         self.tab_data_Array[i].sFilesCount = statusUpdate.filesCount
+                                      if (statusUpdate.totalBytes)
+                                          self.tab_data_Array[i].sTotalBytes = statusUpdate.totalBytes
+                                      if (statusUpdate.statusText)
+                                         self.tab_data_Array[i].Status = statusUpdate.statusText
+                                      if (statusUpdate.end) {
+                                         clearInterval(self.tab_data_Array[i].timer)
+                                         if (self.tab_data_Array[i].isLogs)
+                                            self.tab_data_Array[i].showLinks = true
+                                      }
+                                      // TODO process all other fields
+                                      break
+                                  }
+                                }
+                            } else if (xhr.status === 204) {
+                                // no update, try again later
+                            }
+                            else {
+                                console.error('error - ' + xhr.statusText);
+                            }
+                        }
+                    }
+                    xhr.send()
+                },
+         fillGetStatusData: function() {
+
+           new_status_data = {}
+
+           new_status_data.messages = []
+
+           new_status_data.TestTime = ""
+           ipinfo = {}
+           ipinfo.isAvailable = true;
+           ipinfo.ATTModem = ""
+           ipinfo.VerizonModem = ""
+           new_status_data.IpInformation = ipinfo
+
+           ipreach = {}
+           ipreach.isAvailable = true;
+           ipreach.ATTModemStatus = ""
+           ipreach.VerizonModemStatus = ""
+           ipreach.showConnectedVerizonConnected = false
+           ipreach.showConnectedVerizonNotConnected = false
+           ipreach.showConnectedATTConnected = false
+           ipreach.showConnectedATTNotConnected = false
+           new_status_data.IpReachability = ipreach
+
+           wifi_info = {}
+           wifi_info.ClientId = ""
+           wifi_info.AccessPoint = ""
+           wifi_info.showConnected = false
+           wifi_info.showNotConnected = false
+           wifi_info.ClientStatus = ""
+           new_status_data.WifiInformation = wifi_info
+
+           gate_info = {}
+           gate_info.ETMSClient = ""
+           gate_info.ETMSConnected = false
+           gate_info.MDMClient= ""
+           gate_info.MDMConnected = false
+           new_status_data.GatewayInformation = gate_info
+
+           route_info = {}
+           route_info.ATTRoute=""
+           route_info.VerizonRoute=""
+           route_info.SprintRoute=""
+           route_info.WifiRoute=""
+           route_info.MHzRadio=""
+           route_info.ATTRouteTimestamp=""
+           route_info.VerizonRouteTimestamp=""
+           route_info.SprintRouteTimestamp=""
+           route_info.WifiRouteTimestamp=""
+           route_info.MHzRadioTimestamp=""
+           route_info.isATTStable = false
+           route_info.isVerizonStable = false
+           route_info.showRouteConnected = false
+           route_info.showRouteNotConnected = false
+           route_info.showRadioConnected = false
+           route_info.showRadioNotConnected = false
+           route_info.showSprintNotStable = false
+           route_info.showSprintStable = false
+           new_status_data.RouteInformation = route_info
+
+           radio_info = {}
+           radio_info.RadioId=""
+           radio_info.EMPAddress=""
+
+           new_status_data.RadioInformation = radio_info
+
+           cell_status = {}
+           cell_status.status = ""
+           cell_status.showGood = false
+           cell_status.showBad = false
+
+           new_status_data.CellStatus = cell_status
+           return new_status_data;
+
+           },
     }
 });

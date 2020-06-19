@@ -1,0 +1,283 @@
+#!/bin/sh
+### VERSION 1.2
+### AUG 14, 2018
+### PETE KOFOD
+
+### CHANGELOG
+### Checks for Mark and Loco in Database and warns if not in DB
+### 1.2 Query AIS instead of csv file for loco info, IP addresses.
+### 1.1 Added SCAC Capability
+### 1.0 Initial version
+
+if [ $# -ne 3 ]; then
+	echo "This script requires 3 arguments ( SCAC, Mark, Loco Number).  You entered $#"
+	echo "Lets enter them here instead"
+	echo "Please enter the SCAC of the Railroad"
+	read SCAC
+	echo "Please enter the mark of the Locomotive"
+	read MARK
+	MARK="${MARK^^}"
+	echo "Please enter the locomotive ID of the Locomotive.  It is just a number"
+	read LOCOID
+else
+	SCAC=$1
+	MARK="${2^^}"
+	LOCOID=$3
+fi
+
+
+#export IFS=","
+#MODEM_LIST="/home/railwaynet/amtk.modem.list.csv"
+#MODEM_LIST="/home/railwaynet/modem.list.csv"
+AIS_URL="http://${SCAC}-ais.prod.railwaynet.internal/graphql"
+JUMP_BOX=10.102.10.35
+#CARRIER=$3
+VZW_SOURCE=10.102.10.35
+SPR_SOURCE=10.102.10.36
+ATT_SOURCE=10.102.10.37
+#KEY_PATH="/home/railwaynet/.ssh/id_rsa_rwn"
+JUMP_BOX_PORT=22
+JUMP_BOX_KEY_PATH="/home/railwaynet/amtktestkeys/sample"
+AMTK_KEY_STORE_PATH="./cml/keystore/b.amtk/b.amtk_keys"
+WAN_PORT=22222
+RED='\033[0;31m'
+ORANGE='\033[0;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+AG_FLAG=FALSE
+MARK_COUNT=0
+LOCO_COUNT=0
+ATT_IP_STATUS=false
+VZW_IP_STATUS=false
+ATT_ITCM_STATUS=false
+VZW_ITCM_STATUS=false
+RWN_SCACS=(amtk vrex csao sepa njtr iais nysw)
+#
+SCAC_MATCH=0
+if [[ " ${RWN_SCACS[@]} " =~ " ${SCAC} " ]]; then
+    SCAC_MATCH=1
+fi
+if [ $SCAC_MATCH = 0 ]; then
+       echo -e  "${RED}${SCAC} is not a RailwayNet customer.  Treating it as a foreign locomotive.${NC}"
+       /home/railwaynet/aocscripts/check_foreign_loco.sh $SCAC $MARK $LOCOID
+       exit 0;
+fi
+
+clear
+echo ""
+echo ""
+echo -e "${BLUE}##############################################################################${NC}"
+echo -e "${BLUE}#######               START COPY RIGHT HERE                            #######${NC}"
+echo "                                                                              "
+echo -e "Locomotive:  \t\t\t $MARK-$LOCOID"
+echo -e "Test Time: \t\t\t" `date`
+echo -e "${MAGENTA}IP INFORMATION${NC}"
+exec 3<<< $(curl ${AIS_URL} -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"query ($id: LocoIdSelector!) {  locoById(locoId: $id) { empArea   modems { carrier  ipAddress { value}  }  }}","variables":{"id":{"engineNumber":"'${LOCOID}'","mark":"'${MARK}'"}}}' --compressed --silent)
+EMP_AREA=$(jq -e '.data.locoById.empArea' </proc/self/fd/3 | tr -d \")
+#echo "Exit status $? EMP; ${EMP_AREA}"
+if [ $? != 0 ]; then
+	echo -e "${RED}The locomotive $MARK-$LOCOID is not in our database.${NC}"
+	exit $?;
+fi
+MODEMS=($(jq '.data.locoById.modems[] | { carrier: .carrier, ip: .ipAddress.value } | .carrier, .ip' </proc/self/fd/3 | tr -d \"))
+#echo $MODEMS
+for index in ${!MODEMS[*]}
+do
+    if [[ ${MODEMS[$index]} = 'VERIZON' ]]; then
+        IP_VZW=${MODEMS[$index+1]}
+        echo -e "Verizon modem address: \t\t $IP_VZW"
+    fi
+    if [[ ${MODEMS[$index]} = 'ATT' ]]; then
+        IP_ATT=${MODEMS[$index+1]}
+        echo -e "ATT modem address: \t\t $IP_ATT"
+    fi
+done
+
+echo -e "${MAGENTA}IP REACHABILITY INFORMATION"
+ATT_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_ATT &>/dev/null; do echo -e '${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}'; exit; done;  echo -e '${GREEN}ATT Modem Status: \t\t [ONLINE]${NC}'"
+VZW_STRING="while ! ping -c1 -I $ATT_SOURCE $IP_VZW &>/dev/null; do echo -e '${RED}Verizon Modem Status: \t\t [UNREACHABLE]${NC}'; exit; done; echo -e  '${GREEN}Verizon Modem Status: \t\t [ONLINE]${NC}'"
+
+ATT_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$ATT_STRING"`
+VZW_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$VZW_STRING"`
+if [[ $ATT_OUTPUT = *'UNREACHABLE'* ]] && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
+	ATT_OUTPUT="${RED}ATT Modem Status: \t\t [UNREACHABLE]${NC}"
+	VZW_OUTPUT="${RED}Verizon Modem Status: \t\t [UNREACHABLE]${NC}"
+fi
+
+echo -e $ATT_OUTPUT
+echo -e $VZW_OUTPUT
+if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
+	ATT_IP_STATUS=true
+	IW_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep ESSID'"
+	IA_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep Access'"
+	IF_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
+	IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
+	IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
+	IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
+	echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
+	if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
+                echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
+        else
+		SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
+		ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
+                echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+		echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
+        fi
+	
+	echo -e "${MAGENTA}IETMS GATEWAY INFORMATION${NC}"
+	AG_FLAG=TRUE
+	AG_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
+	AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+	if [[ $AG_INPUT = "" ]]; then
+                echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
+                echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+        else
+		if [[ $AG_INPUT = *"7001"* ]]; then 
+			echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
+		else
+			echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
+		fi
+		if [[ $AG_INPUT = *"7002"* ]]; then
+        		echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
+        	else
+                	echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
+        	fi
+	fi
+fi
+
+VZW_OUTPUT=`ssh -q -i $JUMP_BOX_KEY_PATH -p $JUMP_BOX_PORT railwaynet@$JUMP_BOX "$VZW_STRING"`
+if [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
+	VZW_IP_STATUS=true
+fi
+if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
+	
+        IW_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep ESSID'"
+        IA_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep Access'"
+        IF_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
+        IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
+        IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
+        IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
+        echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
+        if [[ $IW_INPUT = *"off/any"* ]] || [[ $IW_INPUT = "" ]]; then
+                echo -e "${RED}Wifi Client \t\t\t [NOT CONNECTED]${NC}"
+        else
+                SSID=$(echo $IW_INPUT | sed 's/.*://'| sed 's/[[:space:]]//g' | sed  's/^"//' | sed  's/"$//' )
+                ACCESSPOINT=$(echo $IA_INPUT | sed 's/.*Point://' | sed 's/[[:space:]]//g' )
+                echo -e  "${GREEN}Wifi Client SSID \t\t [$SSID]${NC}"
+                echo -e  "${GREEN}Access Point \t\t\t [$ACCESSPOINT]${NC}"
+	fi 
+
+
+
+	echo -e "${MAGENTA}IETMS GATEWAY INFORMATION${NC}"
+	AG_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
+       AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+       if [[ $AG_INPUT = "" ]]; then
+	        echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
+                echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
+	else
+		if [[ $AG_INPUT = *"7001"* ]]; then
+                	echo -e "${GREEN}IETMS Client \t\t\t [CONNECTED]${NC}"
+        	else
+                	echo -e  "${RED}IETMS Client \t\t\t [NOT CONNECTED]${NC}"
+        	fi
+        	if [[ $AG_INPUT = *"7002"* ]]; then
+                	echo -e "${GREEN}MDM Client \t\t\t [CONNECTED]${NC}"
+        	else
+                	echo -e "${RED}MDM Client \t\t\t [NOT CONNECTED]${NC}"
+        	fi
+	fi
+fi
+
+#oc login https://prod-openshift.railwaynet.internal:8443 -u rwn-support -p any > /dev/null
+echo -e "${MAGENTA}ITCM ROUTE INFORMATION:${NC}"
+
+#ag=`oc get pods | grep ^${SCAC}-ag0 | head -n 1 | awk '{ print $1 }'`
+
+#ITCMROUTE=`oc rsh ${ag} itcm-get-route-map -a ${SCAC}-as-0:8000 -c 0 --key-store-path /etc/ITCM/key_store/b.${SCAC} ${SCAC}.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.`
+
+#if [[ $SCAC = "amtk" ]]; then
+#  ITCMROUTE="$(ssh -i ~/.ssh/aoc-itcmdh aoc@anpitcmdh01 itcm-get-route-map -a 10.103.3.59:8000 -c 0 --timeout 60 --key-store-path ${AMTK_KEY_STORE_PATH} amtk.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.)"
+ITCMROUTE="$(ssh -i ~/.ssh/aoc-itcmdh aoc@anpitcmdh01 itcm-get-route-map -a 10.103.3.59:8000 -c 0 --timeout 60 --key-store-path ${AMTK_KEY_STORE_PATH} amtk.b.IS.0.MR.0 --remote-area  ${EMP_AREA})"
+#else
+#  ITCMROUTE="$(oc rsh ${ag} itcm-get-route-map -a ${SCAC}-as-0:8000 -c 0 --key-store-path /etc/ITCM/key_store/b.${SCAC} ${SCAC}.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.)"
+#fi
+echo $ITCMROUTE >> /tmp/itcmroute
+
+if [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'UNREACHABLE'* ]]; then
+	echo -e "${RED}ATT ITCM route \t\t\t [UNSTABLE]${NC}"
+
+elif [[ $ITCMROUTE = *"att"* ]] && [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
+	echo -e "${GREEN}ATT ITCM route \t\t\t [CONNECTED]${NC}"
+	ATT_ITCM_STATUS=true
+else
+      	echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"
+fi
+if [[ $ITCMROUTE = *"vzw"* ]]  && [[ $VZW_OUTPUT = *'UNREACHABLE'* ]]; then
+        echo -e "${RED}VZW ITCM route \t\t\t [UNSTABLE]${NC}"
+fi	
+if [[ $ITCMROUTE = *"vzw"* ]] && [[ $VZW_OUTPUT = *'ONLINE'* ]]; then
+	echo -e "${GREEN}Verizon ITCM route \t\t [CONNECTED]${NC}"
+	VZW_ITCM_STATUS=true
+else
+        echo -e "${RED}Verizon ITCM route \t\t [NOT CONNECTED]${NC}"
+fi
+
+if [[ $ITCMROUTE = *"spr"* ]]; then
+        echo -e "${GREEN}Sprint ITCM route \t\t [CONNECTED]${NC}"
+else
+        echo -e "${RED}Sprint ITCM route \t\t [NOT CONNECTED]${NC}"
+fi
+
+if [[ $ITCMROUTE = *"wifi"* ]]; then
+        echo -e "${GREEN}Wifi ITCM route \t\t [CONNECTED]${NC}"
+else
+        echo -e "${RED}Wifi ITCM route \t\t [NOT CONNECTED]${NC}"
+fi
+
+if [[ $ITCMROUTE = *"Radio220"* ]]; then
+        echo -e "${GREEN}Radio ITCM route \t\t [CONNECTED]${NC}"
+echo -e "${MAGENTA}220 BASE STATION INFORMATION${NC}"
+	txtarray=(${ITCMROUTE// / })
+	for item in "${txtarray[@]}"
+	do
+
+                if [[ $item = *"RadioId"* ]]; then
+                        id=$(echo $item | awk -F':' '{print substr($2, 1, length($2)-2);}' )
+                        echo -e "${GREEN}Radio ID \t\t\t [$id]${NC}"
+                fi
+
+		if [[ $item = *"Radio220"* ]]; then
+			owner=$(echo $item | tr -d '\n' | tr -d '"')
+			owner=$(echo $owner | sed 's/.*://' | sed 's/^[[:space:]]*//g' | sed 's/\t\n\r//')
+			#echo -e "${GREEN}BASE STATION RADIO OWNER \t\t [$owner]${NC}"
+			#echo $owner | od -An -vtu1
+			echo -e "${GREEN}Base Station EMP Address \t [${owner//[$'\t\r\n'}]${NC}"
+			
+		fi
+	done
+
+else
+        echo -e "${RED}220 MHz Radio ITCM route \t [NOT CONNECTED${NC}]"
+fi
+
+if ( $ATT_IP_STATUS && $ATT_ITCM_STATUS ) || ( $VZW_IP_STATUS && $VZW_ITCM_STATUS  ); then
+	echo -e "${GREEN}Cell Status \t\t\t [GOOD]${NC}"
+else
+        echo -e "${RED}Cell Status \t\t\t [BAD]${NC}"
+fi
+
+## ACTION STEPS --- COMMENTED OUT 11/01/18 BY PETE KOFOD ###
+## 
+#if ( $ATT_IP_STATUS  && ! ${ATT_ITCM_STATUS} ) || ( $VZW_IP_STATUS && ! ${VZW_ITCM_STATUS} ); then
+#	echo -e "${ORANGE}Action \t\t\t\t [Contact Rockwell SME]${NC}"
+#elif ( ! ${ATT_IP_STATUS}  && $ATT_ITCM_STATUS ) || ( ! ${VZW_IP_STATUS} && $VZW_ITCM_STATUS ); then
+#        echo -e "${ORANGE}Action \t\t\t\t [Contact Rockwell SME]${NC}"
+#elif ( $ATT_IP_STATUS && $ATT_ITCM_STATUS ) || ( $VZW_IP_STATUS && $VZW_ITCM_STATUS  ); then
+#        echo -e "${GREEN}Action \t\t\t\t [Locomotive Communications Confirmed]${NC}"
+#else
+#	echo -e "${RED}Action \t\t\t\t [Open Amtrak Work Order]${NC}"
+#fi

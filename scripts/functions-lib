@@ -1,7 +1,9 @@
 receiveMessage()
 {
+        QUEUE=$1
+
         aws sqs receive-message \
-                --queue-url $INCOMING_QUEUE \
+                --queue-url $QUEUE \
                 --attribute-names \
                 --message-attribute-names All \
                 --max-number-of-messages 1
@@ -10,23 +12,27 @@ receiveMessage()
 readConfig()
 {
         . /etc/strolr2.conf
-
-#       INCOMING_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogrequest
-#       MAX_JOBS=2
-#       VREX_DIR=/amtk-logs/vrex
-#       AWS_PROFILE=OTG
-#       RESPONSE_QUEUE=https://sqs.us-east-1.amazonaws.com/673500126325/dev_strolrlogresponse.fifo
-#       AMTK_DIR=/amtk-logs
-#       LOGS_TEMP_DIR=/tmp/strolr
 }
 
+sendRouteTimestamp()
+{
+        log "Sending route date and time as status $3"
+        route_ts=$(echo $4 | jq .timestamp)
+        route_datetime=$(date -d@${route_ts%???})
+        log "Date and time is $route_datetime"
+
+        sendStatus $1 $2 $3 "$route_datetime"
+}
 
 sendStatus()
 {
         log "Sending status $2 of message $1"
+
+        QUEUE=$2
+
         messageElement='"MessageID":"'${1}'"'
-        statusElement='"Status":"'${2}'"'
-        infoElement='"Info":"'${3}'"'
+        statusElement='"Status":"'${3}'"'
+        infoElement='"Info":"'${4}'"'
         messageBody="{$messageElement,$statusElement,$infoElement}"
         log "Message body is: $messageBody"
         aws sqs send-message --queue-url $RESPONSE_QUEUE \
@@ -37,7 +43,9 @@ sendStatus()
 deleteMessage()
 {
         log "Deleting message, receipt handler is $1"
-        aws sqs delete-message --queue-url $INCOMING_QUEUE --receipt-handle $1
+        QUEUE=$2
+
+        aws sqs delete-message --queue-url $QUEUE --receipt-handle $1
 }
 
 log()
@@ -100,17 +108,17 @@ putLogsToS3()
 
         copyLogs $1 $3
 
-        sendStatus $2 2 $filesCount
+        sendStatus $2 "$RESPONSE_STATUS_QUEUE" 2 $filesCount
 
         archiveLogs $2 $3
 
         tarsize="$(ls -ltr /tmp/$2.tar.gz | awk '{print $5}')"
-        sendStatus $2 3 $tarsize
+        sendStatus $2 "$RESPONSE_STATUS_QUEUE" 3 $tarsize
 
         uploadArchives $2
         deleteArchives $2
 
-        sendStatus $2 4 None
+        sendStatus $2 "$RESPONSE_STATUS_QUEUE" 4 None
         log "Handling of $2 completed"
 }
 
