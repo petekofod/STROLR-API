@@ -9,6 +9,9 @@ SCAC="${2,,}"
 MARK="${3^^}"
 LOCOID=$4
 
+ERROR_STATUS=1999
+END_STATUS=1998
+
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1001 None
 
 start_time=`date`
@@ -67,3 +70,4 @@ sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "RADIO EMP ADDRESS"
 
 sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "GOOD"
 
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" $END_STATUS None
