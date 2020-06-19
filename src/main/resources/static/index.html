@@ -259,22 +259,20 @@
                                 <tr>
                                     <td>IETMS Client</td>
                                     <td>
-                                        <span v-if="tab.status_data.GatewayInformation.showConnected" class="badge badge-success">
-                                         {{tab.status_data.GatewayInformation.ETMSClient}}
-                                        </span>
-                                        <span v-if="tab.status_data.GatewayInformation.showNotConnected" class="badge badge-danger">
-                                         {{tab.status_data.GatewayInformation.ETMSClient}}
+                                        <span class="badge"
+                                              v-if="tab.status_data.GatewayInformation.ETMSClient.length > 0"
+                                              v-bind:class="tab.status_data.GatewayInformation.ETMSConnected?'badge-success':'badge-danger'">
+                                            {{tab.status_data.GatewayInformation.ETMSClient}}
                                         </span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>MDM Client</td>
                                     <td>
-                                        <span v-if="tab.status_data.GatewayInformation.showConnectedMSC" class="badge badge-success">
-                                          {{tab.status_data.GatewayInformation.MDMClient}}
-                                        </span>
-                                        <span v-if="tab.status_data.GatewayInformation.showNotConnectedMSC" class="badge badge-danger">
-                                          {{tab.status_data.GatewayInformation.MDMClient}}
+                                        <span class="badge"
+                                              v-if="tab.status_data.GatewayInformation.MDMClient.length > 0"
+                                              v-bind:class="tab.status_data.GatewayInformation.MDMConnected?'badge-success':'badge-danger'">
+                                            {{tab.status_data.GatewayInformation.MDMClient}}
                                         </span>
                                     </td>
                                 </tr>
@@ -285,8 +283,8 @@
                                             <td>ATT ITCM Route</td>
                                             <td>
                                                 <span class="badge"
-                                                      v-if="tab.status_data.RouteInformation.ATTRoute.length == 0"
-                                                      v-bind:class="tab.status_data.RouteInformation.isATTStable?badge-success:badge-danger">
+                                                      v-if="tab.status_data.RouteInformation.ATTRoute.length > 0"
+                                                      v-bind:class="tab.status_data.RouteInformation.isATTStable?'badge-success':'badge-danger'">
                                                     {{tab.status_data.RouteInformation.ATTRoute}}
                                                 </span>
                                             </td>
@@ -299,8 +297,8 @@
                                             <td>Verizon ITCM Route</td>
                                             <td>
                                                 <span class="badge"
-                                                      v-if="tab.status_data.RouteInformation.VerizonRoute.length == 0"
-                                                      v-bind:class="tab.status_data.RouteInformation.isVerizonStable?badge-success:badge-danger">
+                                                      v-if="tab.status_data.RouteInformation.VerizonRoute.length > 0"
+                                                      v-bind:class="tab.status_data.RouteInformation.isVerizonStable?'badge-success':'badge-danger'">
                                                     {{tab.status_data.RouteInformation.VerizonRoute}}
                                                 </span>
                                             </td>

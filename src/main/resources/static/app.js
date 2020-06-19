@@ -49,11 +49,9 @@ var vue_det = new Vue({
     },
     methods: {
         setRequestType(value) {
-            console.log(value)
             this.form.RequestType = value
         },
         onSubmit(evt) {
-            console.log(this.form.RequestType)
             evt.preventDefault()
 
             var xhr = new XMLHttpRequest()
@@ -92,7 +90,6 @@ var vue_det = new Vue({
                                 sFilesCount: "Counting...", sTotalBytes: "Checking log file...", sLogRequestStatus: "Request STATUS submitted successfully"})
                         }
                         self.$nextTick(function () {
-                            console.log("Title of the new tab is " + title)
                             self.active_tab = title
                         });
                     } else {
@@ -197,18 +194,15 @@ var vue_det = new Vue({
         },
 
         checkResponse: function (ourMessageId) {
-            console.log("checkResponse.... with ourMessageId", ourMessageId)
              var xhr = new XMLHttpRequest()
                     var self = this
                     xhr.open('GET', 'status-update/' + ourMessageId)
                     xhr.onload = function () {
-                        console.log(" this is what is we have in response:", xhr.responseText)
                         if (xhr.readyState === 4) {
                             if (xhr.status === 200) {
                                 statusUpdate = JSON.parse(xhr.responseText)
                                 for (var i=0; i < self.tab_data_Array.length; i++) {
                                   if (self.tab_data_Array[i].messageId === ourMessageId) {
-                                      console.log("Updating info according to response result")
                                       self.tab_data_Array[i].showFooter = false
                                       if (statusUpdate.statusText) {
                                         self.tab_data_Array[i].status_data.Status = statusUpdate.statusText
@@ -259,24 +253,18 @@ var vue_det = new Vue({
                                       // gateway information
                                       if (statusUpdate.ETMSClient) {
                                          self.tab_data_Array[i].status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
-                                         if ( (statusUpdate.ETMSClient.toLowerCase()).includes("not connected") )
-                                           self.tab_data_Array[i].status_data.GatewayInformation.showNotConnected = true
-                                         else
-                                           self.tab_data_Array[i].status_data.GatewayInformation.showConnected = true
+                                         self.tab_data_Array[i].status_data.GatewayInformation.ETMSConnected = statusUpdate.ETMSClient.toLowerCase() === "connected"
                                       }
                                       if (statusUpdate.MDMClient)
                                       {
                                          self.tab_data_Array[i].status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
-                                         if ((statusUpdate.MDMClient.toLowerCase()).includes("not connected"))
-                                            self.tab_data_Array[i].status_data.GatewayInformation.showNotConnectedMSC = true
-                                         else
-                                            self.tab_data_Array[i].status_data.GatewayInformation.showConnectedMSC = true
+                                         self.tab_data_Array[i].status_data.GatewayInformation.MDMConnected = statusUpdate.MDMClient.toLowerCase() === "connected"
                                       }
 
                                       // route information
                                       if (statusUpdate.ATTRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.isATTStable = statusUpdate.VerizonRoute.toLowerCase() === "connected"
+                                         self.tab_data_Array[i].status_data.RouteInformation.isATTStable = statusUpdate.ATTRoute.toLowerCase() === "connected"
                                       }
                                       if (statusUpdate.ATTRouteTimestamp) {
                                          self.tab_data_Array[i].status_data.RouteInformation.ATTRouteTimestamp = statusUpdate.ATTRouteTimestamp
@@ -344,9 +332,7 @@ var vue_det = new Vue({
                                           self.tab_data_Array[i].sTotalBytes = statusUpdate.totalBytes
                                       if (statusUpdate.statusText)
                                          self.tab_data_Array[i].Status = statusUpdate.statusText
-                                      console.log("going to  check status")
                                       if (statusUpdate.end) {
-                                         console.log("stop the timer as the response has been processed")
                                          clearInterval(self.tab_data_Array[i].timer)
                                          if (self.tab_data_Array[i].isLogs)
                                             self.tab_data_Array[i].showLinks = true
@@ -397,12 +383,10 @@ var vue_det = new Vue({
            new_status_data.WifiInformation = wifi_info
 
            gate_info = {}
-           gate_info.ETMSClient= ""
-           gate_info.showConnected = false
-           gate_info.showNotConnected = false
-           gate_info.showConnectedMSC = false
-           gate_info.showNotConnectedMSC = false
+           gate_info.ETMSClient = ""
+           gate_info.ETMSConnected = false
            gate_info.MDMClient= ""
+           gate_info.MDMConnected = false
            new_status_data.GatewayInformation = gate_info
 
            route_info = {}
