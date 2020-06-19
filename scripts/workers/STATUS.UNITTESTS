@@ -1,0 +1,69 @@
+#!/bin/bash
+
+. ./functions-lib
+
+readConfig
+
+messageId=$1
+SCAC="${2,,}"
+MARK="${3^^}"
+LOCOID=$4
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1001 None
+
+start_time=`date`
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 "$start_time"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1003 "10.1.1.1"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1004 "10.1.1.1"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1005 None
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1006 "UNREACHABLE"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1007 "ONLINE"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
+# sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "NOT CONNECTED"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1009 "CONNECTED"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1010 "WIFI-SSID"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1011 "WIFI-ACCESSPOINT"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
+
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "UNREACHABLE"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "CONNECTED"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1013 "NOT CONNECTED"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "UNREACHABLE"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "CONNECTED"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1014 "NOT CONNECTED"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1015 None
+
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "NOT CONNECTED"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "CONNECTED"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1016 "UNSTABLE"
+sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1025 "ATT ROUTE"
+
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "NOT CONNECTED"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "CONNECTED"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1017 "UNSTABLE"
+sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1026 "VZW ROUTE"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "NOT CONNECTED"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1018 "CONNECTED"
+sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1027 "SPRINT ROUTE"
+
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "NOT CONNECTED"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1019 "CONNECTED"
+sendRouteTimestamp "${messageId}" "$RESPONSE_STATUS_QUEUE" 1028 "WiFi ROUTE"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "CONNECTED"
+#sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1020 "NOT CONNECTED"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1021 None
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1022 "RADIO ID"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1023 "RADIO EMP ADDRESS"
+
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1024 "GOOD"
+

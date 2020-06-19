@@ -1,4 +1,4 @@
-<html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 
 <head>
     <title>Rockwell Collins</title>
@@ -284,11 +284,10 @@
                                         <tr>
                                             <td>ATT ITCM Route</td>
                                             <td>
-                                                <span v-if="tab.status_data.RouteInformation.showConnected" class="badge badge-success">
-                                                     {{tab.status_data.RouteInformation.ATTRoute}}
-                                                </span>
-                                                <span v-if="tab.status_data.RouteInformation.showNotConnected" class="badge badge-danger">
-                                                     {{tab.status_data.RouteInformation.ATTRoute}}
+                                                <span class="badge"
+                                                      v-if="tab.status_data.RouteInformation.ATTRoute.length == 0"
+                                                      v-bind:class="tab.status_data.RouteInformation.isATTStable?badge-success:badge-danger">
+                                                    {{tab.status_data.RouteInformation.ATTRoute}}
                                                 </span>
                                             </td>
                                         </tr>
@@ -299,10 +298,9 @@
                                         <tr>
                                             <td>Verizon ITCM Route</td>
                                             <td>
-                                                <span v-if="tab.status_data.RouteInformation.showStable" class="badge badge-success">
-                                                    {{tab.status_data.RouteInformation.VerizonRoute}}
-                                                </span>
-                                                <span v-if="tab.status_data.RouteInformation.showNotStable" class="badge badge-danger">
+                                                <span class="badge"
+                                                      v-if="tab.status_data.RouteInformation.VerizonRoute.length == 0"
+                                                      v-bind:class="tab.status_data.RouteInformation.isVerizonStable?badge-success:badge-danger">
                                                     {{tab.status_data.RouteInformation.VerizonRoute}}
                                                 </span>
                                             </td>

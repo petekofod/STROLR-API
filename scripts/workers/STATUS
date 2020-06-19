@@ -111,6 +111,8 @@ ATT_SOURCE=10.102.10.37
 #KEY_PATH="/home/railwaynet/.ssh/id_rsa_rwn"
 JUMP_BOX_PORT=22
 JUMP_BOX_KEY_PATH="/home/railwaynet/amtktestkeys/sample"
+AOC_KEY=~/.ssh/aoc-itcmdh
+AOC_HOST=anpitcmdh01
 AMTK_KEY_STORE_PATH="./cml/keystore/b.amtk/b.amtk_keys"
 WAN_PORT=22222
 RED='\033[0;31m'
@@ -148,8 +150,9 @@ echo -e "${BLUE}################################################################
 echo -e "${BLUE}#######               START COPY RIGHT HERE                            #######${NC}"
 echo "                                                                              "
 echo -e "Locomotive:  \t\t\t $MARK-$LOCOID"
-echo -e "Test Time: \t\t\t" `date`
-sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 $(date)
+start_time=`date`
+echo -e "Test Time: \t\t\t" "$start_time"
+sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1002 "$start_time"
 echo -e "${MAGENTA}IP INFORMATION${NC}"
 exec 3<<< $(curl ${AIS_URL} -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"query ($id: LocoIdSelector!) {  locoById(locoId: $id) { empArea   modems { carrier  ipAddress { value}  }  }}","variables":{"id":{"engineNumber":"'${LOCOID}'","mark":"'${MARK}'"}}}' --compressed --silent)
 EMP_AREA=$(jq -e '.data.locoById.empArea' </proc/self/fd/3 | tr -d \")
@@ -199,9 +202,9 @@ if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
 	IW_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep ESSID'"
 	IA_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/iwconfig wlan0 | grep Access'"
 	IF_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
-	IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
-	IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
-	IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
+	IW_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $IW_EXEC`
+	IA_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $IA_EXEC`
+	IF_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $IF_EXEC`
 
 	echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
@@ -223,7 +226,7 @@ if [[ $ATT_OUTPUT = *'ONLINE'* ]]; then
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
 	AG_FLAG=TRUE
 	AG_EXEC="ssh -q -b $ATT_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_ATT 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
-	AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+	AG_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $AG_EXEC`
 	if [[ $AG_INPUT = "" ]]; then
     echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
     echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
@@ -257,9 +260,9 @@ if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
   IW_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep ESSID'"
   IA_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/iwconfig wlan0 | grep Access'"
   IF_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW '/sbin/ifconfig wlan0 | grep inet | grep -v inet6'"
-  IW_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IW_EXEC`
-  IA_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IA_EXEC`
-  IF_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $IF_EXEC`
+  IW_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $IW_EXEC`
+  IA_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $IA_EXEC`
+  IF_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $IF_EXEC`
 
   echo -e "${MAGENTA}WIFI CONFIGURATION${NC}"
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1008 None
@@ -280,7 +283,7 @@ if [[ $VZW_OUTPUT = *'ONLINE'* ]] && [[ $AG_FLAG = FALSE ]]; then
   sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1012 None
 
 	AG_EXEC="ssh -q -b $VZW_SOURCE -i /home/railwaynet/.ssh/id_rsa_rwn -p 22222 rwn@$IP_VZW 'netstat -anp 2>/dev/null | grep ESTABLISHED | grep -e 7001 -e 7002'"
-  AG_INPUT=`timeout 8s ssh -q -i /home/railwaynet/amtktestkeys/sample railwaynet@$JUMP_BOX $AG_EXEC`
+  AG_INPUT=`timeout 8s ssh -q -i "$JUMP_BOX_KEY_PATH" railwaynet@$JUMP_BOX $AG_EXEC`
   if [[ $AG_INPUT = "" ]]; then
     echo -e "${RED}IETMS Client \t\t\t [UNREACHABLE]${NC}"
     echo -e "${RED}MDM Client \t\t\t [UNREACHABLE]${NC}"
@@ -314,7 +317,7 @@ sendStatus "${messageId}" "$RESPONSE_STATUS_QUEUE" 1015 None
 
 #if [[ $SCAC = "amtk" ]]; then
 #  ITCMROUTE="$(ssh -i ~/.ssh/aoc-itcmdh aoc@anpitcmdh01 itcm-get-route-map -a 10.103.3.59:8000 -c 0 --timeout 60 --key-store-path ${AMTK_KEY_STORE_PATH} amtk.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.)"
-ITCMROUTE="$(ssh -i ~/.ssh/aoc-itcmdh aoc@anpitcmdh01 itcm-get-route-map -a 10.103.3.59:8000 -c 0 --timeout 60 --key-store-path ${AMTK_KEY_STORE_PATH} amtk.b.IS.0.MR.0 --remote-area  ${EMP_AREA})"
+ITCMROUTE="$(ssh -i $AOC_KEY aoc@$AOC_HOST itcm-get-route-map -a 10.103.3.59:8000 -c 0 --timeout 60 --key-store-path ${AMTK_KEY_STORE_PATH} amtk.b.IS.0.MR.0 --remote-area  ${EMP_AREA})"
 #else
 #  ITCMROUTE="$(oc rsh ${ag} itcm-get-route-map -a ${SCAC}-as-0:8000 -c 0 --key-store-path /etc/ITCM/key_store/b.${SCAC} ${SCAC}.b.IS.0.MR.0 | grep -C 5 l\.${SCAC}\.${MARK}+${LOCOID}\\.)"
 #fi
@@ -324,7 +327,7 @@ att_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("att"))')
 vzw_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("vzw"))')
 spr_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("spr"))')
 wifi_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("wifi"))')
-radio_route=$(echo $ITCMROUTE | jq '.[] | select(.route|endswith("Radio220"))')
+radio_route=$(echo $ITCMROUTE | jq '.[] | select(.route|contains("Radio220"))')
 
 if [ -z "$att_route" ]; then
   echo -e  "${RED}ATT ITCM route \t\t\t [NOT CONNECTED]${NC}"

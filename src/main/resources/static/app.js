@@ -276,10 +276,7 @@ var vue_det = new Vue({
                                       // route information
                                       if (statusUpdate.ATTRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
-                                         if ( (statusUpdate.ATTRoute.toLowerCase()).includes("not connected") )
-                                            self.tab_data_Array[i].status_data.RouteInformation.showNotConnected = true
-                                         else
-                                            self.tab_data_Array[i].status_data.RouteInformation.showConnected = true
+                                         self.tab_data_Array[i].status_data.RouteInformation.isATTStable = statusUpdate.VerizonRoute.toLowerCase() === "connected"
                                       }
                                       if (statusUpdate.ATTRouteTimestamp) {
                                          self.tab_data_Array[i].status_data.RouteInformation.ATTRouteTimestamp = statusUpdate.ATTRouteTimestamp
@@ -287,10 +284,7 @@ var vue_det = new Vue({
 
                                       if (statusUpdate.VerizonRoute){
                                          self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
-                                         if ( (statusUpdate.VerizonRoute.toLowerCase()).includes("unstable") )
-                                           self.tab_data_Array[i].status_data.RouteInformation.showNotStable = true
-                                         else
-                                           self.tab_data_Array[i].status_data.RouteInformation.showStable = true
+                                         self.tab_data_Array[i].status_data.RouteInformation.isVerizonStable = statusUpdate.VerizonRoute.toLowerCase() === "connected"
                                       }
                                       if (statusUpdate.VerizonRouteTimestamp) {
                                          self.tab_data_Array[i].status_data.RouteInformation.VerizonRouteTimestamp = statusUpdate.VerizonRouteTimestamp
@@ -422,10 +416,8 @@ var vue_det = new Vue({
            route_info.SprintRouteTimestamp=""
            route_info.WifiRouteTimestamp=""
            route_info.MHzRadioTimestamp=""
-           route_info.showConnected = false
-           route_info.showNotConnected = false
-           route_info.showStable= false
-           route_info.showNotStable= false
+           route_info.isATTStable = false
+           route_info.isVerizonStable = false
            route_info.showRouteConnected = false
            route_info.showRouteNotConnected = false
            route_info.showRadioConnected = false
