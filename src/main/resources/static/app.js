@@ -39,6 +39,7 @@ var vue_det = new Vue({
         isActive: false,
         tabName: '',
         active_tab: '',
+        plugins: []
     },
     created: function () {
         this.getUserName()
@@ -131,8 +132,12 @@ var vue_det = new Vue({
 
             xhr.open('GET', 'railroads.json')
             xhr.onload = function () {
-                dataSCAC = JSON.parse(xhr.responseText)
-                self.lstFullTree = self.lstFullTree.concat(dataSCAC.SCAC)
+                conf = JSON.parse(xhr.responseText)
+                self.lstFullTree = self.lstFullTree.concat(conf.SCAC)
+                if (conf.Plugins)
+                    conf.Plugins.forEach(function (item) {
+                      self.plugins.push(item)
+                    })
             }
             xhr.send()
         },

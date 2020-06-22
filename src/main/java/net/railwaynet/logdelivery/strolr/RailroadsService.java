@@ -65,6 +65,7 @@ public class RailroadsService {
         }
 
         logger.debug("JSON:" + result.get("SCAC").toString());
+        logger.debug("Plugins:" + result.get("Plugins").toString());
 
         return result;
     }

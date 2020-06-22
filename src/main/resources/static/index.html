@@ -145,8 +145,7 @@
                             <label class="col-sm-5 "> </label>
                             <div class="col">
                                 <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
-                                <!-- b-button type="submit" variant="primary" v-on:click="onGetStatus">Get System Status</b-button -->
-                                <b-button type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
+                                <b-button v-if="plugins.includes('STROS')" type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
