@@ -23,7 +23,7 @@ public class RailroadsService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static Map<String, ArrayList<Map<?, ?>>> allRailroads;
+    private static final Map<String, ArrayList<Map<?, ?>>> allRailroads;
 
     static {
         try {
