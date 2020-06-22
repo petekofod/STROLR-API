@@ -25,7 +25,14 @@ public class UsersController {
     @RequestMapping("/user.json")
     public String data(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting the user name");
+
+        if (currentUser == null) {
+            logger.error("Can't find the user name!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "User name is NULL!");
+        }
+
+        logger.debug("User name is " + currentUser.getUsername());
 
         Map<String, String> result = new HashMap<>();
         result.put("userName", currentUser.getUsername());
