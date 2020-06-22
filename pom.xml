@@ -76,7 +76,6 @@
 				<configuration>
 					<excludes>
 						<exclude>**/application.properties</exclude>
-						<outputDirectory>../build</outputDirectory>
 					</excludes>
 				</configuration>
 			</plugin>
