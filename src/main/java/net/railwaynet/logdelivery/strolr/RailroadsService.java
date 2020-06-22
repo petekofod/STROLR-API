@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -65,7 +64,10 @@ public class RailroadsService {
         }
 
         logger.debug("JSON:" + result.get("SCAC").toString());
-        logger.debug("Plugins:" + result.get("Plugins").toString());
+        if (result.containsKey("Plugins"))
+            logger.debug("Plugins:" + result.get("Plugins").toString());
+        else
+            logger.debug("No plugins installed for this user");
 
         return result;
     }
