@@ -359,9 +359,7 @@ var vue_det = new Vue({
            ipreach.ATTModemStatus = ""
            ipreach.VerizonModemStatus = ""
            ipreach.showConnectedVerizonConnected = false
-           ipreach.showConnectedVerizonNotConnected = false
            ipreach.showConnectedATTConnected = false
-           ipreach.showConnectedATTNotConnected = false
            new_status_data.IpReachability = ipreach
 
            wifi_info = {}
@@ -393,10 +391,7 @@ var vue_det = new Vue({
            route_info.isATTStable = false
            route_info.isVerizonStable = false
            route_info.showRouteConnected = false
-           route_info.showRouteNotConnected = false
            route_info.showRadioConnected = false
-           route_info.showRadioNotConnected = false
-           route_info.showSprintNotStable = false
            route_info.showSprintStable = false
            new_status_data.RouteInformation = route_info
 
@@ -409,7 +404,6 @@ var vue_det = new Vue({
            cell_status = {}
            cell_status.status = ""
            cell_status.showGood = false
-           cell_status.showBad = false
 
            new_status_data.CellStatus = cell_status
            return new_status_data;
