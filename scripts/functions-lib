@@ -35,7 +35,7 @@ sendStatus()
         infoElement='"Info":"'${4}'"'
         messageBody="{$messageElement,$statusElement,$infoElement}"
         log "Message body is: $messageBody"
-        aws sqs send-message --queue-url $RESPONSE_QUEUE \
+        aws sqs send-message --queue-url $QUEUE \
                 --message-body "$messageBody" \
                 --message-group-id $messageId >/dev/null
 }
