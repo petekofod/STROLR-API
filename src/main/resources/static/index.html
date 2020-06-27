@@ -216,10 +216,8 @@
                                 <tr>
                                      <td>ATT Modem Status</td>
                                      <td>
-                                         <span v-if="tab.status_data.IpReachability.showConnectedATTConnected" class="badge badge-success">
-                                          {{tab.status_data.IpReachability.ATTModemStatus}}
-                                         </span>
-                                         <span v-if="tab.status_data.IpReachability.showConnectedATTNotConnected" class="badge badge-danger">
+                                         <span v-if="tab.status_data.IpReachability.ATTModemStatus.length >0"
+                                               v-bind:class="tab.status_data.GatewayInformation.showConnectedATTConnected?'badge-success':'badge-danger'">
                                           {{tab.status_data.IpReachability.ATTModemStatus}}
                                          </span>
                                      </td>
@@ -227,10 +225,8 @@
                                 <tr>
                                      <td>Verizon Modem Status</td>
                                      <td>
-                                         <span v-if="tab.status_data.IpReachability.showConnectedVerizonConnected" class="badge badge-success">
-                                           {{tab.status_data.IpReachability.VerizonModemStatus}}
-                                         </span>
-                                         <span v-if="tab.status_data.IpReachability.showConnectedVerizonNotConnected" class="badge badge-danger">
+                                         <span v-if="tab.status_data.IpReachability.VerizonModemStatus.length >0"
+                                               v-bind:class="tab.status_data.IpReachability.showConnectedVerizonConnected?'badge-success':'badge-danger'">
                                            {{tab.status_data.IpReachability.VerizonModemStatus}}
                                          </span>
                                      </td>
@@ -309,10 +305,8 @@
                                         <tr>
                                             <td>Sprint ITCM Route</td>
                                             <td>
-                                                <span v-if="tab.status_data.RouteInformation.showSprintStable" class="badge badge-success">
-                                                    {{tab.status_data.RouteInformation.SprintRoute}}
-                                                </span>
-                                                <span v-if="tab.status_data.RouteInformation.showSprintNotStable" class="badge badge-danger">
+                                                <span v-if="tab.status_data.RouteInformation.SprintRoute.length >0"
+                                                      v-bind:class="tab.status_data.RouteInformation.showSprintStable?'badge-success':'badge-danger'">
                                                     {{tab.status_data.RouteInformation.SprintRoute}}
                                                 </span>
                                             </td>
@@ -324,10 +318,8 @@
                                        <tr>
                                            <td>Wifi ITCM Route</td>
                                            <td>
-                                               <span v-if="tab.status_data.RouteInformation.showRouteConnected" class="badge badge-success">
-                                                  {{tab.status_data.RouteInformation.WifiRoute}}
-                                               </span>
-                                               <span v-if="tab.status_data.RouteInformation.showRouteNotConnected" class="badge badge-danger">
+                                               <span v-if="tab.status_data.RouteInformation.WifiRoute.length >0"
+                                                     v-bind:class="tab.status_data.RouteInformation.showRouteConnected?'badge-success':'badge-danger'">
                                                   {{tab.status_data.RouteInformation.WifiRoute}}
                                                </span>
                                            </td>
@@ -339,10 +331,8 @@
                                        <tr>
                                            <td>220 MHz Radio</td>
                                            <td>
-                                               <span v-if="tab.status_data.RouteInformation.showRadioConnected" class="badge badge-success">
-                                                  {{tab.status_data.RouteInformation.MHzRadio}}
-                                               </span>
-                                               <span v-if="tab.status_data.RouteInformation.showRadioNotConnected" class="badge badge-danger">
+                                               <span v-if="tab.status_data.RouteInformation.MHzRadio.length >0"
+                                                     v-bind:class="tab.status_data.RouteInformation.showRadioConnected?'badge-success':'badge-danger'">
                                                   {{tab.status_data.RouteInformation.MHzRadio}}
                                                </span>
                                            </td>
@@ -365,10 +355,8 @@
                                     <tr>
                                         <td>Cell Status</td>
                                         <td>
-                                            <span v-if="tab.status_data.CellStatus.showGood" class="badge badge-success">
-                                              {{tab.status_data.CellStatus.status}}
-                                            </span>
-                                            <span v-if="tab.status_data.CellStatus.showBad" class="badge badge-danger">
+                                            <span v-if="tab.status_data.CellStatus.status.length >0"
+                                                  v-bind:class="tab.status_data.CellStatus.showGood?'badge-success':'badge-danger'">
                                               {{tab.status_data.CellStatus.status}}
                                             </span>
                                         </td>

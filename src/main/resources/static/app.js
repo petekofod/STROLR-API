@@ -228,27 +228,21 @@ var vue_det = new Vue({
                                       // Ip reachability
                                       if (statusUpdate.ATTModemStatus) {
                                          self.tab_data_Array[i].status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
-                                         if ( (statusUpdate.ATTModemStatus.toLowerCase()).includes("unreach") )
-                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedATTNotConnected = true
-                                         else
-                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedATTConnected = true
+                                         self.tab_data_Array[i].status_data.IpReachability.showConnectedATTNotConnected =
+                                             !statusUpdate.ATTModemStatus.toLowerCase().includes("unreach")
                                       }
                                       if (statusUpdate.VerizonModemStatus) {
                                          self.tab_data_Array[i].status_data.IpReachability.VerizonModemStatus = statusUpdate.VerizonModemStatus
-                                         if ( (statusUpdate.VerizonModemStatus.toLowerCase()).includes("online") )
-                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonConnected = true
-                                         else
-                                            self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonNotConnected = true
+                                         self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonConnected =
+                                             statusUpdate.VerizonModemStatus.toLowerCase().includes("online")
                                       }
 
                                       // Wifi information
                                       if (statusUpdate.WiFiClientStatus)
                                       {
                                          self.tab_data_Array[i].status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
-                                         if ( (statusUpdate.WiFiClientStatus.toLowerCase()).includes("not connected") )
-                                           self.tab_data_Array[i].status_data.WifiInformation.showNotConnected = true
-                                         else
-                                           self.tab_data_Array[i].status_data.WifiInformation.showConnected = true
+                                         self.tab_data_Array[i].status_data.WifiInformation.showConnected =
+                                             !statusUpdate.WiFiClientStatus.toLowerCase().includes("not connected")
                                       }
                                       if (statusUpdate.ClientId)
                                          self.tab_data_Array[i].status_data.WifiInformation.ClientId = statusUpdate.ClientId
@@ -285,10 +279,8 @@ var vue_det = new Vue({
 
                                       if (statusUpdate.SprintRoute){
                                          self.tab_data_Array[i].status_data.RouteInformation.SprintRoute = statusUpdate.SprintRoute
-                                         if ( (statusUpdate.SprintRoute.toLowerCase()).includes("not connected") )
-                                           self.tab_data_Array[i].status_data.RouteInformation.showSprintNotStable = true
-                                         else
-                                           self.tab_data_Array[i].status_data.RouteInformation.showSprintStable = true
+                                         self.tab_data_Array[i].status_data.RouteInformation.showSprintStable =
+                                              !statusUpdate.SprintRoute.toLowerCase().includes("not connected")
                                       }
                                       if (statusUpdate.SprintRouteTimestamp) {
                                          self.tab_data_Array[i].status_data.RouteInformation.SprintRouteTimestamp = statusUpdate.SprintRouteTimestamp
@@ -296,10 +288,8 @@ var vue_det = new Vue({
 
                                       if (statusUpdate.WifiRoute) {
                                          self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
-                                         if ((statusUpdate.WifiRoute.toLowerCase()).includes("not connected"))
-                                            self.tab_data_Array[i].status_data.RouteInformation.showRouteNotConnected = true
-                                         else
-                                            self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected = true
+                                         self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected =
+                                            !statusUpdate.WifiRoute.toLowerCase().includes("not connected")
                                       }
                                       if (statusUpdate.WiFiRouteTimestamp) {
                                          self.tab_data_Array[i].status_data.RouteInformation.WiFiRouteTimestamp = statusUpdate.WiFiRouteTimestamp
@@ -307,10 +297,8 @@ var vue_det = new Vue({
 
                                       if (statusUpdate.MHzRadio) {
                                          self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
-                                         if ( !(statusUpdate.MHzRadio.toLowerCase()).includes("not connected") )
-                                           self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected = true
-                                         else
-                                           self.tab_data_Array[i].status_data.RouteInformation.showRadioNotConnected = true
+                                         self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected =
+                                             !statusUpdate.MHzRadio.toLowerCase().includes("not connected")
                                       }
                                       if (statusUpdate.RadioRouteTimestamp) {
                                          self.tab_data_Array[i].status_data.RouteInformation.RadioRouteTimestamp = statusUpdate.RadioRouteTimestamp
@@ -324,10 +312,7 @@ var vue_det = new Vue({
 
                                       if (statusUpdate.CellStatus) {
                                          self.tab_data_Array[i].status_data.CellStatus.status = statusUpdate.CellStatus
-                                         if ( statusUpdate.CellStatus.toLowerCase().includes("good") )
-                                           self.tab_data_Array[i].status_data.CellStatus.showGood = true
-                                         else
-                                           self.tab_data_Array[i].status_data.CellStatus.showBad = true
+                                         self.tab_data_Array[i].status_data.CellStatus.showGood = statusUpdate.CellStatus.toLowerCase().includes("good")
                                       }
 
                                       // logs information
@@ -374,9 +359,7 @@ var vue_det = new Vue({
            ipreach.ATTModemStatus = ""
            ipreach.VerizonModemStatus = ""
            ipreach.showConnectedVerizonConnected = false
-           ipreach.showConnectedVerizonNotConnected = false
            ipreach.showConnectedATTConnected = false
-           ipreach.showConnectedATTNotConnected = false
            new_status_data.IpReachability = ipreach
 
            wifi_info = {}
@@ -408,10 +391,7 @@ var vue_det = new Vue({
            route_info.isATTStable = false
            route_info.isVerizonStable = false
            route_info.showRouteConnected = false
-           route_info.showRouteNotConnected = false
            route_info.showRadioConnected = false
-           route_info.showRadioNotConnected = false
-           route_info.showSprintNotStable = false
            route_info.showSprintStable = false
            new_status_data.RouteInformation = route_info
 
@@ -424,7 +404,6 @@ var vue_det = new Vue({
            cell_status = {}
            cell_status.status = ""
            cell_status.showGood = false
-           cell_status.showBad = false
 
            new_status_data.CellStatus = cell_status
            return new_status_data;
