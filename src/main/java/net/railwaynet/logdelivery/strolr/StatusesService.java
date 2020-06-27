@@ -19,10 +19,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class StatusesService {
@@ -81,7 +78,7 @@ public class StatusesService {
         return STATUS_QUEUE_URL;
     }
 
-    private final Map<String, Map<String, String>> statusUpdates = new HashMap<>();
+    private final Map<String, List<Map<String, String>>> statusUpdates = new HashMap<>();
 
     private void checkQueue(String queueUrl) {
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl)
@@ -278,23 +275,39 @@ public class StatusesService {
         logger.debug("Adding status for " + messageId);
         logger.debug("Status text is " + statusText);
         if (statusUpdates.containsKey(messageId)) {
-            logger.debug("Adding new fields to the existing record");
-            Map<String, String> existingStatus = statusUpdates.get(messageId);
-            String combinedStatus = existingStatus.get(STATUS_TEXT) + ";" + status.get(STATUS_TEXT);
-            logger.debug("Updating old status with combined status: " + combinedStatus);
-            status.put(STATUS_TEXT, combinedStatus);
-            status.forEach((key,value) -> existingStatus.merge(key, value, (v1, v2) -> v2));
+            logger.debug("Adding new status to the existing messages basket");
+            statusUpdates.get(messageId).add(status);
         } else {
-            statusUpdates.put(messageId, status);
+            logger.debug("Adding new messages basket with the new status update");
+            List<Map <String, String>> statusBasket = new LinkedList<>();
+            statusBasket.add(status);
+            statusUpdates.put(messageId, statusBasket);
         }
     }
 
     synchronized public String getStatus(String messageId) throws JsonProcessingException {
-        if (!statusUpdates.containsKey(messageId))
+        if (!statusUpdates.containsKey(messageId)) {
+            logger.debug("No messages found for " + messageId);
             return null;
-        Map<String, String> status = statusUpdates.get(messageId);
-        logger.debug("Removing status for MessageID = " + messageId);
-        statusUpdates.remove(messageId);
+        }
+
+        List<Map<String, String>> statusBasket = statusUpdates.get(messageId);
+        logger.debug("Found messages basket for messageId " + messageId);
+        logger.debug("Number of messages: " + statusBasket.size());
+
+        if (statusBasket.size() == 0) {
+            logger.warn("Unexpected empty messages basket found! Removing it.");
+            statusUpdates.remove(messageId);
+            return null;
+        }
+
+        Map<String, String> status = statusBasket.remove(0);
+
+        if (statusBasket.size() == 0) {
+            logger.debug("Removing empty messages basket.");
+            statusUpdates.remove(messageId);
+        }
+
         return getObjectMapper().writeValueAsString(status);
     }
 }
