@@ -36,6 +36,7 @@ public class StatusesService {
     private AmazonSQS SQS = null;
     private String LOG_QUEUE_URL = null;
     private String STATUS_QUEUE_URL = null;
+    private String BACKOFFICE_QUEUE_URL = null;
 
     private void init() {
         objectMapper = JsonMapper.builder().enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).build();
@@ -52,6 +53,9 @@ public class StatusesService {
         String statusQueueName = Objects.requireNonNull(env.getProperty("status.response.queue.name"));
         logger.info("Initialing status response queue: " + statusQueueName);
         STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
+        String backofficeQueueName = Objects.requireNonNull(env.getProperty("backoffice.response.queue.name"));
+        logger.info("Initialing backoffice response queue: " + backofficeQueueName);
+        BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
     }
 
     private ObjectMapper getObjectMapper() {
@@ -76,6 +80,12 @@ public class StatusesService {
         if (STATUS_QUEUE_URL == null)
             init();
         return STATUS_QUEUE_URL;
+    }
+
+    private String getBackofficeQueueUrl() {
+        if (BACKOFFICE_QUEUE_URL == null)
+            init();
+        return BACKOFFICE_QUEUE_URL;
     }
 
     private final Map<String, List<Map<String, String>>> statusUpdates = new HashMap<>();
@@ -107,6 +117,9 @@ public class StatusesService {
 
             logger.info("Checking for new messages in status queue");
             checkQueue(getStatusQueueUrl());
+
+            logger.info("Checking for new messages in backoffice queue");
+            checkQueue(getBackofficeQueueUrl());
         }
     }
 
@@ -132,6 +145,7 @@ public class StatusesService {
     synchronized public void putStatus(String messageId, Map<String, String> status) {
         String statusText;
         switch (status.get("Status")) {
+            // Logs Retrieval statuses
             case "1":
                 statusText = "Request is being processed";
                 break;
@@ -150,6 +164,7 @@ public class StatusesService {
             case "1001":
                 statusText = "Verifying SCAC and MARK";
                 break;
+            // Locomotive statuses
             case "1002":
                 statusText = "Looking for the locomotive";
                 status.put("TestTime", status.get(INFO_ATTR));
@@ -262,6 +277,22 @@ public class StatusesService {
                 status.put("end", "1");
                 break;
             case "1999":
+                statusText = "An error detected";
+                status.put("error", status.get(INFO_ATTR));
+                status.put("end", "1");
+                break;
+            // Back office statuses
+            case "2000":
+                statusText = status.get(INFO_ATTR);
+                logger.debug("Next backoffice status update: " + statusText);
+                break;
+            case "2001":
+                statusText = status.get(INFO_ATTR);
+                logger.debug("Backoffice request completed successfully");
+                status.put("end", "1");
+                break;
+            case "2002":
+                logger.debug("Fatal error of backoffice request: " + status.get(INFO_ATTR));
                 statusText = "An error detected";
                 status.put("error", status.get(INFO_ATTR));
                 status.put("end", "1");

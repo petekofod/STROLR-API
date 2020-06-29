@@ -57,6 +57,7 @@ public class RequestsController {
     private AmazonSQS SQS;
     private String QUEUE_URL;
     private String STATUS_QUEUE_URL;
+    private String BACKOFFICE_QUEUE_URL;
 
     @Autowired
     private StatusesService statusesService;
@@ -71,10 +72,13 @@ public class RequestsController {
                 .build();
         String queueName = Objects.requireNonNull(env.getProperty("request.queue.name"));
         String statusQueueName = Objects.requireNonNull(env.getProperty("status.request.queue.name"));
+        String backofficeQueueName = Objects.requireNonNull(env.getProperty("backoffice.request.queue.name"));
         logger.info("Initialing request queue: " + queueName);
         QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
         logger.info("Initialing status request queue: " + statusQueueName);
         STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
+        logger.info("Initialing backoffice request queue: " + backofficeQueueName);
+        BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
     }
 
     private AmazonSQS getSQS() {
@@ -93,6 +97,12 @@ public class RequestsController {
         if (STATUS_QUEUE_URL == null)
             init();
         return STATUS_QUEUE_URL;
+    }
+
+    private String getBackofficeQueueUrl() {
+        if (BACKOFFICE_QUEUE_URL == null)
+            init();
+        return BACKOFFICE_QUEUE_URL;
     }
 
     private String sendRequest (final Map<String, String> payloadMap, UserDetails currentUser, String queue) {
@@ -178,6 +188,11 @@ public class RequestsController {
         return sendRequest(payloadMap, currentUser, getStatusQueueUrl());
     }
 
+    private String sendBackofficeRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+        logger.info("Handling backoffice status request");
+        return sendRequest(payloadMap, currentUser, getBackofficeQueueUrl());
+    }
+
     @RequestMapping(
             value = "/data-request",
             method = RequestMethod.POST)
@@ -213,6 +228,9 @@ public class RequestsController {
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-status"))
             return sendStatusRequest(payloadMap, currentUser);
+
+        if (payloadMap.get(REQUEST_TYPE).equals("get-backoffice"))
+            return sendBackofficeRequest(payloadMap, currentUser);
 
         logger.error("Unknown request type!");
         throw new ResponseStatusException(
