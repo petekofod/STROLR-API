@@ -284,7 +284,7 @@ public class StatusesService {
             // Back office statuses
             case "2000":
                 statusText = status.get(INFO_ATTR);
-                logger.debug("Next backoffice status update: " + statusText);
+                logger.debug("Backoffice status update: " + statusText);
                 break;
             case "2001":
                 statusText = status.get(INFO_ATTR);
@@ -292,10 +292,8 @@ public class StatusesService {
                 status.put("end", "1");
                 break;
             case "2002":
-                logger.debug("Fatal error of backoffice request: " + status.get(INFO_ATTR));
-                statusText = "An error detected";
-                status.put("error", status.get(INFO_ATTR));
-                status.put("end", "1");
+                logger.debug("Error in backoffice request: " + status.get(INFO_ATTR));
+                statusText = status.get(INFO_ATTR);
                 break;
             default:
                 statusText = "";

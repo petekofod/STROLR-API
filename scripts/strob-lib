@@ -1,0 +1,92 @@
+sendSTROBStatus()
+{
+  sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2000" "$1;$2;;$3"
+}
+
+sendSTROBError()
+{
+  sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2002" "$1"
+}
+
+sendSTROBEnd()
+{
+  sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2001"
+}
+
+checkServers()
+{
+  local title=$1
+  shift
+  local key_file=$1
+  shift
+  local server_type=$1
+  shift
+  local remote_script=$1
+  shift
+  local ip_addresses=("$@")
+
+  local script_output
+  local server_count=1
+
+  echo -e "${MAGENTA}$title${NC}"
+  for i in "${ip_addresses[@]}"
+  do
+    if [ "$STROB_DEBUG" = "yes" ]; then
+      script_output="OK"
+    else
+      script_output=$(ssh -i "$key_file" railwaynet@"$i" "$remote_script")
+    fi
+
+    if [[ $script_output = *"CRITICAL"* ]]; then
+      echo -e "${RED}$server_type $server_count: \t\t\t\t [CRITICAL]${NC}"
+      sendSTROBStatus "$server_type" "$server_count" "CRITICAL"
+      ERROR_TEXT="$ERROR_TEXT$script_output \n"
+      sendSTROBError "$script_output"
+    elif [[ $script_output = *"WARNING"* ]]; then
+      echo -e "${ORANGE}$server_type $server_count: \t\t\t\t [WARNING]${NC}"
+      sendSTROBStatus "$server_type" "$server_count" "WARNING"
+      ERROR_TEXT="$ERROR_TEXT$script_output \n"
+      sendSTROBError "$script_output"
+    elif [[ $script_output = *"OK"* ]]; then
+      echo -e "${GREEN}$server_type $server_count: \t\t\t\t [OK]${NC}"
+      sendSTROBStatus "$server_type" "$server_count" "OK"
+    fi
+    ((server_count++))
+  done
+}
+
+checkAWSServers()
+{
+  local title=$1
+  shift
+  local key_file=$1
+  shift
+  local server_type=$1
+  shift
+  local remote_script=$1
+  shift
+  local ip_addresses=("$@")
+
+  local script_output
+  local server_count=1
+
+  echo -e "${MAGENTA}$title${NC}"
+  for i in "${ip_addresses[@]}"
+  do
+    if [ "$STROB_DEBUG" = "yes" ]; then
+      script_output="OK"
+    else
+      script_output=$(ssh -q -i "$key_file" railwaynet@"$i" "$remote_script")
+    fi
+    if [[ $script_output = *"Bad"* ]]; then
+      echo -e "${RED}$server_type $server_count KeepAlive: \t\t [CRITICAL]${NC}"
+      sendSTROBStatus "$server_type" "$server_count" "CRITICAL"
+      ERROR_TEXT="$ERROR_TEXT$script_output \n"
+      sendSTROBError "$script_output"
+    elif [[ $script_output = *"Good"* ]]; then
+      echo -e "${GREEN}$server_type $server_count KeepAlive: \t\t [OK]${NC}"
+      sendSTROBStatus "$server_type" "$server_count" "OK"
+    fi
+    ((server_count++))
+  done
+}
