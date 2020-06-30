@@ -1,5 +1,6 @@
 sendSTROBStatus()
 {
+  # shellcheck disable=SC2154
   sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2000" "$1;$2;;$3"
 }
 
@@ -11,6 +12,11 @@ sendSTROBError()
 sendSTROBEnd()
 {
   sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2001"
+}
+
+sendSTROBHeader()
+{
+  sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2003" "$1"
 }
 
 checkServers()
@@ -29,6 +35,8 @@ checkServers()
   local server_count=1
 
   echo -e "${MAGENTA}$title${NC}"
+  sendSTROBHeader "$title"
+
   for i in "${ip_addresses[@]}"
   do
     if [ "$STROB_DEBUG" = "yes" ]; then
@@ -50,6 +58,8 @@ checkServers()
     elif [[ $script_output = *"OK"* ]]; then
       echo -e "${GREEN}$server_type $server_count: \t\t\t\t [OK]${NC}"
       sendSTROBStatus "$server_type" "$server_count" "OK"
+    else
+      sendSTROBError "Wrong response from backoffice script"
     fi
     ((server_count++))
   done
@@ -71,10 +81,12 @@ checkAWSServers()
   local server_count=1
 
   echo -e "${MAGENTA}$title${NC}"
+  sendSTROBHeader "$title"
+
   for i in "${ip_addresses[@]}"
   do
     if [ "$STROB_DEBUG" = "yes" ]; then
-      script_output="OK"
+      script_output="Bad"
     else
       script_output=$(ssh -q -i "$key_file" railwaynet@"$i" "$remote_script")
     fi
@@ -86,6 +98,8 @@ checkAWSServers()
     elif [[ $script_output = *"Good"* ]]; then
       echo -e "${GREEN}$server_type $server_count KeepAlive: \t\t [OK]${NC}"
       sendSTROBStatus "$server_type" "$server_count" "OK"
+    else
+      sendSTROBError "Wrong response from backoffice script"
     fi
     ((server_count++))
   done

@@ -295,6 +295,10 @@ public class StatusesService {
                 logger.debug("Error in backoffice request: " + status.get(INFO_ATTR));
                 statusText = status.get(INFO_ATTR);
                 break;
+            case "2003":
+                logger.debug("Backoffice header: " + status.get(INFO_ATTR));
+                statusText = status.get(INFO_ATTR);
+                break;
             default:
                 statusText = "";
                 logger.warn("Unknown status of the message! Status = " + status);

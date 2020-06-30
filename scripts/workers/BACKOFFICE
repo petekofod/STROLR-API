@@ -23,7 +23,7 @@ echo -e "${BLUE}################################################################
 echo -e "${BLUE}#######               START COPY RIGHT HERE                            #######${NC}"
 echo ""
 
-if [ "$SCAC" = "AMTK" ]; then
+if [ "$SCAC" = "amtk" ]; then
 
   checkServers \
     "CIBOS System Status" \
