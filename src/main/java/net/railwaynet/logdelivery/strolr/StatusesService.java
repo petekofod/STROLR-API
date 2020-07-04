@@ -37,6 +37,7 @@ public class StatusesService {
     private String LOG_QUEUE_URL = null;
     private String STATUS_QUEUE_URL = null;
     private String BACKOFFICE_QUEUE_URL = null;
+    private String FEDERATION_QUEUE_URL = null;
 
     private void init() {
         objectMapper = JsonMapper.builder().enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).build();
@@ -48,14 +49,17 @@ public class StatusesService {
                 .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
                 .build();
         String logQueueName = Objects.requireNonNull(env.getProperty("response.queue.name"));
-        logger.info("Initialing logs response queue: " + logQueueName);
+        logger.info("Creating logs response queue: " + logQueueName);
         LOG_QUEUE_URL = SQS.getQueueUrl(logQueueName).getQueueUrl();
         String statusQueueName = Objects.requireNonNull(env.getProperty("status.response.queue.name"));
-        logger.info("Initialing status response queue: " + statusQueueName);
+        logger.info("Creating status response queue: " + statusQueueName);
         STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
         String backofficeQueueName = Objects.requireNonNull(env.getProperty("backoffice.response.queue.name"));
-        logger.info("Initialing backoffice response queue: " + backofficeQueueName);
+        logger.info("Creating backoffice response queue: " + backofficeQueueName);
         BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
+        String federationQueueName = Objects.requireNonNull(env.getProperty("federation.response.queue.name"));
+        logger.info("Creating federation response queue: " + federationQueueName);
+        FEDERATION_QUEUE_URL = SQS.getQueueUrl(federationQueueName).getQueueUrl();
     }
 
     private ObjectMapper getObjectMapper() {
@@ -86,6 +90,12 @@ public class StatusesService {
         if (BACKOFFICE_QUEUE_URL == null)
             init();
         return BACKOFFICE_QUEUE_URL;
+    }
+
+    private String getFederationQueueUrl() {
+        if (FEDERATION_QUEUE_URL == null)
+            init();
+        return FEDERATION_QUEUE_URL;
     }
 
     private final Map<String, List<Map<String, String>>> statusUpdates = new HashMap<>();
@@ -120,6 +130,9 @@ public class StatusesService {
 
             logger.info("Checking for new messages in backoffice queue");
             checkQueue(getBackofficeQueueUrl());
+
+            logger.info("Checking for new messages in federation queue");
+            checkQueue(getFederationQueueUrl());
         }
     }
 
@@ -302,6 +315,20 @@ public class StatusesService {
             default:
                 statusText = "";
                 logger.warn("Unknown status of the message! Status = " + status);
+            // Federation statuses
+            case "3000":
+                statusText = status.get(INFO_ATTR);
+                logger.debug("Federation status update: " + statusText);
+                break;
+            case "3001":
+                statusText = status.get(INFO_ATTR);
+                logger.debug("Federation request completed successfully");
+                status.put("end", "1");
+                break;
+            case "3003":
+                logger.debug("Federation header: " + status.get(INFO_ATTR));
+                statusText = status.get(INFO_ATTR);
+                break;
         }
         status.put(STATUS_TEXT, statusText);
         status.remove(INFO_ATTR);

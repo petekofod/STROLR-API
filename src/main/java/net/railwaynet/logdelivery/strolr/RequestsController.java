@@ -58,6 +58,7 @@ public class RequestsController {
     private String QUEUE_URL;
     private String STATUS_QUEUE_URL;
     private String BACKOFFICE_QUEUE_URL;
+    private String FEDERATION_QUEUE_URL;
 
     @Autowired
     private StatusesService statusesService;
@@ -73,12 +74,15 @@ public class RequestsController {
         String queueName = Objects.requireNonNull(env.getProperty("request.queue.name"));
         String statusQueueName = Objects.requireNonNull(env.getProperty("status.request.queue.name"));
         String backofficeQueueName = Objects.requireNonNull(env.getProperty("backoffice.request.queue.name"));
+        String federationQueueName = Objects.requireNonNull(env.getProperty("federation.request.queue.name"));
         logger.info("Initialing request queue: " + queueName);
         QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
         logger.info("Initialing status request queue: " + statusQueueName);
         STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
         logger.info("Initialing backoffice request queue: " + backofficeQueueName);
         BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
+        logger.info("Initialing federation request queue: " + federationQueueName);
+        FEDERATION_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
     }
 
     private AmazonSQS getSQS() {
@@ -103,6 +107,12 @@ public class RequestsController {
         if (BACKOFFICE_QUEUE_URL == null)
             init();
         return BACKOFFICE_QUEUE_URL;
+    }
+
+    private String getFederationQueueUrl() {
+        if (FEDERATION_QUEUE_URL == null)
+            init();
+        return FEDERATION_QUEUE_URL;
     }
 
     private String sendRequest (final Map<String, String> payloadMap, UserDetails currentUser, String queue) {
@@ -183,14 +193,19 @@ public class RequestsController {
         return sendRequest(payloadMap, currentUser, getQueueUrl());
     }
 
-    private String sendStatusRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendStatusRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling locomotive status request");
         return sendRequest(payloadMap, currentUser, getStatusQueueUrl());
     }
 
-    private String sendBackofficeRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendBackofficeRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling backoffice status request");
         return sendRequest(payloadMap, currentUser, getBackofficeQueueUrl());
+    }
+
+    private String sendFederationRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
+        logger.info("Handling federation status request");
+        return sendRequest(payloadMap, currentUser, getFederationQueueUrl());
     }
 
     @RequestMapping(
@@ -231,6 +246,9 @@ public class RequestsController {
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-backoffice"))
             return sendBackofficeRequest(payloadMap, currentUser);
+
+        if (payloadMap.get(REQUEST_TYPE).equals("get-federation"))
+            return sendFederationRequest(payloadMap, currentUser);
 
         logger.error("Unknown request type!");
         throw new ResponseStatusException(

@@ -146,7 +146,7 @@
                             <div class="col">
                                 <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
                                 <b-button v-if="plugins.includes('STROS')" type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
-                                <b-button type="submit" v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice Status</b-button>
+                                <b-button v-if="plugins.includes('STROB')" type="submit" v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice Status</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
@@ -217,7 +217,8 @@
                                 <tr>
                                      <td>ATT Modem Status</td>
                                      <td>
-                                         <span v-if="tab.status_data.IpReachability.ATTModemStatus.length >0"
+                                         <span class="badge"
+                                               v-if="tab.status_data.IpReachability.ATTModemStatus.length >0"
                                                v-bind:class="tab.status_data.GatewayInformation.showConnectedATTConnected?'badge-success':'badge-danger'">
                                           {{tab.status_data.IpReachability.ATTModemStatus}}
                                          </span>
@@ -226,7 +227,8 @@
                                 <tr>
                                      <td>Verizon Modem Status</td>
                                      <td>
-                                         <span v-if="tab.status_data.IpReachability.VerizonModemStatus.length >0"
+                                         <span class="badge"
+                                               v-if="tab.status_data.IpReachability.VerizonModemStatus.length >0"
                                                v-bind:class="tab.status_data.IpReachability.showConnectedVerizonConnected?'badge-success':'badge-danger'">
                                            {{tab.status_data.IpReachability.VerizonModemStatus}}
                                          </span>
@@ -306,7 +308,8 @@
                                         <tr>
                                             <td>Sprint ITCM Route</td>
                                             <td>
-                                                <span v-if="tab.status_data.RouteInformation.SprintRoute.length >0"
+                                                <span class="badge"
+                                                      v-if="tab.status_data.RouteInformation.SprintRoute.length >0"
                                                       v-bind:class="tab.status_data.RouteInformation.showSprintStable?'badge-success':'badge-danger'">
                                                     {{tab.status_data.RouteInformation.SprintRoute}}
                                                 </span>
@@ -319,7 +322,8 @@
                                        <tr>
                                            <td>Wifi ITCM Route</td>
                                            <td>
-                                               <span v-if="tab.status_data.RouteInformation.WifiRoute.length >0"
+                                               <span class="badge"
+                                                     v-if="tab.status_data.RouteInformation.WifiRoute.length >0"
                                                      v-bind:class="tab.status_data.RouteInformation.showRouteConnected?'badge-success':'badge-danger'">
                                                   {{tab.status_data.RouteInformation.WifiRoute}}
                                                </span>
@@ -332,7 +336,8 @@
                                        <tr>
                                            <td>220 MHz Radio</td>
                                            <td>
-                                               <span v-if="tab.status_data.RouteInformation.MHzRadio.length >0"
+                                               <span class="badge"
+                                                     v-if="tab.status_data.RouteInformation.MHzRadio.length >0"
                                                      v-bind:class="tab.status_data.RouteInformation.showRadioConnected?'badge-success':'badge-danger'">
                                                   {{tab.status_data.RouteInformation.MHzRadio}}
                                                </span>
@@ -356,7 +361,8 @@
                                     <tr>
                                         <td>Cell Status</td>
                                         <td>
-                                            <span v-if="tab.status_data.CellStatus.status.length >0"
+                                            <span class="badge"
+                                                  v-if="tab.status_data.CellStatus.status.length >0"
                                                   v-bind:class="tab.status_data.CellStatus.showGood?'badge-success':'badge-danger'">
                                               {{tab.status_data.CellStatus.status}}
                                             </span>
