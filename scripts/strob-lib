@@ -4,6 +4,12 @@ sendSTROBStatus()
   sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2000" "$1;$2;;$3"
 }
 
+sendSTROBAWSStatus()
+{
+  # shellcheck disable=SC2154
+  sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2000" "$1;$2;KeepAlive;$3"
+}
+
 sendSTROBError()
 {
   sendStatus "${messageId}" "$RESPONSE_BACKOFFICE_QUEUE" "2002" "$1"
@@ -92,12 +98,12 @@ checkAWSServers()
     fi
     if [[ $script_output = *"Bad"* ]]; then
       echo -e "${RED}$server_type $server_count KeepAlive: \t\t [CRITICAL]${NC}"
-      sendSTROBStatus "$server_type" "$server_count" "CRITICAL"
+      sendSTROBAWSStatus "$server_type" "$server_count" "CRITICAL"
       ERROR_TEXT="$ERROR_TEXT$script_output \n"
       sendSTROBError "$script_output"
     elif [[ $script_output = *"Good"* ]]; then
       echo -e "${GREEN}$server_type $server_count KeepAlive: \t\t [OK]${NC}"
-      sendSTROBStatus "$server_type" "$server_count" "OK"
+      sendSTROBAWSStatus "$server_type" "$server_count" "OK"
     else
       sendSTROBError "Wrong response from backoffice script"
     fi

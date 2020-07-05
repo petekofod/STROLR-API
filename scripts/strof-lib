@@ -1,0 +1,15 @@
+sendSTROFStatus()
+{
+  # shellcheck disable=SC2154
+  sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$1;$2;;$3"
+}
+
+sendSTROBEnd()
+{
+  sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3001"
+}
+
+sendSTROBHeader()
+{
+  sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3003" "$1"
+}

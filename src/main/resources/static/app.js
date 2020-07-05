@@ -52,6 +52,8 @@ var vue_det = new Vue({
 
             var xhr = new XMLHttpRequest()
             var self = this
+            var requestSCACMark = self.form.SCACMark
+            var requestLocoID = self.form.LocoID
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
@@ -65,14 +67,16 @@ var vue_det = new Vue({
                         var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
 
                         if (self.form.RequestType == "get-status") {
-                            var title = "(" + index + ") " + self.form.SCACMark + " " + self.form.LocoID + " status"
+                            var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " status"
                             var tabItem = createStatusTab(title, index, self.form, messageId, timer)
                         } else if (self.form.RequestType == "get-logs") {
-                            var title = "(" + index + ") " + self.form.SCACMark + " " + self.form.LocoID + " logs"
+                            var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " logs"
                             var tabItem = createLogsTab(title, index, self.form, messageId, timer)
                         } else if (self.form.RequestType == "get-backoffice") {
-                            var title = "(" + index + ") " + self.form.SCACMark + " office"
+                            var title = "(" + index + ") " + requestSCACMark + " office"
                             var tabItem = createOfficeTab(title, index, self.form, messageId, timer)
+                            // Send additional request to get Federation status
+                            // self.sendFederationRequest(requestSCACMark, messageId)
                         } else {
                             console.error("Unknown type of request!")
                             return
@@ -90,6 +94,41 @@ var vue_det = new Vue({
                 }
             }
             xhr.send(JSON.stringify(this.form))
+        },
+        sendFederationRequest(SCACMark, officeMessageId) {
+            var xhr = new XMLHttpRequest()
+            xhr.open('POST', 'data-request')
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+            xhr.onload = async function () {
+                if (xhr.readyState !== 4)
+                    return
+                if (xhr.status === 200) {
+                    var messageId = xhr.responseText
+                    var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
+                    addFederationInfo(messageId, officeMessageId, timer)
+                } else {
+                    var errorMessage = JSON.parse(xhr.responseText).message
+                    self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                    console.error('error - ' + errorMessage)
+                }
+            }
+
+            var param = {
+                RequestType: "get-federation",
+                SCACMark: SCACMark,
+            }
+
+            xhr.send(JSON.stringify(param))
+        },
+        addFederationInfo(federationMessageId, officeMessageId, timer) {
+            for (var i=0; i < self.tab_data_Array.length; i++) {
+                if (self.tab_data_Array[i].messageIds.includes(officeMessageId)) {
+                    self.tab_data_Array[i].messageIds.push(federationMessageId)
+                    self.tab_data_Array[i].federationTimer = timer
+                    break
+                }
+            }
         },
         onReset(evt) {
             evt.preventDefault()
@@ -367,10 +406,27 @@ function updateTab(tabItem, statusUpdate) {
         tabItem.sTotalBytes = statusUpdate.totalBytes
     if (statusUpdate.statusText)
         tabItem.Status = statusUpdate.statusText
-    if (statusUpdate.end) {
+    if (statusUpdate.end === "1") {
         clearInterval(tabItem.timer)
     if (tabItem.isLogs)
         tabItem.showLinks = true
+    }
+
+    // backoffice information
+    if (statusUpdate.Status === "2000") {
+        console.log("ServerType: " + statusUpdate.ServerType)
+        console.log("ServerCount: " + statusUpdate.ServerCount)
+        console.log("ServerPostfix: " + statusUpdate.ServerPostfix)
+        console.log("ServerStatus: " + statusUpdate.ServerStatus)
+    }
+
+    if (statusUpdate.Status === "2002") {
+        console.log("Header: " + statusUpdate.statusText)
+    }
+
+    // federation information
+    if (statusUpdate.end === "2") {
+        clearInterval(tabItem.federationTimer)
     }
 }
 

@@ -297,6 +297,15 @@ public class StatusesService {
             // Back office statuses
             case "2000":
                 statusText = status.get(INFO_ATTR);
+                String[] updateFields = statusText.split(";");
+                if (updateFields.length != 4) {
+                    logger.error("Wrong format of backoffice update string: " + statusText);
+                } else {
+                    status.put("ServerType", updateFields[0]);
+                    status.put("ServerCount", updateFields[1]);
+                    status.put("ServerPostfix", updateFields[2]);
+                    status.put("ServerStatus", updateFields[3]);
+                }
                 logger.debug("Backoffice status update: " + statusText);
                 break;
             case "2001":
@@ -323,7 +332,7 @@ public class StatusesService {
             case "3001":
                 statusText = status.get(INFO_ATTR);
                 logger.debug("Federation request completed successfully");
-                status.put("end", "1");
+                status.put("end", "2");
                 break;
             case "3003":
                 logger.debug("Federation header: " + status.get(INFO_ATTR));
