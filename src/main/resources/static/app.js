@@ -420,7 +420,7 @@ function updateTab(tabItem, statusUpdate) {
         console.log("ServerStatus: " + statusUpdate.ServerStatus)
     }
 
-    if (statusUpdate.Status === "2002") {
+    if (statusUpdate.Status === "2003") {
         console.log("Header: " + statusUpdate.statusText)
     }
 
