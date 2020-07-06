@@ -191,7 +191,7 @@
                             shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
-                    <b-card no-body v-if="!tab.isLogs">
+                    <b-card no-body v-if="tab.isStatus">
                         <b-card-body>
                             <div class="row">
                                 <div class="col-sm-6">
@@ -383,6 +383,23 @@
                                      Locomotive System Status Server is currently processing request. You will be
                                      shown the information when the backend server provides it.
                         </b-card-footer>
+                    </b-card>
+                    <b-card no-body v-if="tab.isOffice">
+                        <b-card-body>
+                                <b-card-text>
+                                    {{tab.Status}}
+                                </b-card-text>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <table class="table">
+                                           <tr v-for="office_data in tab.office_dataArray">
+                                             <td>{{office_data.header}}</td>
+                                             <td>{{office_data.value}} </td>
+                                           </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                        </b-card-body>
                     </b-card>
                 </v-tab>
             </vue-tabs>

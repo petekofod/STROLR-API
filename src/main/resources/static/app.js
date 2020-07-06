@@ -233,6 +233,7 @@ var vue_det = new Vue({
                 if (xhr.readyState !== 4)
                     return
                 if (xhr.status === 200) {
+                    console.log("xhr.responseText=", xhr.responseText)
                     var statusUpdate = JSON.parse(xhr.responseText)
                     for (var i=0; i < self.tab_data_Array.length; i++) {
                         if (self.tab_data_Array[i].messageIds.includes(ourMessageId)) {
@@ -262,7 +263,7 @@ function createStatusTab(title, index, form, messageId, timer) {
         messages:["Loading locomotive system status"],
         timer: timer,
         sLogRequestStatus: "Request submitted successfully",
-        showFooter: false, isLogs: false, showLinks: false, isLogs:false
+        showFooter: false, isLogs: false, isStatus: true, isOffice: false, showLinks: false
     }
 }
 
@@ -274,7 +275,7 @@ function createLogsTab(title, index, form, messageId, timer) {
         messageIds: [messageId],
         Status:"Loading locomotive logs...",
         timer: timer,
-        showFooter: true, isLogs: true, showLinks: false, isLogs:true,
+        showFooter: true, isLogs: true, isStatus: false, isOffice: false, showLinks: false,
         sFilesCount: "Counting...",
         sTotalBytes: "Checking log file...",
         sLogRequestStatus: "Request submitted successfully"
@@ -287,8 +288,9 @@ function createOfficeTab(title, index, form, messageId, timer) {
         title: title,
         messageIds: [messageId],
         Status:"Loading backoffice status...",
+        office_dataArray: fillOfficeData(),
         timer: timer,
-        showFooter: true, isLogs: true, showLinks: false, isLogs:true,
+        showFooter: false, isLogs: false, isStatus: false, isOffice: true, showLinks: false,
         sLogRequestStatus: "Request submitted successfully"
     }
 }
@@ -418,6 +420,11 @@ function updateTab(tabItem, statusUpdate) {
         console.log("ServerCount: " + statusUpdate.ServerCount)
         console.log("ServerPostfix: " + statusUpdate.ServerPostfix)
         console.log("ServerStatus: " + statusUpdate.ServerStatus)
+
+        office_data = {}
+        office_data.header = statusUpdate.ServerType + " " + statusUpdate.ServerCount
+        office_data.value  = statusUpdate.ServerStatus
+        tabItem.office_dataArray.push(office_data)
     }
 
     if (statusUpdate.Status === "2003") {
@@ -494,4 +501,19 @@ function fillGetStatusData() {
 
     new_status_data.CellStatus = cell_status
     return new_status_data
+}
+
+function fillOfficeData() {
+    new_office_data = []
+    /*office_data1 = {}
+    office_data1.header  = "Header1"
+    office_data1.value  = "Value1"
+    new_office_data.push(office_data1)
+
+    office_data2 = {}
+    office_data2.header  = "Header2"
+    office_data2.value  = "Value2"
+    new_office_data.push(office_data2) */
+
+    return new_office_data
 }
