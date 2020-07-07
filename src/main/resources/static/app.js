@@ -421,14 +421,27 @@ function updateTab(tabItem, statusUpdate) {
         console.log("ServerPostfix: " + statusUpdate.ServerPostfix)
         console.log("ServerStatus: " + statusUpdate.ServerStatus)
 
-        office_data = {}
-        office_data.header = statusUpdate.ServerType + " " + statusUpdate.ServerCount
-        office_data.value  = statusUpdate.ServerStatus
-        tabItem.office_dataArray.push(office_data)
+        if (tabItem.office_dataArray.length > 0) {
+           tabItem.office_dataArray[tabItem.office_dataArray.length-1].descr = statusUpdate.ServerType + " " + statusUpdate.ServerCount
+           tabItem.office_dataArray[tabItem.office_dataArray.length-1].value = statusUpdate.ServerStatus
+           tabItem.office_dataArray[tabItem.office_dataArray.length-1].isNormal = statusUpdate.ServerStatus === "OK"
+        } else {
+           office_data = {}
+           office_data.header = "Unknown"
+           office_data.descr = statusUpdate.ServerType + " " + statusUpdate.ServerCount
+           office_data.value  = statusUpdate.ServerStatus
+           office_data.isNormal = statusUpdate.ServerStatus === "OK"
+           tabItem.office_dataArray.push(office_data)
+        }
     }
 
     if (statusUpdate.Status === "2003") {
         console.log("Header: " + statusUpdate.statusText)
+        office_data = {}
+        office_data.header = statusUpdate.statusText
+        office_data.descr = "Loading"
+        office_data.value  = "Loading"
+        tabItem.office_dataArray.push(office_data)
     }
 
     // federation information
