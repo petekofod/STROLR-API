@@ -428,11 +428,11 @@ function updateTab(tabItem, statusUpdate) {
            tabItem.office_dataArray[tabItem.office_dataArray.length-1].descr = statusUpdate.ServerType + " " + statusUpdate.ServerCount
            tabItem.office_dataArray[tabItem.office_dataArray.length-1].value = statusUpdate.ServerStatus
         } else {
-           office_data = {}
-           office_data.header = "Unknown"
-           office_data.descr = statusUpdate.ServerType + " " + statusUpdate.ServerCount
-           office_data.value  = statusUpdate.ServerStatus
-           office_data.isNormal = statusUpdate.ServerStatus === "OK"
+           office_data = {
+              header: "Unknown",
+              descr: statusUpdate.ServerType + " " + statusUpdate.ServerCount,
+              value: statusUpdate.ServerStatus
+           }
            tabItem.office_dataArray.push(office_data)
         }
     }
@@ -442,10 +442,11 @@ function updateTab(tabItem, statusUpdate) {
 
         tabItem.Status = "Loading " + statusUpdate.statusText
 
-        office_data = {}
-        office_data.header = statusUpdate.statusText
-        office_data.descr = "Loading"
-        office_data.value  = "Loading"
+        office_data = {
+           header: statusUpdate.statusText,
+           descr: "Loading",
+           value: "Loading"
+        }
         tabItem.office_dataArray.push(office_data)
     }
 
@@ -461,69 +462,60 @@ function updateTab(tabItem, statusUpdate) {
 }
 
 function fillGetStatusData() {
-    new_status_data = {}
-    new_status_data.messages = []
-
-    new_status_data.TestTime = ""
-    ipinfo = {}
-    ipinfo.isAvailable = true;
-    ipinfo.ATTModem = ""
-    ipinfo.VerizonModem = ""
-    new_status_data.IpInformation = ipinfo
-
-    ipreach = {}
-    ipreach.isAvailable = true;
-    ipreach.ATTModemStatus = ""
-    ipreach.VerizonModemStatus = ""
-    ipreach.showConnectedVerizonConnected = false
-    ipreach.showConnectedATTConnected = false
-    new_status_data.IpReachability = ipreach
-
-    wifi_info = {}
-    wifi_info.ClientId = ""
-    wifi_info.AccessPoint = ""
-    wifi_info.showConnected = false
-    wifi_info.showNotConnected = false
-    wifi_info.ClientStatus = ""
-    new_status_data.WifiInformation = wifi_info
-
-    gate_info = {}
-    gate_info.ETMSClient = ""
-    gate_info.ETMSConnected = false
-    gate_info.MDMClient= ""
-    gate_info.MDMConnected = false
-    new_status_data.GatewayInformation = gate_info
-
-    route_info = {}
-    route_info.ATTRoute=""
-    route_info.VerizonRoute=""
-    route_info.SprintRoute=""
-    route_info.WifiRoute=""
-    route_info.MHzRadio=""
-    route_info.ATTRouteTimestamp=""
-    route_info.VerizonRouteTimestamp=""
-    route_info.SprintRouteTimestamp=""
-    route_info.WifiRouteTimestamp=""
-    route_info.MHzRadioTimestamp=""
-    route_info.isATTStable = false
-    route_info.isVerizonStable = false
-    route_info.showRouteConnected = false
-    route_info.showRadioConnected = false
-    route_info.showSprintStable = false
-    new_status_data.RouteInformation = route_info
-
-    radio_info = {}
-    radio_info.RadioId=""
-    radio_info.EMPAddress=""
-
-    new_status_data.RadioInformation = radio_info
-
-    cell_status = {}
-    cell_status.status = ""
-    cell_status.showGood = false
-
-    new_status_data.CellStatus = cell_status
-    return new_status_data
+    return {
+       messages: [],
+       TestTime: "",
+       IpInformation: {
+          isAvailable: true,
+          ATTModem: "",
+          VerizonModem: ""
+       },
+       IpReachability : {
+          isAvailable: true,
+          ATTModemStatus: "",
+          VerizonModemStatus: "",
+          showConnectedVerizonConnected: false,
+          showConnectedATTConnected: false
+       },
+       WifiInformation : {
+          ClientId: "",
+          AccessPoint: "",
+          showConnected: false,
+          showNotConnected: false,
+          ClientStatus: ""
+       },
+       GatewayInformation: {
+          ETMSClient: "",
+          ETMSConnected: false,
+          MDMClient: "",
+          MDMConnected: false
+       },
+       RouteInformation: {
+          ATTRoute: "",
+          VerizonRoute: "",
+          SprintRoute: "",
+          WifiRoute: "",
+          MHzRadio: "",
+          ATTRouteTimestamp: "",
+          VerizonRouteTimestamp: "",
+          SprintRouteTimestamp: "",
+          WifiRouteTimestamp: "",
+          MHzRadioTimestamp: "",
+          isATTStable: false,
+          isVerizonStable: false,
+          showRouteConnected: false,
+          showRadioConnected: false,
+          showSprintStable: false
+       },
+       RadioInformation: {
+          RadioId: "",
+          EMPAddress: ""
+       },
+       CellStatus: {
+          status: "",
+          showGood: false
+       }
+    }
 }
 
 function fillOfficeData() {
