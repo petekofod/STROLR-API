@@ -407,7 +407,10 @@ function updateTab(tabItem, statusUpdate) {
     if (statusUpdate.totalBytes)
         tabItem.sTotalBytes = statusUpdate.totalBytes
     if (statusUpdate.statusText)
-        tabItem.Status = statusUpdate.statusText
+    {
+        if ((statusUpdate.Status != "2000"))
+            tabItem.Status = statusUpdate.statusText
+    }
     if (statusUpdate.end === "1") {
         clearInterval(tabItem.timer)
     if (tabItem.isLogs)
@@ -424,7 +427,6 @@ function updateTab(tabItem, statusUpdate) {
         if (tabItem.office_dataArray.length > 0) {
            tabItem.office_dataArray[tabItem.office_dataArray.length-1].descr = statusUpdate.ServerType + " " + statusUpdate.ServerCount
            tabItem.office_dataArray[tabItem.office_dataArray.length-1].value = statusUpdate.ServerStatus
-           tabItem.office_dataArray[tabItem.office_dataArray.length-1].isNormal = statusUpdate.ServerStatus === "OK"
         } else {
            office_data = {}
            office_data.header = "Unknown"
@@ -437,11 +439,19 @@ function updateTab(tabItem, statusUpdate) {
 
     if (statusUpdate.Status === "2003") {
         console.log("Header: " + statusUpdate.statusText)
+
+        tabItem.Status = "Loading " + statusUpdate.statusText
+
         office_data = {}
         office_data.header = statusUpdate.statusText
         office_data.descr = "Loading"
         office_data.value  = "Loading"
         tabItem.office_dataArray.push(office_data)
+    }
+
+    if (statusUpdate.Status === "2001")
+    {
+        tabItem.Status = "Data retrieved successfully"
     }
 
     // federation information

@@ -395,8 +395,17 @@
                                             <th colspan="2" style="text-align:center;">{{office_data.header}}</th>
                                            <tr>
                                              <td>{{office_data.descr}}</td>
-                                             <td v-bind:class="office_data.isNormal?'badge-success':'badge-danger'">
-                                                 {{office_data.value}} </td>
+                                               <td>
+                                                   <span class="badge badge-success"
+                                                         v-if="office_data.value === 'OK'"> {{office_data.value}}
+                                                   </span>
+                                                   <span class="badge badge-warning"
+                                                         v-if="office_data.value === 'WARNING'"> {{office_data.value}}
+                                                   </span>
+                                                   <span class="badge badge-danger"
+                                                         v-if="office_data.value === 'CRITICAL'"> {{office_data.value}}
+                                                   </span>
+                                               </td>
                                            </tr>
                                         </table>
                                     </div>
