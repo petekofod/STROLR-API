@@ -1,0 +1,21 @@
+#!/bin/bash
+
+. ./functions-lib
+. ./strof-lib
+
+readConfig
+
+# shellcheck disable=SC2034
+messageId=$1
+SCAC="${2,,}"
+
+FEDCHECK="fed-check"
+
+fed-check() {
+  
+}
+
+if [ "$SCAC" = "amtk" ]; then
+  "$FEDCHECK amtk"
+elif [ "$SCAC" = "vrex" ]; then
+  "$FEDCHECK amtk"

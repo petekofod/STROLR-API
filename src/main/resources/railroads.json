@@ -11,6 +11,9 @@
             "WDTX",
             "IDTX",
             "RNCX"
+          ],
+          "federations": [
+            "amtk"
           ]
         }
       ],
@@ -25,6 +28,9 @@
           "label": "VREX",
           "options": [
             "VREX"
+          ],
+          "federations": [
+            "vrex"
           ]
         }
       ]
@@ -40,12 +46,18 @@
             "WDTX",
             "IDTX",
             "RNCX"
+          ],
+          "federations": [
+            "amtk"
           ]
         },
         {
           "label": "VREX",
           "options": [
             "VREX"
+          ],
+          "federations": [
+            "vrex"
           ]
         }
       ]
@@ -61,12 +73,18 @@
             "WDTX",
             "IDTX",
             "RNCX"
+          ],
+          "federations": [
+            "amtk"
           ]
         },
         {
           "label": "VREX",
           "options": [
             "VREX"
+          ],
+          "federations": [
+            "vrex"
           ]
         }
       ]

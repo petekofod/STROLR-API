@@ -205,6 +205,8 @@ public class RequestsController {
 
     private String sendFederationRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling federation status request");
+        List<String> federations = railroadsService.getFederationsBySCAC(currentUser.getUsername());
+        payloadMap.put("federations", String.join(",", federations));
         return sendRequest(payloadMap, currentUser, getFederationQueueUrl());
     }
 
