@@ -424,17 +424,15 @@ function updateTab(tabItem, statusUpdate) {
         console.log("ServerPostfix: " + statusUpdate.ServerPostfix)
         console.log("ServerStatus: " + statusUpdate.ServerStatus)
 
+        console.log("tabItem.office_dataArray WAS =", tabItem.office_dataArray)
         if (tabItem.office_dataArray.length > 0) {
-           tabItem.office_dataArray[tabItem.office_dataArray.length-1].descr = statusUpdate.ServerType + " " + statusUpdate.ServerCount
-           tabItem.office_dataArray[tabItem.office_dataArray.length-1].value = statusUpdate.ServerStatus
-        } else {
-           office_data = {
-              header: "Unknown",
-              descr: statusUpdate.ServerType + " " + statusUpdate.ServerCount,
-              value: statusUpdate.ServerStatus
-           }
-           tabItem.office_dataArray.push(office_data)
+           console.log("We are in the first part and length =", tabItem.office_dataArray.length)
+           var array_len = tabItem.office_dataArray.length
+           tabItem.office_dataArray[array_len-1].servers.push( {descr: statusUpdate.ServerType + " " + statusUpdate.ServerCount,
+               value: statusUpdate.ServerStatus})
         }
+
+        console.log("tabItem.office_dataArray BECAME =", tabItem.office_dataArray)
     }
 
     if (statusUpdate.Status === "2003") {
@@ -444,8 +442,7 @@ function updateTab(tabItem, statusUpdate) {
 
         office_data = {
            header: statusUpdate.statusText,
-           descr: "Loading",
-           value: "Loading"
+           servers: []
         }
         tabItem.office_dataArray.push(office_data)
     }

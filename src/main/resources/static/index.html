@@ -393,17 +393,17 @@
                                     <div class="col-sm-6">
                                         <table v-for="office_data in tab.office_dataArray" class="table">
                                             <th colspan="2" style="text-align:center;">{{office_data.header}}</th>
-                                           <tr>
-                                             <td>{{office_data.descr}}</td>
+                                           <tr v-for="server in office_data.servers">
+                                             <td>{{server.descr}}</td>
                                                <td>
                                                    <span class="badge badge-success"
-                                                         v-if="office_data.value === 'OK'"> {{office_data.value}}
+                                                         v-if="server.value === 'OK'"> {{server.value}}
                                                    </span>
                                                    <span class="badge badge-warning"
-                                                         v-if="office_data.value === 'WARNING'"> {{office_data.value}}
+                                                         v-if="server.value === 'WARNING'"> {{server.value}}
                                                    </span>
                                                    <span class="badge badge-danger"
-                                                         v-if="office_data.value === 'CRITICAL'"> {{office_data.value}}
+                                                         v-if="server.value === 'CRITICAL'"> {{server.value}}
                                                    </span>
                                                </td>
                                            </tr>
