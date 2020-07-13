@@ -200,6 +200,7 @@ public class RequestsController {
 
     private String sendBackofficeRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling backoffice status request");
+        payloadMap.remove("LocoID");
         return sendRequest(payloadMap, currentUser, getBackofficeQueueUrl());
     }
 
