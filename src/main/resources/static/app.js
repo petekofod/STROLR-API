@@ -46,10 +46,17 @@ var vue_det = new Vue({
     methods: {
         setRequestType(value) {
             this.form.RequestType = value
+            if (this.form.RequestType != "get-backoffice")
+            {
+               LocoIdElement = document.getElementById("inpLocoID");
+               LocoIdElement.setCustomValidity(this.validateLocoId()? "" : "LocoId should be set for this request");
+            }
+        },
+        validateLocoId() {
+           return this.form.LocoID != null
         },
         onSubmit(evt) {
             evt.preventDefault()
-
             var xhr = new XMLHttpRequest()
             var self = this
             var requestSCACMark = self.form.SCACMark
@@ -61,7 +68,6 @@ var vue_det = new Vue({
             xhr.onload = async function () {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-
                         var messageId = xhr.responseText
                         var index = self.tab_data_Array.length
                         var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
@@ -93,7 +99,10 @@ var vue_det = new Vue({
                     }
                 }
             }
-            xhr.send(JSON.stringify(this.form))
+            xhr.send(JSON.stringify(this.form, (key, value)=> {
+              if ((value === null) && (key === 'LocoID')) return undefined
+                  return value
+            }))
         },
         sendFederationRequest(SCACMark, officeMessageId) {
             var xhr = new XMLHttpRequest()
