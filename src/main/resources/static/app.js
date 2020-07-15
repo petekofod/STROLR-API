@@ -433,15 +433,12 @@ function updateTab(tabItem, statusUpdate) {
         console.log("ServerPostfix: " + statusUpdate.ServerPostfix)
         console.log("ServerStatus: " + statusUpdate.ServerStatus)
 
-        console.log("tabItem.office_dataArray WAS =", tabItem.office_dataArray)
         if (tabItem.office_dataArray.length > 0) {
-           console.log("We are in the first part and length =", tabItem.office_dataArray.length)
            var array_len = tabItem.office_dataArray.length
            tabItem.office_dataArray[array_len-1].servers.push( {descr: statusUpdate.ServerType + " " + statusUpdate.ServerCount,
-               value: statusUpdate.ServerStatus})
+               value: statusUpdate.ServerStatus, errorMsg: ''})
         }
 
-        console.log("tabItem.office_dataArray BECAME =", tabItem.office_dataArray)
     }
 
     if (statusUpdate.Status === "2003") {
@@ -461,6 +458,16 @@ function updateTab(tabItem, statusUpdate) {
         tabItem.Status = "Data retrieved successfully"
     }
 
+    if (statusUpdate.Status === "2002")
+    {
+        // we assume that the status contains error message regarding the last server
+        var array_len = tabItem.office_dataArray.length
+        var cur_servers_len = tabItem.office_dataArray[array_len-1].servers.length
+        if (cur_servers_len > 0)
+           tabItem.office_dataArray[array_len-1].servers[cur_servers_len-1].errorMsg = statusUpdate.statusText
+        else
+           console.log("We have received an error message outside the list of given servers: ", statusUpdate.statusText)
+    }
     // federation information
     if (statusUpdate.end === "2") {
         clearInterval(tabItem.federationTimer)
