@@ -405,6 +405,9 @@
                                                    <span class="badge badge-danger"
                                                          v-if="server.value === 'CRITICAL'"> {{server.value}}
                                                    </span>
+                                                   <span class="badge"
+                                                         v-if="server.errorMsg != ''"> {{server.errorMsg}}
+                                                   </span>
                                                </td>
                                            </tr>
                                         </table>
