@@ -20,28 +20,23 @@ do
 
         messageId=$(echo "$message" | jq -r '.Messages[0].MessageId')
         receiptHandle=$(echo "$message" | jq -r '.Messages[0].ReceiptHandle')
-        SCAC=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.SCAC.StringValue')
+        federations=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.federations.StringValue')
 
-        if [[ "$SCAC" == "null" ]]; then
-                log "SCAC is empty, deleting the invalid message"
-                deleteMessage "$receiptHandle" "$INCOMING_FEDERATION_QUEUE"
-        else
-                log "Getting federation status of $SCAC"
+        log "Getting status of federations: $federations"
 
-                jobsCount=$(jobs -r | wc -l)
-                log "Number of running jobs = $jobsCount"
+        jobsCount=$(jobs -r | wc -l)
+        log "Number of running jobs = $jobsCount"
 
-                if [[ "$jobsCount" -gt "$MAX_JOBS" ]]; then
-                        log "Maximum number of workers exceeded, waiting..."
-                        sleep $POLL_TIMEOUT
-                        continue
-                fi
-
-                log "Starting a worker"
-                workers/FEDERATION "$messageId" "$SCAC" &
-                log "Deleting the incoming message"
-                deleteMessage "$receiptHandle" "$INCOMING_FEDERATION_QUEUE"
+        if [[ "$jobsCount" -gt "$MAX_JOBS" ]]; then
+                log "Maximum number of workers exceeded, waiting..."
+                sleep $POLL_TIMEOUT
+                continue
         fi
+
+        log "Starting a worker"
+        workers/FEDERATION "$messageId" "$federations" &
+        log "Deleting the incoming message"
+        deleteMessage "$receiptHandle" "$INCOMING_FEDERATION_QUEUE"
 
         sleep $POLL_TIMEOUT
 done

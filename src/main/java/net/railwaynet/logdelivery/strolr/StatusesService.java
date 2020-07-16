@@ -328,15 +328,19 @@ public class StatusesService {
             case "3000":
                 statusText = status.get(INFO_ATTR);
                 logger.debug("Federation status update: " + statusText);
+                String[] federationFields = statusText.split(";");
+                if (federationFields.length != 3) {
+                    logger.error("Wrong format of federation update string: " + statusText);
+                } else {
+                    status.put("Federation", federationFields[0]);
+                    status.put("ServerCount", federationFields[1]);
+                    status.put("OperationalCount", federationFields[2]);
+                }
                 break;
             case "3001":
                 statusText = status.get(INFO_ATTR);
                 logger.debug("Federation request completed successfully");
                 status.put("end", "2");
-                break;
-            case "3003":
-                logger.debug("Federation header: " + status.get(INFO_ATTR));
-                statusText = status.get(INFO_ATTR);
                 break;
         }
         status.put(STATUS_TEXT, statusText);

@@ -408,6 +408,27 @@
                                                </td>
                                            </tr>
                                         </table>
+                                        <table class="table">
+                                            <th colspan="2" style="text-align:center;">Federation Status</th>
+                                            <tr v-for="federation in tab.federations">
+                                                <td>{{federation.Federation}}</td>
+                                                <td>
+                                                   <span class="badge badge-success"
+                                                       v-if="federation.ServerCount === federation.OperationalCount">
+                                                       Fully Operational
+                                                   </span>
+                                                    <span class="badge badge-warning"
+                                                        v-if="federation.ServerCount > 0 && federation.ServerCount > federation.OperationalCount">
+                                                        Partially Operational
+                                                   </span>
+                                                    <span class="badge badge-danger"
+                                                          v-if="federation.ServerCount > 0 && federation.OperationalCount === 0">
+                                                        Offline
+                                                   </span>
+                                                    ({{federation.ServerCount}}/{{federation.OperationalCount}})
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 </div>
                         </b-card-body>

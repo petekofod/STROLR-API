@@ -82,7 +82,7 @@ var vue_det = new Vue({
                             var title = "(" + index + ") " + requestSCACMark + " office"
                             var tabItem = createOfficeTab(title, index, self.form, messageId, timer)
                             // Send additional request to get Federation status
-                            // self.sendFederationRequest(requestSCACMark, messageId)
+                            self.sendFederationRequest(requestSCACMark, messageId)
                         } else {
                             console.error("Unknown type of request!")
                             return
@@ -298,6 +298,7 @@ function createOfficeTab(title, index, form, messageId, timer) {
         messageIds: [messageId],
         Status:"Loading backoffice status...",
         office_dataArray: fillOfficeData(),
+        federations: [],
         timer: timer,
         showFooter: false, isLogs: false, isStatus: false, isOffice: true, showLinks: false,
         sLogRequestStatus: "Request submitted successfully"
@@ -462,8 +463,16 @@ function updateTab(tabItem, statusUpdate) {
     }
 
     // federation information
-    if (statusUpdate.end === "2") {
+    if (statusUpdate.Status === "3001" && statusUpdate.end === "2") {
         clearInterval(tabItem.federationTimer)
+    }
+
+    if (statusUpdate.Status === "3000") {
+        console.log("Federation: " + statusUpdate.Federation)
+        console.log("ServerCount: " + statusUpdate.ServerCount)
+        console.log("OperationalCount: " + statusUpdate.OperationalCount)
+
+        tabItem.federations.push(statusUpdate)
     }
 }
 
