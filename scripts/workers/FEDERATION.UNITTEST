@@ -5,17 +5,45 @@
 
 readConfig
 
-# shellcheck disable=SC2034
-messageId=$1
-SCAC="${2,,}"
-
-FEDCHECK="fed-check"
-
-fed-check() {
-  
+test-fed-check()
+{
+    if [ $RANDOM -gt 10000  ]; then
+        echo Operational
+    else
+        echo Failed
+    fi
+    if [ $RANDOM -gt 10000  ]; then
+        echo Operational
+    else
+        echo Failed
+    fi
 }
 
-if [ "$SCAC" = "amtk" ]; then
-  "$FEDCHECK amtk"
-elif [ "$SCAC" = "vrex" ]; then
-  "$FEDCHECK amtk"
+# shellcheck disable=SC2034
+messageId=$1
+federations_list=$2
+
+FEDCHECK="test-fed-check"
+
+# shellcheck disable=SC2001
+for federation in $(echo "$federations_list" | sed "s/,/ /g")
+do
+    log "Running check for federation $federation"
+
+    servers_statuses=$(mktemp)
+    $FEDCHECK "$federation" > "$servers_statuses"
+
+    log "FEDCHECK output:"
+    cat "$servers_statuses"
+
+    servers=$(wc -l "$servers_statuses")
+
+    if [ "$servers" -eq 0 ]; then
+          sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$federation;0;0"
+    else
+          # shellcheck disable=SC2002
+          # shellcheck disable=SC2126
+          operational=$(cat "$servers_statuses" | grep Operational | wc -l)
+          sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$federation;$servers;$operational"
+    fi
+done
