@@ -371,7 +371,7 @@
                                     </tr>
                                  </table>
                                 </div>
-                                <div class="col-sm-6>">
+                                <div class="col-sm-6">
                                     <ul>
                                         <li style="list-style: none;" v-for="status_message in tab.messages">
                                             {{ status_message }}
@@ -387,9 +387,6 @@
                     </b-card>
                     <b-card no-body v-if="tab.isOffice">
                         <b-card-body>
-                                <b-card-text>
-                                    {{tab.Status}}
-                                </b-card-text>
                                 <div class="row">
                                     <div class="col-sm-6">
                                         <table v-for="office_data in tab.office_dataArray" class="table">
@@ -412,7 +409,7 @@
                                                </td>
                                            </tr>
                                         </table>
-                                        <table class="table">
+                                        <table class="table" v-if="tab.federations.length">
                                             <th colspan="2" style="text-align:center;">Federation Status</th>
                                             <tr v-for="federation in tab.federations">
                                                 <td>{{federation.Federation}}</td>
@@ -426,13 +423,20 @@
                                                         Partially Operational
                                                    </span>
                                                     <span class="badge badge-danger"
-                                                          v-if="federation.ServerCount > 0 && federation.OperationalCount === 0">
+                                                          v-if="federation.ServerCount > 0 && federation.OperationalCount == 0">
                                                         Offline
                                                    </span>
                                                     ({{federation.ServerCount}}/{{federation.OperationalCount}})
                                                 </td>
                                             </tr>
                                         </table>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <ul>
+                                            <li style="list-style: none;" v-for="status_message in tab.messages">
+                                                {{ status_message }}
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
                         </b-card-body>

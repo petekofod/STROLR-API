@@ -36,7 +36,7 @@ do
     log "FEDCHECK output:"
     cat "$servers_statuses"
 
-    servers=$(wc -l "$servers_statuses")
+    servers=$(wc -l < "$servers_statuses")
 
     if [ "$servers" -eq 0 ]; then
           sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$federation;0;0"
@@ -47,3 +47,5 @@ do
           sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$federation;$servers;$operational"
     fi
 done
+
+sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3001"

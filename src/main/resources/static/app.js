@@ -109,13 +109,15 @@ var vue_det = new Vue({
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
 
+            var self = this
+
             xhr.onload = async function () {
                 if (xhr.readyState !== 4)
                     return
                 if (xhr.status === 200) {
                     var messageId = xhr.responseText
                     var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
-                    addFederationInfo(messageId, officeMessageId, timer)
+                    self.addFederationInfo(messageId, officeMessageId, timer)
                 } else {
                     var errorMessage = JSON.parse(xhr.responseText).message
                     self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
@@ -131,10 +133,10 @@ var vue_det = new Vue({
             xhr.send(JSON.stringify(param))
         },
         addFederationInfo(federationMessageId, officeMessageId, timer) {
-            for (var i=0; i < self.tab_data_Array.length; i++) {
-                if (self.tab_data_Array[i].messageIds.includes(officeMessageId)) {
-                    self.tab_data_Array[i].messageIds.push(federationMessageId)
-                    self.tab_data_Array[i].federationTimer = timer
+            for (var i=0; i < this.tab_data_Array.length; i++) {
+                if (this.tab_data_Array[i].messageIds.includes(officeMessageId)) {
+                    this.tab_data_Array[i].messageIds.push(federationMessageId)
+                    this.tab_data_Array[i].federationTimer = timer
                     break
                 }
             }
@@ -298,6 +300,7 @@ function createOfficeTab(title, index, form, messageId, timer) {
         messageIds: [messageId],
         Status:"Loading backoffice status...",
         office_dataArray: fillOfficeData(),
+        messages:["Loading backoffice system status"],
         federations: [],
         timer: timer,
         showFooter: false, isLogs: false, isStatus: false, isOffice: true, showLinks: false,
@@ -470,7 +473,7 @@ function updateTab(tabItem, statusUpdate) {
            console.log("We have received an error message outside the list of given servers: ", statusUpdate.statusText)
     }
     // federation information
-    if (statusUpdate.Status === "3001" && statusUpdate.end === "2") {
+    if (statusUpdate.Status === "3001") {
         clearInterval(tabItem.federationTimer)
     }
 

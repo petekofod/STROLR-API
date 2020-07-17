@@ -82,7 +82,7 @@ public class RequestsController {
         logger.info("Initialing backoffice request queue: " + backofficeQueueName);
         BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
         logger.info("Initialing federation request queue: " + federationQueueName);
-        FEDERATION_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
+        FEDERATION_QUEUE_URL = SQS.getQueueUrl(federationQueueName).getQueueUrl();
     }
 
     private AmazonSQS getSQS() {
@@ -161,6 +161,12 @@ public class RequestsController {
     private String sendLogsRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling logs retrieval request");
 
+        if (!payloadMap.containsKey(TIME_ZONE) || payloadMap.get(TIME_ZONE).isEmpty()) {
+            logger.error("Time zone is not specified!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Time zone is not specified!");
+        }
+
         String startDateTime=payloadMap.get(START_DATE) + ":" + payloadMap.get(START_TIME);
         String endDateTime=payloadMap.get(END_DATE) + ":" + payloadMap.get(END_TIME);
         try {
@@ -229,12 +235,6 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the log request JSON", e);
         }
 
-        if (!payloadMap.containsKey(TIME_ZONE) || payloadMap.get(TIME_ZONE).isEmpty()) {
-            logger.error("Time zone is not specified!");
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Time zone is not specified!");
-        }
-
         if (!payloadMap.containsKey(REQUEST_TYPE) || payloadMap.get(REQUEST_TYPE).isEmpty()) {
             logger.error("Request type is not specified!");
             throw new ResponseStatusException(
@@ -264,13 +264,11 @@ public class RequestsController {
         String status;
         try {
             status = statusesService.getStatus(messageId);
-            logger.debug("Status is " + status);
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate status update JSON", e);
         }
         if (status == null) {
-            logger.debug("No status available");
             throw new ResponseStatusException(
                     HttpStatus.NO_CONTENT, "No status update available");
         }

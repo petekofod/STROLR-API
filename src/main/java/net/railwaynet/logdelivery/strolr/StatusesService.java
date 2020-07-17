@@ -296,20 +296,21 @@ public class StatusesService {
                 break;
             // Back office statuses
             case "2000":
-                statusText = status.get(INFO_ATTR);
-                String[] updateFields = statusText.split(";");
+                String[] updateFields = status.get(INFO_ATTR).split(";");
                 if (updateFields.length != 4) {
+                    statusText = status.get(INFO_ATTR);
                     logger.error("Wrong format of backoffice update string: " + statusText);
                 } else {
                     status.put("ServerType", updateFields[0]);
                     status.put("ServerCount", updateFields[1]);
                     status.put("ServerPostfix", updateFields[2]);
                     status.put("ServerStatus", updateFields[3]);
+                    statusText = "Received status of " + updateFields[0] + " " + updateFields[1];
                 }
                 logger.debug("Backoffice status update: " + statusText);
                 break;
             case "2001":
-                statusText = status.get(INFO_ATTR);
+                statusText = "Backoffice request completed successfully";
                 logger.debug("Backoffice request completed successfully");
                 status.put("end", "1");
                 break;
@@ -322,23 +323,22 @@ public class StatusesService {
                 statusText = status.get(INFO_ATTR);
                 break;
             default:
-                statusText = "";
                 logger.warn("Unknown status of the message! Status = " + status);
             // Federation statuses
             case "3000":
-                statusText = status.get(INFO_ATTR);
-                logger.debug("Federation status update: " + statusText);
-                String[] federationFields = statusText.split(";");
+                String[] federationFields = status.get(INFO_ATTR).split(";");
                 if (federationFields.length != 3) {
+                    statusText = status.get(INFO_ATTR);
                     logger.error("Wrong format of federation update string: " + statusText);
                 } else {
                     status.put("Federation", federationFields[0]);
                     status.put("ServerCount", federationFields[1]);
                     status.put("OperationalCount", federationFields[2]);
+                    statusText = "Received status of federation " + federationFields[0];
                 }
                 break;
             case "3001":
-                statusText = status.get(INFO_ATTR);
+                statusText = "Federation request completed successfully";
                 logger.debug("Federation request completed successfully");
                 status.put("end", "2");
                 break;
