@@ -8,7 +8,7 @@ readConfig
 
 while :
 do
-        log "Next polling loop"
+        log "STROB: Next polling loop"
 
         message=$(receiveMessage "$INCOMING_BACKOFFICE_QUEUE")
 
