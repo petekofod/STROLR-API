@@ -284,6 +284,7 @@ function createLogsTab(title, index, form, messageId, timer) {
         title: title,
         LocoID: form.LocoID,
         messageIds: [messageId],
+        messageId: messageId,
         Status:"Loading locomotive logs...",
         timer: timer,
         showFooter: true, isLogs: true, isStatus: false, isOffice: false, showLinks: false,
