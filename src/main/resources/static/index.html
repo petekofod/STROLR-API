@@ -220,7 +220,7 @@
                                      <td>
                                          <span class="badge"
                                                v-if="tab.status_data.IpReachability.ATTModemStatus.length >0"
-                                               v-bind:class="tab.status_data.GatewayInformation.showConnectedATTConnected?'badge-success':'badge-danger'">
+                                               v-bind:class="tab.status_data.IpReachability.showConnectedATTConnected?'badge-success':'badge-danger'">
                                           {{tab.status_data.IpReachability.ATTModemStatus}}
                                          </span>
                                      </td>
