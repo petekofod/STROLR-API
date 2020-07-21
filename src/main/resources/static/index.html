@@ -173,16 +173,16 @@
                             </b-card-text>
                             <b-card-title v-if="tab.showLinks">Download links</b-card-title>
                             <b-card-text v-if="tab.showLinks">
-                                <a :href="'https://rwn.strolr2.s3.amazonaws.com/' + tab.messageId + '.tar.gz'" target="_blank">
-                                    https://rwn.strolr2.s3.amazonaws.com/{{tab.messageId}}.tar.gz
+                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + tab.messageId + '.tar.gz'" target="_blank">
+                                    https://s3.amazonaws.com/rwn.strolr2/{{tab.messageId}}.tar.gz
                                 </a>
                                 <br>
-                                <a :href="'https://rwn.strolr2.s3.amazonaws.com/' + tab.messageId + '.tar'" target="_blank">
-                                    https://rwn.strolr2.s3.amazonaws.com/{{tab.messageId}}.tar
+                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + tab.messageId + '.tar'" target="_blank">
+                                    https://s3.amazonaws.com/rwn.strolr2/{{tab.messageId}}.tar
                                 </a>
                                 <br>
-                                <a :href="'https://rwn.strolr2.s3.amazonaws.com/' + tab.messageId + '.7z'" target="_blank">
-                                    https://rwn.strolr2.s3.amazonaws.com/{{tab.messageId}}.7z
+                                <a :href="'https://s3.amazonaws.com/rwn.strolr2/' + tab.messageId + '.7z'" target="_blank">
+                                    https://s3.amazonaws.com/rwn.strolr2/{{tab.messageId}}.7z
                                 </a>
                                 <br>
                             </b-card-text>
