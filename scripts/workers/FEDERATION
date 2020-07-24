@@ -9,8 +9,6 @@ readConfig
 messageId=$1
 federations_list=$2
 
-FEDCHECK="/usr/bin/python fed-check"
-
 # shellcheck disable=SC2001
 for federation in $(echo "$federations_list" | sed "s/,/ /g")
 do
@@ -23,6 +21,8 @@ do
     cat "$servers_statuses"
 
     servers=$(wc -l < "$servers_statuses")
+
+    log "Number of servers: $servers"
 
     if [ "$servers" -eq 0 ]; then
           sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$federation;0;0"

@@ -8,12 +8,12 @@ readConfig
 test-fed-check()
 {
     if [ $RANDOM -gt 10000  ]; then
-        echo Operational
+        echo "amtk-ios-0     : Operational"
     else
         echo Failed
     fi
     if [ $RANDOM -gt 10000  ]; then
-        echo Operational
+        echo "amtk-ios-1     : Operational"
     else
         echo Failed
     fi
@@ -37,6 +37,8 @@ do
     cat "$servers_statuses"
 
     servers=$(wc -l < "$servers_statuses")
+
+    log "Number of servers: $servers"
 
     if [ "$servers" -eq 0 ]; then
           sendStatus "${messageId}" "$RESPONSE_FEDERATION_QUEUE" "3000" "$federation;0;0"
