@@ -34,7 +34,8 @@ var vue_det = new Vue({
         cell_class: 'table-danger',
         isActive: false,
         active_tab: '',
-        plugins: []
+        plugins: [],
+        S3BaseUrl: '',
     },
     created: function () {
         this.getUserName()
@@ -176,6 +177,9 @@ var vue_det = new Vue({
                     conf.Plugins.forEach(function (item) {
                       self.plugins.push(item)
                     })
+                if (conf.S3BaseURL) {
+                    self.S3BaseURL = conf.S3BaseURL
+                }
             }
             xhr.send()
         },
