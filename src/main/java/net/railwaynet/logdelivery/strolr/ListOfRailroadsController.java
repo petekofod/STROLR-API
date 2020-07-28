@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
+
+import static java.util.Objects.*;
 
 @RestController
 public class ListOfRailroadsController {
@@ -26,19 +30,26 @@ public class ListOfRailroadsController {
     @Autowired
     private RailroadsService railroadsService;
 
+    @Autowired
+    private Environment env;
+
     @RequestMapping("/railroads.json")
     public String data(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
 
-        Map<?, ?> railroadsForUser = railroadsService.getRailroadsBySCAC(currentUser.getUsername());
+        @SuppressWarnings("unchecked") Map<String, Object> userConfiguration =
+                (Map<String, Object>) railroadsService.getRailroadsBySCAC(currentUser.getUsername());
+        userConfiguration.put("S3BaseURL", Objects.requireNonNull(env.getProperty("S3.base.URL")));
 
         try {
-            return objectMapper.writeValueAsString(railroadsForUser);
+            String result = objectMapper.writeValueAsString(userConfiguration);
+            logger.debug("User configuration is: " + result);
+            return result;
         } catch (JsonProcessingException e) {
-            logger.error("Can't generate the list of railroads!");
+            logger.error("Can't generate the configuration for the user!");
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate the list of railroads!", e);
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate the configuration for the user!", e);
         }
     }
 

@@ -57,6 +57,8 @@ public class RequestsController {
     private AmazonSQS SQS;
     private String QUEUE_URL;
     private String STATUS_QUEUE_URL;
+    private String BACKOFFICE_QUEUE_URL;
+    private String FEDERATION_QUEUE_URL;
 
     @Autowired
     private StatusesService statusesService;
@@ -71,10 +73,16 @@ public class RequestsController {
                 .build();
         String queueName = Objects.requireNonNull(env.getProperty("request.queue.name"));
         String statusQueueName = Objects.requireNonNull(env.getProperty("status.request.queue.name"));
+        String backofficeQueueName = Objects.requireNonNull(env.getProperty("backoffice.request.queue.name"));
+        String federationQueueName = Objects.requireNonNull(env.getProperty("federation.request.queue.name"));
         logger.info("Initialing request queue: " + queueName);
         QUEUE_URL = SQS.getQueueUrl(queueName).getQueueUrl();
         logger.info("Initialing status request queue: " + statusQueueName);
         STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
+        logger.info("Initialing backoffice request queue: " + backofficeQueueName);
+        BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
+        logger.info("Initialing federation request queue: " + federationQueueName);
+        FEDERATION_QUEUE_URL = SQS.getQueueUrl(federationQueueName).getQueueUrl();
     }
 
     private AmazonSQS getSQS() {
@@ -93,6 +101,18 @@ public class RequestsController {
         if (STATUS_QUEUE_URL == null)
             init();
         return STATUS_QUEUE_URL;
+    }
+
+    private String getBackofficeQueueUrl() {
+        if (BACKOFFICE_QUEUE_URL == null)
+            init();
+        return BACKOFFICE_QUEUE_URL;
+    }
+
+    private String getFederationQueueUrl() {
+        if (FEDERATION_QUEUE_URL == null)
+            init();
+        return FEDERATION_QUEUE_URL;
     }
 
     private String sendRequest (final Map<String, String> payloadMap, UserDetails currentUser, String queue) {
@@ -141,6 +161,12 @@ public class RequestsController {
     private String sendLogsRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling logs retrieval request");
 
+        if (!payloadMap.containsKey(TIME_ZONE) || payloadMap.get(TIME_ZONE).isEmpty()) {
+            logger.error("Time zone is not specified!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Time zone is not specified!");
+        }
+
         String startDateTime=payloadMap.get(START_DATE) + ":" + payloadMap.get(START_TIME);
         String endDateTime=payloadMap.get(END_DATE) + ":" + payloadMap.get(END_TIME);
         try {
@@ -173,9 +199,22 @@ public class RequestsController {
         return sendRequest(payloadMap, currentUser, getQueueUrl());
     }
 
-    private String sendStatusRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendStatusRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
         logger.info("Handling locomotive status request");
         return sendRequest(payloadMap, currentUser, getStatusQueueUrl());
+    }
+
+    private String sendBackofficeRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
+        logger.info("Handling backoffice status request");
+        payloadMap.remove("LocoID");
+        return sendRequest(payloadMap, currentUser, getBackofficeQueueUrl());
+    }
+
+    private String sendFederationRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
+        logger.info("Handling federation status request");
+        List<String> federations = railroadsService.getFederationsBySCAC(currentUser.getUsername());
+        payloadMap.put("federations", String.join(",", federations));
+        return sendRequest(payloadMap, currentUser, getFederationQueueUrl());
     }
 
     @RequestMapping(
@@ -196,12 +235,6 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the log request JSON", e);
         }
 
-        if (!payloadMap.containsKey(TIME_ZONE) || payloadMap.get(TIME_ZONE).isEmpty()) {
-            logger.error("Time zone is not specified!");
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Time zone is not specified!");
-        }
-
         if (!payloadMap.containsKey(REQUEST_TYPE) || payloadMap.get(REQUEST_TYPE).isEmpty()) {
             logger.error("Request type is not specified!");
             throw new ResponseStatusException(
@@ -214,6 +247,12 @@ public class RequestsController {
         if (payloadMap.get(REQUEST_TYPE).equals("get-status"))
             return sendStatusRequest(payloadMap, currentUser);
 
+        if (payloadMap.get(REQUEST_TYPE).equals("get-backoffice"))
+            return sendBackofficeRequest(payloadMap, currentUser);
+
+        if (payloadMap.get(REQUEST_TYPE).equals("get-federation"))
+            return sendFederationRequest(payloadMap, currentUser);
+
         logger.error("Unknown request type!");
         throw new ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR, "Unknown request type!");
@@ -225,13 +264,11 @@ public class RequestsController {
         String status;
         try {
             status = statusesService.getStatus(messageId);
-            logger.debug("Status is " + status);
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate status update JSON", e);
         }
         if (status == null) {
-            logger.debug("No status available");
             throw new ResponseStatusException(
                     HttpStatus.NO_CONTENT, "No status update available");
         }

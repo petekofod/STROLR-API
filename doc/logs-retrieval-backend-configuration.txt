@@ -31,16 +31,27 @@ chmod +x /usr/bin/strolr2/workers/*
 systemctl enable strolr2
 systemctl start strolr2
 
-# Status requests configuration
+# Locomotive status and backoffice status requests configuration
 
 cd strolr2/scripts/system
-cp stros.service /etc/systemd/system
+cp stros.service /etc/systemd/system/
+cp strob.service /etc/systemd/system/
+cp strof.service /etc/systemd/system/
 
 # Use “nano /etc/strolr2.conf” to update the SQS queues urls
 
 cd ..
 cp STROS /usr/bin/strolr2/
+cp STROB /usr/bin/strolr2/
+cp STROF /usr/bin/strolr2/
+cp strob-lib /usr/bin/strolr2/
 chmod +x /usr/bin/strolr2/STROS
 
 systemctl enable stros
 systemctl start stros
+
+systemctl enable strob
+systemctl start strob
+
+systemctl enable strof
+systemctl start strof

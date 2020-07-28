@@ -8,9 +8,9 @@ readConfig
 
 while :
 do
-        log "STROS: Next polling loop"
+        log "STROB: Next polling loop"
 
-        message=$(receiveMessage "$INCOMING_STATUS_QUEUE")
+        message=$(receiveMessage "$INCOMING_BACKOFFICE_QUEUE")
 
         if [[ -z "$message" ]]; then
                 log "No new messages"
@@ -21,14 +21,12 @@ do
         messageId=$(echo "$message" | jq -r '.Messages[0].MessageId')
         receiptHandle=$(echo "$message" | jq -r '.Messages[0].ReceiptHandle')
         SCAC=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.SCAC.StringValue')
-        mark=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.SCACMark.StringValue')
-        locoID=$(echo "$message" | jq -r '.Messages[0].MessageAttributes.LocoID.StringValue')
 
         if [[ "$SCAC" == "null" ]]; then
                 log "SCAC is empty, deleting the invalid message"
-                deleteMessage "$receiptHandle" "$INCOMING_STATUS_QUEUE"
+                deleteMessage "$receiptHandle" "$INCOMING_BACKOFFICE_QUEUE"
         else
-                log "Getting status of locomotive $locoID of $SCAC/$mark"
+                log "Getting backoffice status of $SCAC"
 
                 jobsCount=$(jobs -r | wc -l)
                 log "Number of running jobs = $jobsCount"
@@ -40,9 +38,9 @@ do
                 fi
 
                 log "Starting a worker"
-                workers/STATUS "$messageId" "$SCAC" "$mark" "$locoID" &
+                workers/BACKOFFICE "$messageId" "$SCAC" &
                 log "Deleting the incoming message"
-                deleteMessage "$receiptHandle" "$INCOMING_STATUS_QUEUE"
+                deleteMessage "$receiptHandle" "$INCOMING_BACKOFFICE_QUEUE"
         fi
 
         sleep $POLL_TIMEOUT

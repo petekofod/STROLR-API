@@ -1,3 +1,4 @@
+<!--suppress ALL -->
 <html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -85,7 +86,7 @@
                         <div class="form-group row">
                             <label for="inpLocoID" size="sm" class="col-sm-5 col-form-label">Locomotive ID</label>
                             <div class="col">
-                                <b-form-input id="inpLocoID" v-model="form.LocoID" required
+                                <b-form-input id="inpLocoID" v-model="form.LocoID"
                                     placeholder="Enter Locomotive ID" type="number" size="sm">
                                 </b-form-input>
                             </div>
@@ -146,6 +147,7 @@
                             <div class="col">
                                 <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
                                 <b-button v-if="plugins.includes('STROS')" type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
+                                <b-button v-if="plugins.includes('STROB')" type="submit" v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice Status</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
@@ -171,16 +173,16 @@
                             </b-card-text>
                             <b-card-title v-if="tab.showLinks">Download links</b-card-title>
                             <b-card-text v-if="tab.showLinks">
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.tar.gz'" target="_blank">
-                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.tar.gz
+                                <a :href="S3BaseURL + tab.messageId + '.tar.gz'" target="_blank">
+                                    {{S3BaseURL}}{{tab.messageId}}.tar.gz
                                 </a>
                                 <br>
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.tar'" target="_blank">
-                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.tar
+                                <a :href="S3BaseURL + tab.messageId + '.tar'" target="_blank">
+                                    {{S3BaseURL}}{{tab.messageId}}.tar.gz
                                 </a>
                                 <br>
-                                <a :href="'https://strolrdev.s3.amazonaws.com/' + tab.messageId + '.7z'" target="_blank">
-                                    https://strolrdev.s3.amazonaws.com/{{tab.messageId}}.7z
+                                <a :href="S3BaseURL + tab.messageId + '.7z'" target="_blank">
+                                    {{S3BaseURL}}{{tab.messageId}}.tar.gz
                                 </a>
                                 <br>
                             </b-card-text>
@@ -190,7 +192,7 @@
                             shown a download URL when the log files are ready
                         </b-card-footer>
                     </b-card>
-                    <b-card no-body v-if="!tab.isLogs">
+                    <b-card no-body v-if="tab.isStatus">
                         <b-card-body>
                             <div class="row">
                                 <div class="col-sm-6">
@@ -216,8 +218,9 @@
                                 <tr>
                                      <td>ATT Modem Status</td>
                                      <td>
-                                         <span v-if="tab.status_data.IpReachability.ATTModemStatus.length >0"
-                                               v-bind:class="tab.status_data.GatewayInformation.showConnectedATTConnected?'badge-success':'badge-danger'">
+                                         <span class="badge"
+                                               v-if="tab.status_data.IpReachability.ATTModemStatus.length >0"
+                                               v-bind:class="tab.status_data.IpReachability.showConnectedATTConnected?'badge-success':'badge-danger'">
                                           {{tab.status_data.IpReachability.ATTModemStatus}}
                                          </span>
                                      </td>
@@ -225,7 +228,8 @@
                                 <tr>
                                      <td>Verizon Modem Status</td>
                                      <td>
-                                         <span v-if="tab.status_data.IpReachability.VerizonModemStatus.length >0"
+                                         <span class="badge"
+                                               v-if="tab.status_data.IpReachability.VerizonModemStatus.length >0"
                                                v-bind:class="tab.status_data.IpReachability.showConnectedVerizonConnected?'badge-success':'badge-danger'">
                                            {{tab.status_data.IpReachability.VerizonModemStatus}}
                                          </span>
@@ -305,7 +309,8 @@
                                         <tr>
                                             <td>Sprint ITCM Route</td>
                                             <td>
-                                                <span v-if="tab.status_data.RouteInformation.SprintRoute.length >0"
+                                                <span class="badge"
+                                                      v-if="tab.status_data.RouteInformation.SprintRoute.length >0"
                                                       v-bind:class="tab.status_data.RouteInformation.showSprintStable?'badge-success':'badge-danger'">
                                                     {{tab.status_data.RouteInformation.SprintRoute}}
                                                 </span>
@@ -318,7 +323,8 @@
                                        <tr>
                                            <td>Wifi ITCM Route</td>
                                            <td>
-                                               <span v-if="tab.status_data.RouteInformation.WifiRoute.length >0"
+                                               <span class="badge"
+                                                     v-if="tab.status_data.RouteInformation.WifiRoute.length >0"
                                                      v-bind:class="tab.status_data.RouteInformation.showRouteConnected?'badge-success':'badge-danger'">
                                                   {{tab.status_data.RouteInformation.WifiRoute}}
                                                </span>
@@ -331,7 +337,8 @@
                                        <tr>
                                            <td>220 MHz Radio</td>
                                            <td>
-                                               <span v-if="tab.status_data.RouteInformation.MHzRadio.length >0"
+                                               <span class="badge"
+                                                     v-if="tab.status_data.RouteInformation.MHzRadio.length >0"
                                                      v-bind:class="tab.status_data.RouteInformation.showRadioConnected?'badge-success':'badge-danger'">
                                                   {{tab.status_data.RouteInformation.MHzRadio}}
                                                </span>
@@ -355,7 +362,8 @@
                                     <tr>
                                         <td>Cell Status</td>
                                         <td>
-                                            <span v-if="tab.status_data.CellStatus.status.length >0"
+                                            <span class="badge"
+                                                  v-if="tab.status_data.CellStatus.status.length >0"
                                                   v-bind:class="tab.status_data.CellStatus.showGood?'badge-success':'badge-danger'">
                                               {{tab.status_data.CellStatus.status}}
                                             </span>
@@ -363,7 +371,7 @@
                                     </tr>
                                  </table>
                                 </div>
-                                <div class="col-sm-6>">
+                                <div class="col-sm-6">
                                     <ul>
                                         <li style="list-style: none;" v-for="status_message in tab.messages">
                                             {{ status_message }}
@@ -376,6 +384,62 @@
                                      Locomotive System Status Server is currently processing request. You will be
                                      shown the information when the backend server provides it.
                         </b-card-footer>
+                    </b-card>
+                    <b-card no-body v-if="tab.isOffice">
+                        <b-card-body>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <table v-for="office_data in tab.office_dataArray" class="table">
+                                            <th colspan="2" style="text-align:center;">{{office_data.header}}</th>
+                                           <tr v-for="server in office_data.servers">
+                                             <td>{{server.descr}}</td>
+                                               <td>
+                                                   <span class="badge badge-success"
+                                                         v-if="server.value === 'OK'"> {{server.value}}
+                                                   </span>
+                                                   <span class="badge badge-warning"
+                                                         v-if="server.value === 'WARNING'"> {{server.value}}
+                                                   </span>
+                                                   <span class="badge badge-danger"
+                                                         v-if="server.value === 'CRITICAL'"> {{server.value}}
+                                                   </span>
+                                                   <span class="badge"
+                                                         v-if="server.errorMsg != ''"> {{server.errorMsg}}
+                                                   </span>
+                                               </td>
+                                           </tr>
+                                        </table>
+                                        <table class="table" v-if="tab.federations.length">
+                                            <th colspan="2" style="text-align:center;">Federation Status</th>
+                                            <tr v-for="federation in tab.federations">
+                                                <td>{{federation.Federation}}</td>
+                                                <td>
+                                                   <span class="badge badge-success"
+                                                       v-if="federation.ServerCount === federation.OperationalCount">
+                                                       Fully Operational
+                                                   </span>
+                                                    <span class="badge badge-warning"
+                                                        v-if="federation.ServerCount > 0 && federation.ServerCount > federation.OperationalCount">
+                                                        Partially Operational
+                                                   </span>
+                                                    <span class="badge badge-danger"
+                                                          v-if="federation.ServerCount > 0 && federation.OperationalCount == 0">
+                                                        Offline
+                                                   </span>
+                                                    ({{federation.ServerCount}}/{{federation.OperationalCount}})
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <ul>
+                                            <li style="list-style: none;" v-for="status_message in tab.messages">
+                                                {{ status_message }}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                        </b-card-body>
                     </b-card>
                 </v-tab>
             </vue-tabs>

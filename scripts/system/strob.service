@@ -1,0 +1,13 @@
+[Unit]
+Description=STROB backoffice status application
+After=network.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/nohup /usr/bin/strolr2/STROB
+WorkingDirectory=/usr/bin/strolr2
+Restart=on-failure
+#StandardOutput=null
+
+[Install]
+WantedBy=default.target

@@ -5,27 +5,19 @@
       "SCAC": [
         {
           "label": "AMTK",
-          "options": [
-            "AMTK",
-            "CDTX",
-            "WDTX",
-            "IDTX",
-            "RNCX"
-          ]
+          "options": [ "AMTK", "CDTX", "WDTX", "IDTX", "RNCX" ],
+          "federations": [ "amtk", "bnsf", "cn", "cprs", "csao", "csxt", "htix", "kcs", "metx", "nctc", "njtr", "ns", "pjpb", "rcax", "scax", "sepa", "up", "xorr" ]
         }
       ],
-      "Plugins": [
-        "STROS"
-      ]
+      "Plugins": [ "STROS", "STROB" ]
     },
     {
       "AccessSCAC": "VREX",
       "SCAC": [
         {
           "label": "VREX",
-          "options": [
-            "VREX"
-          ]
+          "options": [ "VREX" ],
+          "federations": [ "vrex" ]
         }
       ]
     },
@@ -34,19 +26,13 @@
       "SCAC": [
         {
           "label": "AMTK",
-          "options": [
-            "AMTK",
-            "CDTX",
-            "WDTX",
-            "IDTX",
-            "RNCX"
-          ]
+          "options": [ "AMTK", "CDTX", "WDTX", "IDTX", "RNCX" ],
+          "federations": [ "amtk", "bnsf", "cn", "cprs", "csao", "csxt", "htix", "kcs", "metx", "nctc", "njtr", "ns", "pjpb", "rcax", "scax", "sepa", "up", "xorr" ]
         },
         {
           "label": "VREX",
-          "options": [
-            "VREX"
-          ]
+          "options": [ "VREX" ],
+          "federations": [ "vrex" ]
         }
       ]
     },
@@ -55,19 +41,13 @@
       "SCAC": [
         {
           "label": "AMTK",
-          "options": [
-            "AMTK",
-            "CDTX",
-            "WDTX",
-            "IDTX",
-            "RNCX"
-          ]
+          "options": [ "AMTK", "CDTX", "WDTX", "IDTX", "RNCX" ],
+          "federations": [ "amtk", "bnsf", "cn", "cprs", "csao", "csxt", "htix", "kcs", "metx", "nctc", "njtr", "ns", "pjpb", "rcax", "scax", "sepa", "up", "xorr" ]
         },
         {
           "label": "VREX",
-          "options": [
-            "VREX"
-          ]
+          "options": [ "VREX" ],
+          "federations": [ "vrex" ]
         }
       ]
     }

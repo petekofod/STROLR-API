@@ -1,4 +1,5 @@
 Vue.config.devtools = true
+
 var vue_det = new Vue({
     el: '#MainApp',
     data: {
@@ -27,19 +28,14 @@ var vue_det = new Vue({
             	],
         tab_data_Array: [],
         show: true,
-        bLogStatus: false,
-        timerCheck: '',
-        sStatus: '',
-        sLogRequestStatus: '',
         timeUTC: '',
         userName: '',
         formTZ: '',
-        messageId: '',
         cell_class: 'table-danger',
         isActive: false,
-        tabName: '',
         active_tab: '',
-        plugins: []
+        plugins: [],
+        S3BaseUrl: '',
     },
     created: function () {
         this.getUserName()
@@ -51,57 +47,100 @@ var vue_det = new Vue({
     methods: {
         setRequestType(value) {
             this.form.RequestType = value
+            if (this.form.RequestType != "get-backoffice")
+            {
+               LocoIdElement = document.getElementById("inpLocoID");
+               LocoIdElement.setCustomValidity(this.validateLocoId()? "" : "LocoId should be set for this request");
+            }
+        },
+        validateLocoId() {
+           return this.form.LocoID != null
         },
         onSubmit(evt) {
             evt.preventDefault()
-
             var xhr = new XMLHttpRequest()
             var self = this
+            var requestSCACMark = self.form.SCACMark
+            var requestLocoID = self.form.LocoID
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
             xhr.onload = async function () {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        self.new_messageId = xhr.responseText
-                        new_tab_item = {}
-                        new_tab_item.timer = setInterval(self.checkResponse.bind(null, self.new_messageId), 1000)
+                        var messageId = xhr.responseText
+                        var index = self.tab_data_Array.length
+                        var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
 
-                        index = self.tab_data_Array.length
-                        var title = "(" + index + ") " + self.form.SCACMark + " " + self.form.LocoID
                         if (self.form.RequestType == "get-status") {
-                            title = title + " status"
-                            new_status_data = self.fillGetStatusData()   // TODO this is test data just to show
-                            self.tab_data_Array.push({id:index,
-                                title: title,
-                                LocoID: self.form.SCACMark + " " + self.form.LocoID,
-                                status_data: new_status_data,
-                                messageId: self.new_messageId, messages:["Loading locomotive system status"],
-                                timer: new_tab_item.timer, sLogRequestStatus: "Request STATUS submitted successfully",
-                                showFooter: false, isLogs: false, showLinks: false, isLogs:false})
-
+                            var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " status"
+                            var tabItem = createStatusTab(title, index, self.form, messageId, timer)
                         } else if (self.form.RequestType == "get-logs") {
-                            title = title + " logs"
-                            self.tab_data_Array.push({id:index,
-                                title: title,
-                                LocoID: self.form.LocoID,
-                                messageId: self.new_messageId, Status:"Loading locomotive logs...",
-                                timer: new_tab_item.timer,
-                                showFooter: true, isLogs: true, showLinks: false, isLogs:true,
-                                sFilesCount: "Counting...", sTotalBytes: "Checking log file...", sLogRequestStatus: "Request STATUS submitted successfully"})
+                            var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " logs"
+                            var tabItem = createLogsTab(title, index, self.form, messageId, timer)
+                        } else if (self.form.RequestType == "get-backoffice") {
+                            var title = "(" + index + ") " + requestSCACMark + " office"
+                            var tabItem = createOfficeTab(title, index, self.form, messageId, timer)
+                            // Send additional request to get Federation status
+                            self.sendFederationRequest(requestSCACMark, messageId)
+                        } else {
+                            console.error("Unknown type of request!")
+                            return
                         }
+                        self.tab_data_Array.push(tabItem)
+
                         self.$nextTick(function () {
                             self.active_tab = title
                         });
                     } else {
-                                var errorMessage = JSON.parse(xhr.responseText).message
-                                self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
-                                console.error('error - ' + errorMessage)
-                                console.error(xhr.responseText)
+                        var errorMessage = JSON.parse(xhr.responseText).message
+                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                        console.error('error - ' + errorMessage)
                     }
                 }
             }
-            xhr.send(JSON.stringify(this.form))
+            xhr.send(JSON.stringify(this.form, (key, value)=> {
+              if ((value === null) && (key === 'LocoID')) return undefined
+                  return value
+            }))
+        },
+        sendFederationRequest(SCACMark, officeMessageId) {
+            var xhr = new XMLHttpRequest()
+            xhr.open('POST', 'data-request')
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+            var self = this
+
+            xhr.onload = async function () {
+                if (xhr.readyState !== 4)
+                    return
+                if (xhr.status === 200) {
+                    var messageId = xhr.responseText
+                    var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
+                    self.addFederationInfo(messageId, officeMessageId, timer)
+                } else {
+                    var errorMessage = JSON.parse(xhr.responseText).message
+                    self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                    console.error('error - ' + errorMessage)
+                }
+            }
+
+            var param = {
+                RequestType: "get-federation",
+                SCACMark: SCACMark,
+            }
+
+            xhr.send(JSON.stringify(param))
+        },
+        addFederationInfo(federationMessageId, officeMessageId, timer) {
+            for (var i=0; i < this.tab_data_Array.length; i++) {
+                if (this.tab_data_Array[i].messageIds.includes(officeMessageId)) {
+                    this.tab_data_Array[i].messageIds.push(federationMessageId)
+                    this.tab_data_Array[i].federationTimer = timer
+                    break
+                }
+            }
         },
         onReset(evt) {
             evt.preventDefault()
@@ -138,6 +177,9 @@ var vue_det = new Vue({
                     conf.Plugins.forEach(function (item) {
                       self.plugins.push(item)
                     })
+                if (conf.S3BaseURL) {
+                    self.S3BaseURL = conf.S3BaseURL
+                }
             }
             xhr.send()
         },
@@ -199,215 +241,324 @@ var vue_det = new Vue({
         },
 
         checkResponse: function (ourMessageId) {
-             var xhr = new XMLHttpRequest()
-                    var self = this
-                    xhr.open('GET', 'status-update/' + ourMessageId)
-                    xhr.onload = function () {
-                        if (xhr.readyState === 4) {
-                            if (xhr.status === 200) {
-                                statusUpdate = JSON.parse(xhr.responseText)
-                                for (var i=0; i < self.tab_data_Array.length; i++) {
-                                  if (self.tab_data_Array[i].messageId === ourMessageId) {
-                                      self.tab_data_Array[i].showFooter = false
-                                      if (statusUpdate.statusText) {
-                                        self.tab_data_Array[i].status_data.Status = statusUpdate.statusText
-                                        var newMessages = statusUpdate.statusText.split(";")
-                                        newMessages.forEach(function (m, index) {
-                                          self.tab_data_Array[i].messages.push(m)
-                                        })
-                                      }
-                                      if (statusUpdate.TestTime)
-                                        self.tab_data_Array[i].status_data.TestTime = statusUpdate.TestTime
-
-                                      // ip information
-                                      if (statusUpdate.VerizonModem)
-                                         self.tab_data_Array[i].status_data.IpInformation.VerizonModem = statusUpdate.VerizonModem
-                                      if (statusUpdate.ATTModem)
-                                         self.tab_data_Array[i].status_data.IpInformation.ATTModem = statusUpdate.ATTModem
-
-                                      // Ip reachability
-                                      if (statusUpdate.ATTModemStatus) {
-                                         self.tab_data_Array[i].status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
-                                         self.tab_data_Array[i].status_data.IpReachability.showConnectedATTNotConnected =
-                                             !statusUpdate.ATTModemStatus.toLowerCase().includes("unreach")
-                                      }
-                                      if (statusUpdate.VerizonModemStatus) {
-                                         self.tab_data_Array[i].status_data.IpReachability.VerizonModemStatus = statusUpdate.VerizonModemStatus
-                                         self.tab_data_Array[i].status_data.IpReachability.showConnectedVerizonConnected =
-                                             statusUpdate.VerizonModemStatus.toLowerCase().includes("online")
-                                      }
-
-                                      // Wifi information
-                                      if (statusUpdate.WiFiClientStatus)
-                                      {
-                                         self.tab_data_Array[i].status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
-                                         self.tab_data_Array[i].status_data.WifiInformation.showConnected =
-                                             !statusUpdate.WiFiClientStatus.toLowerCase().includes("not connected")
-                                      }
-                                      if (statusUpdate.ClientId)
-                                         self.tab_data_Array[i].status_data.WifiInformation.ClientId = statusUpdate.ClientId
-                                      if (statusUpdate.AccessPoint)
-                                         self.tab_data_Array[i].status_data.WifiInformation.AccessPoint = statusUpdate.AccessPoint
-
-                                      // gateway information
-                                      if (statusUpdate.ETMSClient) {
-                                         self.tab_data_Array[i].status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
-                                         self.tab_data_Array[i].status_data.GatewayInformation.ETMSConnected = statusUpdate.ETMSClient.toLowerCase() === "connected"
-                                      }
-                                      if (statusUpdate.MDMClient)
-                                      {
-                                         self.tab_data_Array[i].status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
-                                         self.tab_data_Array[i].status_data.GatewayInformation.MDMConnected = statusUpdate.MDMClient.toLowerCase() === "connected"
-                                      }
-
-                                      // route information
-                                      if (statusUpdate.ATTRoute) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.isATTStable = statusUpdate.ATTRoute.toLowerCase() === "connected"
-                                      }
-                                      if (statusUpdate.ATTRouteTimestamp) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.ATTRouteTimestamp = statusUpdate.ATTRouteTimestamp
-                                      }
-
-                                      if (statusUpdate.VerizonRoute){
-                                         self.tab_data_Array[i].status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.isVerizonStable = statusUpdate.VerizonRoute.toLowerCase() === "connected"
-                                      }
-                                      if (statusUpdate.VerizonRouteTimestamp) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.VerizonRouteTimestamp = statusUpdate.VerizonRouteTimestamp
-                                      }
-
-                                      if (statusUpdate.SprintRoute){
-                                         self.tab_data_Array[i].status_data.RouteInformation.SprintRoute = statusUpdate.SprintRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.showSprintStable =
-                                              !statusUpdate.SprintRoute.toLowerCase().includes("not connected")
-                                      }
-                                      if (statusUpdate.SprintRouteTimestamp) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.SprintRouteTimestamp = statusUpdate.SprintRouteTimestamp
-                                      }
-
-                                      if (statusUpdate.WifiRoute) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
-                                         self.tab_data_Array[i].status_data.RouteInformation.showRouteConnected =
-                                            !statusUpdate.WifiRoute.toLowerCase().includes("not connected")
-                                      }
-                                      if (statusUpdate.WiFiRouteTimestamp) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.WiFiRouteTimestamp = statusUpdate.WiFiRouteTimestamp
-                                      }
-
-                                      if (statusUpdate.MHzRadio) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
-                                         self.tab_data_Array[i].status_data.RouteInformation.showRadioConnected =
-                                             !statusUpdate.MHzRadio.toLowerCase().includes("not connected")
-                                      }
-                                      if (statusUpdate.RadioRouteTimestamp) {
-                                         self.tab_data_Array[i].status_data.RouteInformation.RadioRouteTimestamp = statusUpdate.RadioRouteTimestamp
-                                      }
-
-                                      // gateway information
-                                      if (statusUpdate.RadioId)
-                                         self.tab_data_Array[i].status_data.RadioInformation.RadioId = statusUpdate.RadioId
-                                      if (statusUpdate.EMPAddress)
-                                         self.tab_data_Array[i].status_data.RadioInformation.EMPAddress = statusUpdate.EMPAddress
-
-                                      if (statusUpdate.CellStatus) {
-                                         self.tab_data_Array[i].status_data.CellStatus.status = statusUpdate.CellStatus
-                                         self.tab_data_Array[i].status_data.CellStatus.showGood = statusUpdate.CellStatus.toLowerCase().includes("good")
-                                      }
-
-                                      // logs information
-                                      if (statusUpdate.filesCount)
-                                         self.tab_data_Array[i].sFilesCount = statusUpdate.filesCount
-                                      if (statusUpdate.totalBytes)
-                                          self.tab_data_Array[i].sTotalBytes = statusUpdate.totalBytes
-                                      if (statusUpdate.statusText)
-                                         self.tab_data_Array[i].Status = statusUpdate.statusText
-                                      if (statusUpdate.end) {
-                                         clearInterval(self.tab_data_Array[i].timer)
-                                         if (self.tab_data_Array[i].isLogs)
-                                            self.tab_data_Array[i].showLinks = true
-                                      }
-                                      // TODO process all other fields
-                                      break
-                                  }
-                                }
-                            } else if (xhr.status === 204) {
-                                // no update, try again later
-                            }
-                            else {
-                                console.error('error - ' + xhr.statusText);
-                            }
+            var xhr = new XMLHttpRequest()
+            var self = this
+            xhr.open('GET', 'status-update/' + ourMessageId)
+            xhr.onload = function () {
+                if (xhr.readyState !== 4)
+                    return
+                if (xhr.status === 200) {
+                    console.log("xhr.responseText=", xhr.responseText)
+                    var statusUpdate = JSON.parse(xhr.responseText)
+                    for (var i=0; i < self.tab_data_Array.length; i++) {
+                        if (self.tab_data_Array[i].messageIds.includes(ourMessageId)) {
+                            updateTab(self.tab_data_Array[i], statusUpdate)
+                            break
                         }
                     }
-                    xhr.send()
-                },
-         fillGetStatusData: function() {
-
-           new_status_data = {}
-
-           new_status_data.messages = []
-
-           new_status_data.TestTime = ""
-           ipinfo = {}
-           ipinfo.isAvailable = true;
-           ipinfo.ATTModem = ""
-           ipinfo.VerizonModem = ""
-           new_status_data.IpInformation = ipinfo
-
-           ipreach = {}
-           ipreach.isAvailable = true;
-           ipreach.ATTModemStatus = ""
-           ipreach.VerizonModemStatus = ""
-           ipreach.showConnectedVerizonConnected = false
-           ipreach.showConnectedATTConnected = false
-           new_status_data.IpReachability = ipreach
-
-           wifi_info = {}
-           wifi_info.ClientId = ""
-           wifi_info.AccessPoint = ""
-           wifi_info.showConnected = false
-           wifi_info.showNotConnected = false
-           wifi_info.ClientStatus = ""
-           new_status_data.WifiInformation = wifi_info
-
-           gate_info = {}
-           gate_info.ETMSClient = ""
-           gate_info.ETMSConnected = false
-           gate_info.MDMClient= ""
-           gate_info.MDMConnected = false
-           new_status_data.GatewayInformation = gate_info
-
-           route_info = {}
-           route_info.ATTRoute=""
-           route_info.VerizonRoute=""
-           route_info.SprintRoute=""
-           route_info.WifiRoute=""
-           route_info.MHzRadio=""
-           route_info.ATTRouteTimestamp=""
-           route_info.VerizonRouteTimestamp=""
-           route_info.SprintRouteTimestamp=""
-           route_info.WifiRouteTimestamp=""
-           route_info.MHzRadioTimestamp=""
-           route_info.isATTStable = false
-           route_info.isVerizonStable = false
-           route_info.showRouteConnected = false
-           route_info.showRadioConnected = false
-           route_info.showSprintStable = false
-           new_status_data.RouteInformation = route_info
-
-           radio_info = {}
-           radio_info.RadioId=""
-           radio_info.EMPAddress=""
-
-           new_status_data.RadioInformation = radio_info
-
-           cell_status = {}
-           cell_status.status = ""
-           cell_status.showGood = false
-
-           new_status_data.CellStatus = cell_status
-           return new_status_data;
-
-           },
+                } else if (xhr.status === 204) {
+                    // no update, try again later
+                }
+                else {
+                    console.error('error - ' + xhr.statusText);
+                }
+            }
+            xhr.send()
+        },
     }
 });
+
+function createStatusTab(title, index, form, messageId, timer) {
+    return {
+        id:index,
+        title: title,
+        LocoID: form.SCACMark + " " + form.LocoID,
+        status_data: fillGetStatusData(),
+        messageIds: [messageId],
+        messages:["Loading locomotive system status"],
+        timer: timer,
+        sLogRequestStatus: "Request submitted successfully",
+        showFooter: false, isLogs: false, isStatus: true, isOffice: false, showLinks: false
+    }
+}
+
+function createLogsTab(title, index, form, messageId, timer) {
+    return {
+        id: index,
+        title: title,
+        LocoID: form.LocoID,
+        messageIds: [messageId],
+        messageId: messageId,
+        Status:"Loading locomotive logs...",
+        timer: timer,
+        showFooter: true, isLogs: true, isStatus: false, isOffice: false, showLinks: false,
+        sFilesCount: "Counting...",
+        sTotalBytes: "Checking log file...",
+        sLogRequestStatus: "Request submitted successfully"
+    }
+}
+
+function createOfficeTab(title, index, form, messageId, timer) {
+    return {
+        id: index,
+        title: title,
+        messageIds: [messageId],
+        Status:"Loading backoffice status...",
+        office_dataArray: fillOfficeData(),
+        messages:["Loading backoffice system status"],
+        federations: [],
+        timer: timer,
+        showFooter: false, isLogs: false, isStatus: false, isOffice: true, showLinks: false,
+        sLogRequestStatus: "Request submitted successfully"
+    }
+}
+
+function updateTab(tabItem, statusUpdate) {
+    tabItem.showFooter = false
+
+    // Locomotive status tab has an array of status messages, which is growing with time
+    if (statusUpdate.statusText && tabItem.messages) {
+        tabItem.messages.push(statusUpdate.statusText)
+    }
+
+    if (statusUpdate.TestTime)
+        tabItem.status_data.TestTime = statusUpdate.TestTime
+
+    // ip information
+    if (statusUpdate.VerizonModem)
+        tabItem.status_data.IpInformation.VerizonModem = statusUpdate.VerizonModem
+    if (statusUpdate.ATTModem)
+        tabItem.status_data.IpInformation.ATTModem = statusUpdate.ATTModem
+
+    // Ip reachability
+    if (statusUpdate.ATTModemStatus) {
+        tabItem.status_data.IpReachability.ATTModemStatus = statusUpdate.ATTModemStatus
+        tabItem.status_data.IpReachability.showConnectedATTConnected =
+            !statusUpdate.ATTModemStatus.toLowerCase().includes("unreach")
+    }
+    if (statusUpdate.VerizonModemStatus) {
+        tabItem.status_data.IpReachability.VerizonModemStatus = statusUpdate.VerizonModemStatus
+        tabItem.status_data.IpReachability.showConnectedVerizonConnected =
+            statusUpdate.VerizonModemStatus.toLowerCase().includes("online")
+    }
+
+    // Wifi information
+    if (statusUpdate.WiFiClientStatus)
+    {
+        tabItem.status_data.WifiInformation.ClientStatus = statusUpdate.WiFiClientStatus
+        tabItem.status_data.WifiInformation.showConnected =
+            !statusUpdate.WiFiClientStatus.toLowerCase().includes("not connected")
+    }
+    if (statusUpdate.ClientId)
+        tabItem.status_data.WifiInformation.ClientId = statusUpdate.ClientId
+    if (statusUpdate.AccessPoint)
+        tabItem.status_data.WifiInformation.AccessPoint = statusUpdate.AccessPoint
+
+    // gateway information
+    if (statusUpdate.ETMSClient) {
+        tabItem.status_data.GatewayInformation.ETMSClient = statusUpdate.ETMSClient
+        tabItem.status_data.GatewayInformation.ETMSConnected = statusUpdate.ETMSClient.toLowerCase() === "connected"
+    }
+    if (statusUpdate.MDMClient) {
+        tabItem.status_data.GatewayInformation.MDMClient = statusUpdate.MDMClient
+        tabItem.status_data.GatewayInformation.MDMConnected = statusUpdate.MDMClient.toLowerCase() === "connected"
+    }
+
+    // route information
+    if (statusUpdate.ATTRoute) {
+        tabItem.status_data.RouteInformation.ATTRoute = statusUpdate.ATTRoute
+        tabItem.status_data.RouteInformation.isATTStable = statusUpdate.ATTRoute.toLowerCase() === "connected"
+    }
+    if (statusUpdate.ATTRouteTimestamp) {
+        tabItem.status_data.RouteInformation.ATTRouteTimestamp = statusUpdate.ATTRouteTimestamp
+    }
+
+    if (statusUpdate.VerizonRoute){
+        tabItem.status_data.RouteInformation.VerizonRoute = statusUpdate.VerizonRoute
+        tabItem.status_data.RouteInformation.isVerizonStable = statusUpdate.VerizonRoute.toLowerCase() === "connected"
+    }
+    if (statusUpdate.VerizonRouteTimestamp) {
+        tabItem.status_data.RouteInformation.VerizonRouteTimestamp = statusUpdate.VerizonRouteTimestamp
+    }
+
+    if (statusUpdate.SprintRoute){
+        tabItem.status_data.RouteInformation.SprintRoute = statusUpdate.SprintRoute
+        tabItem.status_data.RouteInformation.showSprintStable =
+            !statusUpdate.SprintRoute.toLowerCase().includes("not connected")
+    }
+    if (statusUpdate.SprintRouteTimestamp) {
+        tabItem.status_data.RouteInformation.SprintRouteTimestamp = statusUpdate.SprintRouteTimestamp
+    }
+
+    if (statusUpdate.WifiRoute) {
+        tabItem.status_data.RouteInformation.WifiRoute = statusUpdate.WifiRoute
+        tabItem.status_data.RouteInformation.showRouteConnected =
+            !statusUpdate.WifiRoute.toLowerCase().includes("not connected")
+    }
+    if (statusUpdate.WiFiRouteTimestamp) {
+        tabItem.status_data.RouteInformation.WiFiRouteTimestamp = statusUpdate.WiFiRouteTimestamp
+    }
+
+    if (statusUpdate.MHzRadio) {
+        tabItem.status_data.RouteInformation.MHzRadio = statusUpdate.MHzRadio
+        tabItem.status_data.RouteInformation.showRadioConnected =
+            !statusUpdate.MHzRadio.toLowerCase().includes("not connected")
+    }
+    if (statusUpdate.RadioRouteTimestamp) {
+        tabItem.status_data.RouteInformation.RadioRouteTimestamp = statusUpdate.RadioRouteTimestamp
+    }
+
+    // gateway information
+    if (statusUpdate.RadioId)
+        tabItem.status_data.RadioInformation.RadioId = statusUpdate.RadioId
+    if (statusUpdate.EMPAddress)
+        tabItem.status_data.RadioInformation.EMPAddress = statusUpdate.EMPAddress
+
+    if (statusUpdate.CellStatus) {
+        tabItem.status_data.CellStatus.status = statusUpdate.CellStatus
+        tabItem.status_data.CellStatus.showGood = statusUpdate.CellStatus.toLowerCase().includes("good")
+    }
+
+    // logs information
+    if (statusUpdate.filesCount)
+        tabItem.sFilesCount = statusUpdate.filesCount
+    if (statusUpdate.totalBytes)
+        tabItem.sTotalBytes = statusUpdate.totalBytes
+    if (statusUpdate.statusText)
+    {
+        if ((statusUpdate.Status != "2000"))
+            tabItem.Status = statusUpdate.statusText
+    }
+    if (statusUpdate.end === "1") {
+        clearInterval(tabItem.timer)
+    if (tabItem.isLogs)
+        tabItem.showLinks = true
+    }
+
+    // backoffice information
+    if (statusUpdate.Status === "2000") {
+        console.log("ServerType: " + statusUpdate.ServerType)
+        console.log("ServerCount: " + statusUpdate.ServerCount)
+        console.log("ServerPostfix: " + statusUpdate.ServerPostfix)
+        console.log("ServerStatus: " + statusUpdate.ServerStatus)
+
+        if (tabItem.office_dataArray.length > 0) {
+           var array_len = tabItem.office_dataArray.length
+           tabItem.office_dataArray[array_len-1].servers.push( {descr: statusUpdate.ServerType + " " + statusUpdate.ServerCount,
+               value: statusUpdate.ServerStatus, errorMsg: ''})
+        }
+
+    }
+
+    if (statusUpdate.Status === "2003") {
+        console.log("Header: " + statusUpdate.statusText)
+
+        tabItem.Status = "Loading " + statusUpdate.statusText
+
+        office_data = {
+           header: statusUpdate.statusText,
+           servers: []
+        }
+        tabItem.office_dataArray.push(office_data)
+    }
+
+    if (statusUpdate.Status === "2001")
+    {
+        tabItem.Status = "Data retrieved successfully"
+    }
+
+    if (statusUpdate.Status === "2002")
+    {
+        // we assume that the status contains error message regarding the last server
+        var array_len = tabItem.office_dataArray.length
+        var cur_servers_len = tabItem.office_dataArray[array_len-1].servers.length
+        if (cur_servers_len > 0)
+           tabItem.office_dataArray[array_len-1].servers[cur_servers_len-1].errorMsg = statusUpdate.statusText
+        else
+           console.log("We have received an error message outside the list of given servers: ", statusUpdate.statusText)
+    }
+    // federation information
+    if (statusUpdate.Status === "3001") {
+        clearInterval(tabItem.federationTimer)
+    }
+
+    if (statusUpdate.Status === "3000") {
+        console.log("Federation: " + statusUpdate.Federation)
+        console.log("ServerCount: " + statusUpdate.ServerCount)
+        console.log("OperationalCount: " + statusUpdate.OperationalCount)
+
+        tabItem.federations.push(statusUpdate)
+    }
+}
+
+function fillGetStatusData() {
+    return {
+       messages: [],
+       TestTime: "",
+       IpInformation: {
+          isAvailable: true,
+          ATTModem: "",
+          VerizonModem: ""
+       },
+       IpReachability : {
+          isAvailable: true,
+          ATTModemStatus: "",
+          VerizonModemStatus: "",
+          showConnectedVerizonConnected: false,
+          showConnectedATTConnected: false
+       },
+       WifiInformation : {
+          ClientId: "",
+          AccessPoint: "",
+          showConnected: false,
+          showNotConnected: false,
+          ClientStatus: ""
+       },
+       GatewayInformation: {
+          ETMSClient: "",
+          ETMSConnected: false,
+          MDMClient: "",
+          MDMConnected: false
+       },
+       RouteInformation: {
+          ATTRoute: "",
+          VerizonRoute: "",
+          SprintRoute: "",
+          WifiRoute: "",
+          MHzRadio: "",
+          ATTRouteTimestamp: "",
+          VerizonRouteTimestamp: "",
+          SprintRouteTimestamp: "",
+          WifiRouteTimestamp: "",
+          MHzRadioTimestamp: "",
+          isATTStable: false,
+          isVerizonStable: false,
+          showRouteConnected: false,
+          showRadioConnected: false,
+          showSprintStable: false
+       },
+       RadioInformation: {
+          RadioId: "",
+          EMPAddress: ""
+       },
+       CellStatus: {
+          status: "",
+          showGood: false
+       }
+    }
+}
+
+function fillOfficeData() {
+    new_office_data = []
+    /*office_data1 = {}
+    office_data1.header  = "Header1"
+    office_data1.value  = "Value1"
+    new_office_data.push(office_data1)
+
+    office_data2 = {}
+    office_data2.header  = "Header2"
+    office_data2.value  = "Value2"
+    new_office_data.push(office_data2) */
+
+    return new_office_data
+}

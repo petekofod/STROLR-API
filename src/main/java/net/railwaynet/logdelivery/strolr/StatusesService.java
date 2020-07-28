@@ -36,6 +36,8 @@ public class StatusesService {
     private AmazonSQS SQS = null;
     private String LOG_QUEUE_URL = null;
     private String STATUS_QUEUE_URL = null;
+    private String BACKOFFICE_QUEUE_URL = null;
+    private String FEDERATION_QUEUE_URL = null;
 
     private void init() {
         objectMapper = JsonMapper.builder().enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).build();
@@ -47,11 +49,17 @@ public class StatusesService {
                 .withCredentials(new AWSStaticCredentialsProvider(bAWSc))
                 .build();
         String logQueueName = Objects.requireNonNull(env.getProperty("response.queue.name"));
-        logger.info("Initialing logs response queue: " + logQueueName);
+        logger.info("Creating logs response queue: " + logQueueName);
         LOG_QUEUE_URL = SQS.getQueueUrl(logQueueName).getQueueUrl();
         String statusQueueName = Objects.requireNonNull(env.getProperty("status.response.queue.name"));
-        logger.info("Initialing status response queue: " + statusQueueName);
+        logger.info("Creating status response queue: " + statusQueueName);
         STATUS_QUEUE_URL = SQS.getQueueUrl(statusQueueName).getQueueUrl();
+        String backofficeQueueName = Objects.requireNonNull(env.getProperty("backoffice.response.queue.name"));
+        logger.info("Creating backoffice response queue: " + backofficeQueueName);
+        BACKOFFICE_QUEUE_URL = SQS.getQueueUrl(backofficeQueueName).getQueueUrl();
+        String federationQueueName = Objects.requireNonNull(env.getProperty("federation.response.queue.name"));
+        logger.info("Creating federation response queue: " + federationQueueName);
+        FEDERATION_QUEUE_URL = SQS.getQueueUrl(federationQueueName).getQueueUrl();
     }
 
     private ObjectMapper getObjectMapper() {
@@ -76,6 +84,18 @@ public class StatusesService {
         if (STATUS_QUEUE_URL == null)
             init();
         return STATUS_QUEUE_URL;
+    }
+
+    private String getBackofficeQueueUrl() {
+        if (BACKOFFICE_QUEUE_URL == null)
+            init();
+        return BACKOFFICE_QUEUE_URL;
+    }
+
+    private String getFederationQueueUrl() {
+        if (FEDERATION_QUEUE_URL == null)
+            init();
+        return FEDERATION_QUEUE_URL;
     }
 
     private final Map<String, List<Map<String, String>>> statusUpdates = new HashMap<>();
@@ -107,6 +127,12 @@ public class StatusesService {
 
             logger.info("Checking for new messages in status queue");
             checkQueue(getStatusQueueUrl());
+
+            logger.info("Checking for new messages in backoffice queue");
+            checkQueue(getBackofficeQueueUrl());
+
+            logger.info("Checking for new messages in federation queue");
+            checkQueue(getFederationQueueUrl());
         }
     }
 
@@ -132,6 +158,7 @@ public class StatusesService {
     synchronized public void putStatus(String messageId, Map<String, String> status) {
         String statusText;
         switch (status.get("Status")) {
+            // Logs Retrieval statuses
             case "1":
                 statusText = "Request is being processed";
                 break;
@@ -150,6 +177,7 @@ public class StatusesService {
             case "1001":
                 statusText = "Verifying SCAC and MARK";
                 break;
+            // Locomotive statuses
             case "1002":
                 statusText = "Looking for the locomotive";
                 status.put("TestTime", status.get(INFO_ATTR));
@@ -266,9 +294,54 @@ public class StatusesService {
                 status.put("error", status.get(INFO_ATTR));
                 status.put("end", "1");
                 break;
+            // Back office statuses
+            case "2000":
+                String[] updateFields = status.get(INFO_ATTR).split(";");
+                if (updateFields.length != 4) {
+                    statusText = status.get(INFO_ATTR);
+                    logger.error("Wrong format of backoffice update string: " + statusText);
+                } else {
+                    status.put("ServerType", updateFields[0]);
+                    status.put("ServerCount", updateFields[1]);
+                    status.put("ServerPostfix", updateFields[2]);
+                    status.put("ServerStatus", updateFields[3]);
+                    statusText = "Received status of " + updateFields[0] + " " + updateFields[1];
+                }
+                logger.debug("Backoffice status update: " + statusText);
+                break;
+            case "2001":
+                statusText = "Backoffice request completed successfully";
+                logger.debug("Backoffice request completed successfully");
+                status.put("end", "1");
+                break;
+            case "2002":
+                logger.debug("Error in backoffice request: " + status.get(INFO_ATTR));
+                statusText = status.get(INFO_ATTR);
+                break;
+            case "2003":
+                logger.debug("Backoffice header: " + status.get(INFO_ATTR));
+                statusText = status.get(INFO_ATTR);
+                break;
             default:
-                statusText = "";
                 logger.warn("Unknown status of the message! Status = " + status);
+            // Federation statuses
+            case "3000":
+                String[] federationFields = status.get(INFO_ATTR).split(";");
+                if (federationFields.length != 3) {
+                    statusText = status.get(INFO_ATTR);
+                    logger.error("Wrong format of federation update string: " + statusText);
+                } else {
+                    status.put("Federation", federationFields[0]);
+                    status.put("ServerCount", federationFields[1]);
+                    status.put("OperationalCount", federationFields[2]);
+                    statusText = "Received status of federation " + federationFields[0];
+                }
+                break;
+            case "3001":
+                statusText = "Federation request completed successfully";
+                logger.debug("Federation request completed successfully");
+                status.put("end", "2");
+                break;
         }
         status.put(STATUS_TEXT, statusText);
         status.remove(INFO_ATTR);

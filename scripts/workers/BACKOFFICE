@@ -1,0 +1,67 @@
+#!/bin/bash
+
+. ./functions-lib
+. ./strob-lib
+
+readConfig
+
+# shellcheck disable=SC2034
+messageId=$1
+SCAC="${2,,}"
+
+ARIS_KEY_FILE="/home/railwaynet/amtktestkeys/sample"
+KEY_FILE="/home/railwaynet/.ssh/checkscripts"
+ERROR_TEXT=""
+AWS_REMOTE_SCRIPT="bin/checkaws.sh"
+REMOTE_SCRIPT="/home/railwaynet/check_aim.tcl"
+
+clear
+echo ""
+echo ""
+echo ""
+echo -e "${BLUE}##############################################################################${NC}"
+echo -e "${BLUE}#######               START COPY RIGHT HERE                            #######${NC}"
+echo ""
+
+if [ "$SCAC" = "amtk" ]; then
+
+  checkServers \
+    "CIBOS System Status" \
+    "$KEY_FILE" \
+    "BOS" \
+    "$REMOTE_SCRIPT" \
+    10.103.3.33 10.103.3.34 10.103.3.35
+
+  checkServers \
+    "Nationwide ARIS System Status" \
+    "$KEY_FILE" \
+    "ARIS" \
+    "$REMOTE_SCRIPT" \
+    10.103.3.39 10.103.3.40 10.103.3.41
+
+  checkServers \
+    "Mobile Device Manager (MDM) System Status" \
+    "$KEY_FILE" \
+    "MDM" \
+    "$REMOTE_SCRIPT" \
+    10.103.3.36 10.103.3.37 10.103.3.38
+
+  checkAWSServers \
+    "Amazon Web Service MIS System Status" \
+    "$ARIS_KEY_FILE" \
+    "ARIS" \
+    "$AWS_REMOTE_SCRIPT" \
+    10.103.3.39 10.103.3.40 10.103.3.41
+
+else
+  sendSTROBError "SCAC $SCAC is not supported"
+fi
+
+echo ""
+echo -e "${BLUE}ERROR TEXT${NC}"
+echo -e "${CYAN}$ERROR_TEXT${NC}"
+echo -e ""
+echo -e "${BLUE}#######                 END COPY RIGHT HERE                            #######${NC}"
+echo -e "${BLUE}##############################################################################${NC}"
+
+sendSTROBEnd

@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +64,7 @@ public class RailroadsService {
                     HttpStatus.INTERNAL_SERVER_ERROR, "User role is not found!");
         }
 
-        logger.debug("JSON:" + result.get("SCAC").toString());
+        logger.debug("JSON:" + result.toString());
         if (result.containsKey("Plugins"))
             logger.debug("Plugins:" + result.get("Plugins").toString());
         else
@@ -72,14 +73,36 @@ public class RailroadsService {
         return result;
     }
 
+    public List<String> getFederationsBySCAC(String accessScac) {
+        List<String> federations = new ArrayList<>();
+
+        Map<?, ?> scacs = getScacsByAccessScac(accessScac);
+
+        if (scacs == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "User role is not found!");
+        }
+
+        @SuppressWarnings("unchecked") List<Map<String, ?>> listOfScacs = (List<Map<String, ?>>) scacs.get("SCAC");
+        for (Map<String, ?> scac: listOfScacs) {
+            //noinspection unchecked
+            federations.addAll((Collection<? extends String>) scac.get("federations"));
+        }
+
+        logger.debug("Federations list: " + federations.toString());
+        return federations;
+    }
+
     public String getSCACbyMARK(String accessScac, String mark) {
         logger.debug("Looking for SCAC of mark " + mark);
+        //noinspection unchecked
         Map<String, List<Map<String, ?>>> scacs = (Map<String, List<Map<String, ?>>>) getScacsByAccessScac(accessScac);
         if (scacs == null)
             return null;
 
         for (Map<String, ?> scac: scacs.get("SCAC")) {
             logger.debug("SCAC: " + scac.get("label"));
+            //noinspection unchecked
             List<String> scacOptions = (List<String>) scac.get("options");
             if (scacOptions.contains(mark)) {
                 logger.debug("SCAC found!");
