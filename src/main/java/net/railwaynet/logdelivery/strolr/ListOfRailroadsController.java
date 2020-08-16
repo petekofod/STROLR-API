@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -31,10 +32,13 @@ public class ListOfRailroadsController {
     private RailroadsService railroadsService;
 
     @Autowired
+    private ListOfLocomotivesService locomotivesService;
+
+    @Autowired
     private Environment env;
 
     @RequestMapping("/railroads.json")
-    public String data(Principal principal) {
+    public String railroads(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
 
@@ -51,6 +55,27 @@ public class ListOfRailroadsController {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate the configuration for the user!", e);
         }
+    }
+
+    @RequestMapping("/locomotives.json")
+    public String locomotives(Principal principal) {
+        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
+        logger.debug(currentUser.getUsername() + " requesting the list of locomotives");
+
+        try {
+            @SuppressWarnings("unchecked") Map<String, Object> result = locomotivesService.getLocomotives();
+            return objectMapper.writeValueAsString(result);
+        } catch (SQLException e) {
+            logger.error("Can't get locomotives from RDS!", e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't get locomotives from RDS!", e);
+        } catch (JsonProcessingException e) {
+            logger.error("Can't generate JSON with a list of locomotives!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate JSON with a list of locomotives!", e);
+        }
+
+
     }
 
 }

@@ -8,7 +8,7 @@
       "ATTModem": {"Address": "1.1.1.1", "IsOnline": true},
       "VZWModem": {"Address": "2.2.2.2", "IsOnline": false},
       "WiFi": {"Address": "AP Mac", "IsOnline": true},
-      "Radio": {"Address": "  Base ID", "IsOnline": true}
+      "Radio": {"Address": "Base ID", "IsOnline": true}
     },
     {
       "SCAC": "AMTK",
