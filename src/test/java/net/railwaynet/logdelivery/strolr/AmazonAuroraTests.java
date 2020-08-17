@@ -46,7 +46,10 @@ public class AmazonAuroraTests {
     @Test
     void insertData() {
         try {
-            service.insertData();
+            service.insertData("101", "3.3.3.3", "4.4.4.4");
+            service.insertData("102", "5.5.5.5", "6.6.4.4");
+            service.insertData("103", "7.7.7.7", "7.7.4.4");
+            service.insertData("104", "9.9.9.9", "8.8.4.4");
         } catch (SQLException e) {
             logger.debug("Can't insert data!", e);
             assert(false);

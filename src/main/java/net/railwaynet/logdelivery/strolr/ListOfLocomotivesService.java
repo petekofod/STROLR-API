@@ -122,7 +122,7 @@ public class ListOfLocomotivesService {
         return result;
     }
 
-    public void insertData() throws SQLException {
+    public void insertData(String locoID, String ip1, String ip2) throws SQLException {
         Connection conn = DriverManager.getConnection(jdbc_url, db_username, db_password);
         PreparedStatement preparedStatement = conn.prepareStatement(
                 "INSERT INTO locomotives (" +
@@ -135,12 +135,12 @@ public class ListOfLocomotivesService {
 
         preparedStatement.setString(1, "AMTK");
         preparedStatement.setString(2, "AMTK");
-        preparedStatement.setString(3, "100");
+        preparedStatement.setString(3, locoID);
 
-        preparedStatement.setString(4, "1.1.1.1");
+        preparedStatement.setString(4, ip1);
         preparedStatement.setBoolean(5, true);
 
-        preparedStatement.setString(6, "2.2.2.2");
+        preparedStatement.setString(6, ip2);
         preparedStatement.setBoolean(7, false);
 
         preparedStatement.setString(8, "AP Mac");

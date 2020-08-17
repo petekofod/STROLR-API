@@ -9,7 +9,7 @@
           "federations": [ "amtk", "bnsf", "cn", "cprs", "csao", "csxt", "htix", "kcs", "metx", "nctc", "njtr", "ns", "pjpb", "rcax", "scax", "sepa", "up", "xorr" ]
         }
       ],
-      "Plugins": [ "STROS", "STROB" ]
+      "Plugins": [ "STROS", "STROB", "STRL" ]
     },
     {
       "AccessSCAC": "VREX",
