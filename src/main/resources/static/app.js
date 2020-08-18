@@ -67,6 +67,42 @@ var vue_det = new Vue({
         validateLocoId() {
            return this.form.LocoID != null
         },
+        GetLocomotivesReport(evt) {
+           evt.preventDefault()
+           var xhr = new XMLHttpRequest()
+           var self = this
+           this.isLocomotivesView = true;
+           xhr.open('GET', 'locomotives.json')
+           xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+           self.locomotives_rows = [];
+
+           xhr.onload = async function () {
+             if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                   var locomotivesData = JSON.parse(xhr.responseText);
+                   for (var i = 0; i < locomotivesData.Locomotives.length; i++)
+                      self.locomotives_rows.push (
+                           {id:i, Locomotive: locomotivesData.Locomotives[i].SCAC + "-" +locomotivesData.Locomotives[i].LocoID,
+                            ATTModem: locomotivesData.Locomotives[i].ATTModem.Address,
+                            ATTModemIsOnline: locomotivesData.Locomotives[i].ATTModem.IsOnline,
+                            VZWModem: locomotivesData.Locomotives[i].VZWModem.Address,
+                            VZWModemIsOnline: locomotivesData.Locomotives[i].VZWModem.IsOnline,
+                            WiFi: locomotivesData.Locomotives[i].WiFi.Address,
+                            WiFiIsOnline: locomotivesData.Locomotives[i].WiFi.IsOnline,
+                            Radio: locomotivesData.Locomotives[i].Radio.Address,
+                            RadioIsOnline: locomotivesData.Locomotives[i].Radio.IsOnline,});
+
+                } else {
+                    var errorMessage = JSON.parse(xhr.responseText).message
+                    self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                    console.error('error - ' + errorMessage)
+                }
+             }
+           }
+           xhr.send()
+        },
+
         onSubmit(evt) {
             evt.preventDefault()
             var xhr = new XMLHttpRequest()
@@ -74,37 +110,14 @@ var vue_det = new Vue({
             var requestSCACMark = self.form.SCACMark
             var requestLocoID = self.form.LocoID
 
-            this.isLocomotivesView = this.form.RequestType == "locomotives.json";
-            console.log("isLocomotivesView = ", this.isLocomotivesView);
-            if (this.isLocomotivesView){
-               xhr.open('GET', 'locomotives.json')
-            } else {
-               xhr.open('POST', 'data-request')
-            }
+            this.isLocomotivesView = false;
 
+            xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
-
-            self.locomotives_rows = [];
 
             xhr.onload = async function () {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                    if (self.isLocomotivesView) {
-                       console.log("locomotives", xhr.responseText)
-
-                       locomotivesData = JSON.parse(xhr.responseText);
-                       for (var i = 0; i < locomotivesData.Locomotives.length; i++)
-                          self.locomotives_rows.push ({id:i, Locomotive: locomotivesData.Locomotives[i].SCAC + "-" +locomotivesData.Locomotives[i].LocoID,
-                             ATTModem: locomotivesData.Locomotives[i].ATTModem.Address,
-                             ATTModemIsOnline: locomotivesData.Locomotives[i].ATTModem.IsOnline,
-                             VZWModem: locomotivesData.Locomotives[i].VZWModem.Address,
-                             VZWModemIsOnline: locomotivesData.Locomotives[i].VZWModem.IsOnline,
-                             WiFi: locomotivesData.Locomotives[i].WiFi.Address,
-                             WiFiIsOnline: locomotivesData.Locomotives[i].WiFi.IsOnline,
-                             Radio: locomotivesData.Locomotives[i].Radio.Address,
-                             RadioIsOnline: locomotivesData.Locomotives[i].Radio.IsOnline,});
-
-                    } else {
                         var messageId = xhr.responseText
                         var index = self.tab_data_Array.length
                         var timer = setInterval(self.checkResponse.bind(null, messageId), 1000)
@@ -135,7 +148,6 @@ var vue_det = new Vue({
                         self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
                         console.error('error - ' + errorMessage)
                     }
-                }
             }
             xhr.send(JSON.stringify(this.form, (key, value)=> {
               if ((value === null) && (key === 'LocoID')) return undefined

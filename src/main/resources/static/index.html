@@ -31,6 +31,11 @@
             display: none;
         }
     </style>
+    <style>
+        .button-container-div {
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
@@ -74,6 +79,7 @@
                     </b-link>
                 </div>
             </div>
+            <div class="button-container-div"> <b-button v-if="plugins.includes('STRL')" type="button" v-on:click="GetLocomotivesReport" variant="primary">Get Locomotives</b-button></div>
 
             <div class="row">
                 <div class="col m-3">
@@ -151,7 +157,6 @@
                                 <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs</b-button>
                                 <b-button v-if="plugins.includes('STROS')" type="submit" v-on:click="setRequestType('get-status')" variant="primary">Get System Status</b-button>
                                 <b-button v-if="plugins.includes('STROB')" type="submit" v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice Status</b-button>
-                                <b-button v-if="plugins.includes('STRL')" type="submit" v-on:click="setRequestType('locomotives.json')" variant="primary">Get Locomotives</b-button>
                                 <b-button type="reset" variant="light">Reset</b-button>
                             </div>
                         </div>
