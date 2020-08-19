@@ -17,8 +17,11 @@
     <!-- Load Vue followed by BootstrapVue -->
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
 
+    <script src="//unpkg.com/"></script>
+
     <!-- Load the following for BootstrapVueIcons support -->
-    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue-icons.min.js"></script>
+    <script src="//unpkg.com/vue-good-table@2.14.1/dist/vue-good-table.js"></script>
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/vue-good-table@2.14.1/dist/vue-good-table.css"></link>
 
     <link rel="stylesheet" href="https://unpkg.com/vue-nav-tabs/themes/vue-tabs.css">
     <script src="https://unpkg.com/vue-nav-tabs/dist/vue-tabs.js"></script>
@@ -26,6 +29,13 @@
     <style>
         [v-cloak] {
             display: none;
+        }
+    </style>
+    <style>
+        .button-container-div {
+            height: 70;
+            position: fixed;
+            left: 87%;
         }
     </style>
 </head>
@@ -37,6 +47,37 @@
         </b-alert>
 
         <div class="container">
+        <div class="button-container-div"> <b-button v-if="plugins.includes('STRL')" type="button" v-on:click="GetLocomotivesReport"
+             variant="primary">{{locomotivesText}}</b-button></div>
+
+            <vue-good-table v-if="isLocomotivesView" title="Fleet Communications Report"
+                            :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="true"
+                            :pagination-options="{ enabled: true, perPage: 20}" >
+                <template slot="table-row" slot-scope="props">
+                                 <span v-if="props.column.field == 'Locomotive'">
+                                       <span>{{props.row.Locomotive}}</span>
+                                 </span>
+                    <span v-if="props.column.field == 'ATTModem'">
+                                       <span v-if="!props.row.ATTModemIsOnline" style="font-weight: bold; color: red;">{{props.row.ATTModem}}</span>
+                                       <span v-if="props.row.ATTModemIsOnline" style="font-weight: bold; color: green;">{{props.row.ATTModem}}</span>
+                                 </span>
+                    <span v-if="props.column.field == 'VZWModem'">
+                                       <span v-if="!props.row.VZWModemIsOnline" style="font-weight: bold; color: red;">{{props.row.VZWModem}}</span>
+                                       <span v-if="props.row.VZWModemIsOnline" style="font-weight: bold; color: green;">{{props.row.VZWModem}}</span>
+                                 </span>
+                    <span v-if="props.column.field == 'WiFi'">
+                                       <span v-if="!props.row.WiFiIsOnline" style="font-weight: bold; color: red;">{{props.row.WiFi}}</span>
+                                       <span v-if="props.row.WiFiIsOnline" style="font-weight: bold; color: green;">{{props.row.WiFi}}</span>
+                                 </span>
+                    <span v-if="props.column.field == 'Radio'">
+                                       <span v-if="!props.row.RadioIsOnline" style="font-weight: bold; color: red;">{{props.row.Radio}}</span>
+                                       <span v-if="props.row.RadioIsOnline" style="font-weight: bold; color: green;">{{props.row.Radio}}</span>
+                                 </span>
+                </template>>
+            </vue-good-table>
+        </div>
+
+        <div v-if="!isLocomotivesView" class="container">
             <div class="row">
                 <div class="col m-3">
                     <b-card no-body>
@@ -443,10 +484,13 @@
                     </b-card>
                 </v-tab>
             </vue-tabs>
+            </div>
+
         </div>
     </div>
 
     <script src="app.js"></script>
+
 </body>
 
 </html>
