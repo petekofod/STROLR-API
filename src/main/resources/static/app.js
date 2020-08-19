@@ -46,7 +46,8 @@ var vue_det = new Vue({
                                  {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
                                  {label: "220", field: "Radio", filterable:true},
                                  {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
-        locomotives_rows: []
+        locomotives_rows: [],
+        locomotivesText: "Get Locomotives",
     },
     created: function () {
         this.getUserName()
@@ -67,11 +68,18 @@ var vue_det = new Vue({
         validateLocoId() {
            return this.form.LocoID != null
         },
-        GetLocomotivesReport(evt) {
-           evt.preventDefault()
+        GetLocomotivesReport() {
+           if (this.isLocomotivesView) {
+             this.locomotivesText = "Get Locomotives";
+             this.isLocomotivesView = false;
+             return
+           }
+
+           this.isLocomotivesView = true;
+           this.locomotivesText = "Back"
+
            var xhr = new XMLHttpRequest()
            var self = this
-           this.isLocomotivesView = true;
            xhr.open('GET', 'locomotives.json')
            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
 
