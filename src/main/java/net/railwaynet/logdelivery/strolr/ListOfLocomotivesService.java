@@ -135,19 +135,19 @@ public class ListOfLocomotivesService {
 
         preparedStatement.setString(1, "AMTK");
         preparedStatement.setString(2, "AMTK");
-        preparedStatement.setString(3, locoID);
+        preparedStatement.setString(3, String.valueOf(Integer.parseInt(locoID) + 100));
 
         preparedStatement.setString(4, ip1);
-        preparedStatement.setBoolean(5, true);
+        preparedStatement.setBoolean(5, false);
 
         preparedStatement.setString(6, ip2);
-        preparedStatement.setBoolean(7, false);
+        preparedStatement.setBoolean(7, true);
 
         preparedStatement.setString(8, "AP Mac");
-        preparedStatement.setBoolean(9, true);
+        preparedStatement.setBoolean(9, false);
 
         preparedStatement.setString(10, "Base ID");
-        preparedStatement.setBoolean(11, true);
+        preparedStatement.setBoolean(11, false);
 
         preparedStatement.executeUpdate();
     }

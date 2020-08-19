@@ -173,10 +173,12 @@ var vue_det = new Vue({
             xhr.onload = function () {
                 conf = JSON.parse(xhr.responseText)
                 self.lstFullTree = self.lstFullTree.concat(conf.SCAC)
-                if (conf.Plugins)
+                if (conf.Plugins) {
+                    console.log("Plugins: " + conf.Plugins)
                     conf.Plugins.forEach(function (item) {
                       self.plugins.push(item)
                     })
+                }
                 if (conf.S3BaseURL) {
                     self.S3BaseURL = conf.S3BaseURL
                 }
