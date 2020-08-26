@@ -1,73 +1,25 @@
 package net.railwaynet.logdelivery.strolr;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.rds.AmazonRDS;
-import com.amazonaws.services.rds.AmazonRDSClientBuilder;
-import com.amazonaws.services.rds.model.CreateDBInstanceRequest;
-import com.amazonaws.services.rds.model.DBInstance;
-import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
-import com.amazonaws.services.rds.model.Endpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Service;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-@Component
+@Service
 public class ListOfLocomotivesService {
 
     private static final Logger logger = LoggerFactory.getLogger(ListOfLocomotivesService.class);
 
-    @SuppressWarnings("SpellCheckingInspection")
-    private AWSCredentialsProvider credentials = new AWSStaticCredentialsProvider(
-            new BasicAWSCredentials(
-//                    "AKIAZZT54LR2YYDAEK5S",
-//                    "jiFbruq3LSy/o9Sqi6Hkd5+t1FtdRNjJPLLtag+k")
-            "AKIAITXGJL3A5KKC7L7A",
-            "jC4SEtH9uMkFFbLijEif9l+gY6HP3N+4LbuZ2IUN")
-    );
+    @Autowired
+    private Environment env;
 
-    @SuppressWarnings("SpellCheckingInspection")
-//    private String url = "jdbc:postgresql://strolrdevreporterdb.cluster-cazrvbfnv6bw.us-east-2.rds.amazonaws.com/strolrdevreporterdb:5432/";
-    private String endpoint = "database-1.chduvwzl9h3v.us-east-1.rds.amazonaws.com";
-    private String jdbc_url = "jdbc:postgresql://" + endpoint + ":5432/postgres";
-//    private String jdbc_url = "jdbc:postgresql://" + endpoint + ":5432/strolrdevreporterdb";
-
-
-    private final String db_username = "postgres";
-    //    private final String db_password = "eL3kcV3SUf5iEXwmCoGI";
-    private final String db_password = "3016295Abrikos!!";
-
-    private AmazonRDS amazonRDS = AmazonRDSClientBuilder.standard().withCredentials(credentials)
-            .withRegion(Regions.AP_SOUTHEAST_2).build();
-
-    public void createTable() throws SQLException {
-        Connection conn = DriverManager.getConnection(jdbc_url, db_username, db_password);
-        Statement statement = conn.createStatement();
-        String sql = "CREATE TABLE IF NOT EXISTS locomotives (" +
-                "id SERIAL PRIMARY KEY, " +
-                "scac character varying(255) NOT NULL," +
-                "mark character varying(255) NOT NULL," +
-                "locoID character varying(255) NOT NULL," +
-                "ATTModem_Address character varying(15)," +
-                "ATTModem_Status boolean NOT NULL," +
-                "VZWModem_Address character varying(15)," +
-                "VZWModem_Status boolean NOT NULL," +
-                "WiFi_Address character varying(255)," +
-                "WiFi_Status boolean NOT NULL," +
-                "Radio_Address character varying(255)," +
-                "Radio_Status boolean NOT NULL" +
-                ")";
-        statement.executeUpdate(sql);
-    }
+    private final String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    private final SimpleDateFormat sdf = new SimpleDateFormat(TIME_FORMAT);
 
     private Map<String, Object> makeLocomotive(ResultSet resultSet) throws SQLException {
         Map<String, Object> result = new HashMap<>();
@@ -101,9 +53,13 @@ public class ListOfLocomotivesService {
 
     public Map<String, Object> getLocomotives() throws SQLException {
         Map<String, Object> result = new HashMap<>();
-        result.put("StartTestTime", "2020-08-01:00:01");
+
+        String endpoint = Objects.requireNonNull(env.getProperty("aws.rds.endpoint"));
+        String jdbc_url = "jdbc:postgresql://" + endpoint + ":5432/postgres";
 
         List<Map<String, Object>> locomotives = new ArrayList<>();
+        String db_username = Objects.requireNonNull(env.getProperty("aws.rds.username"));
+        String db_password = Objects.requireNonNull(env.getProperty("aws.rds.password"));
         Connection conn = DriverManager.getConnection(jdbc_url, db_username, db_password);
         Statement statement = conn.createStatement();
         String sql = "SELECT " +
@@ -111,79 +67,23 @@ public class ListOfLocomotivesService {
                 "ATTModem_Address, ATTModem_Status, " +
                 "VZWModem_Address, VZWModem_Status, " +
                 "WiFi_Address, WiFi_Status, " +
-                "Radio_Address, Radio_Status " +
-                " FROM locomotives";
+                "Radio_Address, Radio_Status, created_at " +
+                " FROM locomotives join history on history.id = locomotives.history_id " +
+                " where history_id = (select id from history order by created_at desc limit 1);";
         ResultSet resultSet = statement.executeQuery(sql);
+
+        boolean firstLine = true;
         while (resultSet.next()) {
+            if (firstLine) {
+                logger.debug("Adding date/time to the list of locomotives");
+                result.put("StartTestTime", sdf.format(resultSet.getTimestamp("created_at")));
+                firstLine = false;
+            }
+
             locomotives.add(makeLocomotive(resultSet));
         }
         result.put("Locomotives", locomotives);
 
         return result;
     }
-
-    public void insertData(String locoID, String ip1, String ip2) throws SQLException {
-        Connection conn = DriverManager.getConnection(jdbc_url, db_username, db_password);
-        PreparedStatement preparedStatement = conn.prepareStatement(
-                "INSERT INTO locomotives (" +
-                        "scac, mark, locoID, " +
-                        "ATTModem_Address, ATTModem_Status, " +
-                        "VZWModem_Address, VZWModem_Status, " +
-                        "WiFi_Address, WiFi_Status, " +
-                        "Radio_Address, Radio_Status " +
-                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-        preparedStatement.setString(1, "AMTK");
-        preparedStatement.setString(2, "AMTK");
-        preparedStatement.setString(3, String.valueOf(Integer.parseInt(locoID) + 100));
-
-        preparedStatement.setString(4, ip1);
-        preparedStatement.setBoolean(5, false);
-
-        preparedStatement.setString(6, ip2);
-        preparedStatement.setBoolean(7, true);
-
-        preparedStatement.setString(8, "AP Mac");
-        preparedStatement.setBoolean(9, false);
-
-        preparedStatement.setString(10, "Base ID");
-        preparedStatement.setBoolean(11, false);
-
-        preparedStatement.executeUpdate();
-    }
-
-    public void listDatabases() throws SQLException {
-        DescribeDBInstancesResult result = amazonRDS.describeDBInstances();
-        List<DBInstance> instances = result.getDBInstances();
-        logger.debug("List of instances:");
-        for (DBInstance instance : instances) {
-            // Information about each RDS instance
-            String identifier = instance.getDBInstanceIdentifier();
-            String engine = instance.getEngine();
-            String status = instance.getDBInstanceStatus();
-            Endpoint endpoint = instance.getEndpoint();
-            logger.debug("===============");
-            logger.debug("Identifier: " + identifier);
-            logger.debug("engine: " + engine);
-            logger.debug("status: " + status);
-            logger.debug("endpoint: " + endpoint.getAddress() + ", " + endpoint.getHostedZoneId() + ", " + endpoint.getPort());
-        }
-    }
-
-    public void createDatabase() throws SQLException {
-        CreateDBInstanceRequest request = new CreateDBInstanceRequest();
-        // RDS instance name
-        request.setDBInstanceIdentifier("database-1");
-        request.setEngine("postgres");
-        request.setMultiAZ(false);
-        request.setMasterUsername(db_username);
-        request.setMasterUserPassword(db_password);
-        request.setDBName("strolrdevreporterdb");
-        request.setDBInstanceClass("db.t2.micro");
-        request.setStorageType("gp2");
-        request.setAllocatedStorage(10);
-
-        DBInstance instance = amazonRDS.createDBInstance(request);
-    }
-
 }
