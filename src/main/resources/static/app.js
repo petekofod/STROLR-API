@@ -47,7 +47,8 @@ var vue_det = new Vue({
                                  {label: "220", field: "Radio", filterable:true},
                                  {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
         locomotives_rows: [],
-        locomotivesText: "Get Locomotives",
+        locomotivesText: "See Locomotives",
+        locomotives_timestamp: ""
     },
     created: function () {
         this.getUserName()
@@ -88,6 +89,7 @@ var vue_det = new Vue({
              if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
                    var locomotivesData = JSON.parse(xhr.responseText);
+                   self.locomotives_timestamp = locomotivesData.StartTestTime
                    for (var i = 0; i < locomotivesData.Locomotives.length; i++)
                       self.locomotives_rows.push (
                            {id:i, Locomotive: locomotivesData.Locomotives[i].SCAC + "-" +locomotivesData.Locomotives[i].LocoID,

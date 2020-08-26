@@ -15,11 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
-
-import static java.util.Objects.*;
 
 @RestController
 public class ListOfRailroadsController {
@@ -39,6 +36,13 @@ public class ListOfRailroadsController {
 
     @RequestMapping("/railroads.json")
     public String railroads(Principal principal) {
+
+        if (env == null) {
+            logger.error("Can't access application.properties, skipping the request");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't access application.properties, skipping the request");
+        }
+
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of railroads");
 
@@ -63,7 +67,7 @@ public class ListOfRailroadsController {
         logger.debug(currentUser.getUsername() + " requesting the list of locomotives");
 
         try {
-            @SuppressWarnings("unchecked") Map<String, Object> result = locomotivesService.getLocomotives();
+            Map<String, Object> result = locomotivesService.getLocomotives();
             return objectMapper.writeValueAsString(result);
         } catch (SQLException e) {
             logger.error("Can't get locomotives from RDS!", e);

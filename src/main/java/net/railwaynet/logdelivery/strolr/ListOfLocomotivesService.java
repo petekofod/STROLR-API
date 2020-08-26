@@ -18,7 +18,7 @@ public class ListOfLocomotivesService {
     @Autowired
     private Environment env;
 
-    private final String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    private final String TIME_FORMAT = "yyyy-MM-dd HH:mm:ssX";
     private final SimpleDateFormat sdf = new SimpleDateFormat(TIME_FORMAT);
 
     private Map<String, Object> makeLocomotive(ResultSet resultSet) throws SQLException {
