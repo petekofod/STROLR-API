@@ -49,29 +49,28 @@
         <div class="container">
         <div class="button-container-div"> <b-button v-if="plugins.includes('STRL')" type="button" v-on:click="GetLocomotivesReport"
              variant="primary">{{locomotivesText}}</b-button></div>
-
             <vue-good-table v-if="isLocomotivesView" title="Fleet Communications Report"
                             :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="true"
-                            :pagination-options="{ enabled: true, perPage: 20}" >
+                            :pagination-options="{ enabled: true, perPage: 20}" styleClass="vgt-table striped bordered condensed">
                 <template slot="table-row" slot-scope="props">
-                                 <span v-if="props.column.field == 'Locomotive'">
+                                 <span v-if="props.column.field == 'Locomotive'" class="col-sm-6">
                                        <span>{{props.row.Locomotive}}</span>
                                  </span>
                     <span v-if="props.column.field == 'ATTModem'">
-                                       <span v-if="!props.row.ATTModemIsOnline" style="font-weight: bold; color: red;">{{props.row.ATTModem}}</span>
-                                       <span v-if="props.row.ATTModemIsOnline" style="font-weight: bold; color: green;">{{props.row.ATTModem}}</span>
+                                       <span v-if="!props.row.ATTModemIsOnline" class="badge badge-danger">{{props.row.ATTModem}}</span>
+                                       <span v-if="props.row.ATTModemIsOnline" class="badge badge-success">{{props.row.ATTModem}}</span>
                                  </span>
                     <span v-if="props.column.field == 'VZWModem'">
-                                       <span v-if="!props.row.VZWModemIsOnline" style="font-weight: bold; color: red;">{{props.row.VZWModem}}</span>
-                                       <span v-if="props.row.VZWModemIsOnline" style="font-weight: bold; color: green;">{{props.row.VZWModem}}</span>
+                                       <span v-if="!props.row.VZWModemIsOnline" class="badge badge-danger">{{props.row.VZWModem}}</span>
+                                       <span v-if="props.row.VZWModemIsOnline" class="badge badge-success">{{props.row.VZWModem}}</span>
                                  </span>
                     <span v-if="props.column.field == 'WiFi'">
-                                       <span v-if="!props.row.WiFiIsOnline" style="font-weight: bold; color: red;">{{props.row.WiFi}}</span>
-                                       <span v-if="props.row.WiFiIsOnline" style="font-weight: bold; color: green;">{{props.row.WiFi}}</span>
+                                       <span v-if="!props.row.WiFiIsOnline" class="badge badge-danger">{{props.row.WiFi}}</span>
+                                       <span v-if="props.row.WiFiIsOnline" class="badge badge-success">{{props.row.WiFi}}</span>
                                  </span>
                     <span v-if="props.column.field == 'Radio'">
-                                       <span v-if="!props.row.RadioIsOnline" style="font-weight: bold; color: red;">{{props.row.Radio}}</span>
-                                       <span v-if="props.row.RadioIsOnline" style="font-weight: bold; color: green;">{{props.row.Radio}}</span>
+                                       <span v-if="!props.row.RadioIsOnline" class="badge badge-danger">{{props.row.Radio}}</span>
+                                       <span v-if="props.row.RadioIsOnline" class="badge badge-success">{{props.row.Radio}}</span>
                                  </span>
                 </template>>
             </vue-good-table>
