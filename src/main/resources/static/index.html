@@ -32,10 +32,19 @@
         }
     </style>
     <style>
-        .button-container-div {
+        .button-container-div-right {
+            width: 200px;
             height: 70;
+            text-align: right;
             position: fixed;
-            left: 87%;
+            right: 5%;
+        }
+        .button-container-div-left {
+            width: 200px;
+            height: 70;
+            text-align: left;
+            position: fixed;
+            left: 5%
         }
     </style>
 </head>
@@ -47,8 +56,14 @@
         </b-alert>
 
         <div class="container">
-        <div class="button-container-div"> <b-button v-if="plugins.includes('STRL')" type="button" v-on:click="GetLocomotivesReport"
-             variant="primary">{{locomotivesText}}</b-button></div>
+        <div class="button-container-div-right" v-if="plugins.includes('STRL') && !isLocomotivesView">
+               <b-button type="button" v-on:click="GetLocomotivesReport" variant="primary" class="btn btn-default" >{{locomotivesText}}
+                 <span class="glyphicon glyphicon-triangle-right"> </span> </b-button>
+        </div>
+        <div v-if="plugins.includes('STRL') && isLocomotivesView">
+            <b-button type="button" v-on:click="GetLocomotivesReportBack" variant="primary" class="btn btn-default" >{{locomotivesText}}
+                <span class="glyphicon glyphicon-triangle-right"> </span> </b-button>
+        </div>
             <vue-good-table v-if="isLocomotivesView" title="Fleet Communications Report"
                             :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="true"
                             :pagination-options="{ enabled: true, perPage: 20}" styleClass="vgt-table striped bordered condensed">
@@ -72,7 +87,7 @@
                                        <span v-if="!props.row.RadioIsOnline" class="badge badge-danger">{{props.row.Radio}}</span>
                                        <span v-if="props.row.RadioIsOnline" class="badge badge-success">{{props.row.Radio}}</span>
                                  </span>
-                </template>>
+                </template>
             </vue-good-table>
         </div>
 
