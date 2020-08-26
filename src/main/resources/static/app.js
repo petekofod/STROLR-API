@@ -68,15 +68,14 @@ var vue_det = new Vue({
         validateLocoId() {
            return this.form.LocoID != null
         },
-        GetLocomotivesReport() {
-           if (this.isLocomotivesView) {
-             this.locomotivesText = "Get Locomotives";
-             this.isLocomotivesView = false;
-             return
-           }
+        GetLocomotivesReportBack() {
+           this.isLocomotivesView = false;
+           this.locomotivesText = "Get Locomotives";
+        },
 
+        GetLocomotivesReport() {
            this.isLocomotivesView = true;
-           this.locomotivesText = "Back"
+           this.locomotivesText = "Back to main page"
 
            var xhr = new XMLHttpRequest()
            var self = this
