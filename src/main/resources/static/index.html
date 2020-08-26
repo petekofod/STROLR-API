@@ -56,14 +56,12 @@
         </b-alert>
 
         <div class="container">
-        <div class="button-container-div-right" v-if="plugins.includes('STRL') && !isLocomotivesView">
-               <b-button type="button" v-on:click="GetLocomotivesReport" variant="primary" class="btn btn-default" >{{locomotivesText}}
-                 <span class="glyphicon glyphicon-triangle-right"> </span> </b-button>
+
+        <div v-if="plugins.includes('STRL') && isLocomotivesView" style="margin-bottom: 10px;">
+            <b-button type="button" v-on:click="GetLocomotivesReportBack" variant="primary" class="btn btn-default" >
+                <span class="glyphicon glyphicon-triangle-left">{{locomotivesText}}</span> </b-button>
         </div>
-        <div v-if="plugins.includes('STRL') && isLocomotivesView">
-            <b-button type="button" v-on:click="GetLocomotivesReportBack" variant="primary" class="btn btn-default" >{{locomotivesText}}
-                <span class="glyphicon glyphicon-triangle-right"> </span> </b-button>
-        </div>
+
             <vue-good-table v-if="isLocomotivesView" title="Fleet Communications Report"
                             :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="true"
                             :pagination-options="{ enabled: true, perPage: 20}" styleClass="vgt-table striped bordered condensed">
@@ -137,7 +135,14 @@
                                     size="sm" @change1="onChange($event)"></b-form-select>
                             </div>
                         </div>
-
+                        <div class="form-group row">
+                            <div class="col">
+                                <div class="float-right" v-if="plugins.includes('STRL') && !isLocomotivesView">
+                                    <b-button type="button" v-on:click="GetLocomotivesReport" variant="primary" class="btn btn-default" >
+                                        <span class="glyphicon glyphicon-triangle-right">{{locomotivesText}}</span> </b-button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-group row">
                             <label for="inpLocoID" size="sm" class="col-sm-5 col-form-label">Locomotive ID</label>
                             <div class="col">
@@ -501,7 +506,6 @@
             </div>
 
         </div>
-    </div>
 
     <script src="app.js"></script>
 
