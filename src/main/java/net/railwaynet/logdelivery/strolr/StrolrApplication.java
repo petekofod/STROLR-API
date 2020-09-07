@@ -15,6 +15,8 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.sql.SQLException;
+
 @EnableWebSecurity
 @SpringBootApplication
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -26,6 +28,9 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	private StatusesService statusesService;
+
+	@Autowired
+	private ListOfLocomotivesService locomotivesService;
 
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {

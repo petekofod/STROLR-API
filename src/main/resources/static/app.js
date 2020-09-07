@@ -36,6 +36,19 @@ var vue_det = new Vue({
         active_tab: '',
         plugins: [],
         S3BaseUrl: '',
+        isLocomotivesView: false,
+        locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
+                                 {label: "ATT Modem", field: "ATTModem", filterable:true},
+                                 {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
+                                 {label: "VZW Modem", field: "VZWModem", filterable:true},
+                                 {label: "VZW Modem IsOnline", field: "VZWModemIsOnline", hidden:true},
+                                 {label: "WiFi", field: "WiFi", filterable:true},
+                                 {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
+                                 {label: "220", field: "Radio", filterable:true},
+                                 {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
+        locomotives_rows: [],
+        locomotivesText: "See Locomotives",
+        locomotives_timestamp: ""
     },
     created: function () {
         this.getUserName()
@@ -47,7 +60,7 @@ var vue_det = new Vue({
     methods: {
         setRequestType(value) {
             this.form.RequestType = value
-            if (this.form.RequestType != "get-backoffice")
+            if (this.form.RequestType == "get-status")
             {
                LocoIdElement = document.getElementById("inpLocoID");
                LocoIdElement.setCustomValidity(this.validateLocoId()? "" : "LocoId should be set for this request");
@@ -56,12 +69,57 @@ var vue_det = new Vue({
         validateLocoId() {
            return this.form.LocoID != null
         },
+        GetLocomotivesReportBack() {
+           this.isLocomotivesView = false;
+           this.locomotivesText = "Get Locomotives";
+        },
+
+        GetLocomotivesReport() {
+           this.isLocomotivesView = true;
+           this.locomotivesText = "Back to main page"
+
+           var xhr = new XMLHttpRequest()
+           var self = this
+           xhr.open('GET', 'locomotives.json')
+           xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+           self.locomotives_rows = [];
+
+           xhr.onload = async function () {
+             if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                   var locomotivesData = JSON.parse(xhr.responseText);
+                   self.locomotives_timestamp = locomotivesData.StartTestTime
+                   for (var i = 0; i < locomotivesData.Locomotives.length; i++)
+                      self.locomotives_rows.push (
+                           {id:i, Locomotive: locomotivesData.Locomotives[i].SCAC + "-" +locomotivesData.Locomotives[i].LocoID,
+                            ATTModem: locomotivesData.Locomotives[i].ATTModem.Address,
+                            ATTModemIsOnline: locomotivesData.Locomotives[i].ATTModem.IsOnline,
+                            VZWModem: locomotivesData.Locomotives[i].VZWModem.Address,
+                            VZWModemIsOnline: locomotivesData.Locomotives[i].VZWModem.IsOnline,
+                            WiFi: locomotivesData.Locomotives[i].WiFi.Address,
+                            WiFiIsOnline: locomotivesData.Locomotives[i].WiFi.IsOnline,
+                            Radio: locomotivesData.Locomotives[i].Radio.Address,
+                            RadioIsOnline: locomotivesData.Locomotives[i].Radio.IsOnline,});
+
+                } else {
+                    var errorMessage = JSON.parse(xhr.responseText).message
+                    self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                    console.error('error - ' + errorMessage)
+                }
+             }
+           }
+           xhr.send()
+        },
+
         onSubmit(evt) {
             evt.preventDefault()
             var xhr = new XMLHttpRequest()
             var self = this
             var requestSCACMark = self.form.SCACMark
             var requestLocoID = self.form.LocoID
+
+            this.isLocomotivesView = false;
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
@@ -93,12 +151,12 @@ var vue_det = new Vue({
                         self.$nextTick(function () {
                             self.active_tab = title
                         });
+                      }
                     } else {
                         var errorMessage = JSON.parse(xhr.responseText).message
                         self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
                         console.error('error - ' + errorMessage)
                     }
-                }
             }
             xhr.send(JSON.stringify(this.form, (key, value)=> {
               if ((value === null) && (key === 'LocoID')) return undefined
@@ -173,10 +231,12 @@ var vue_det = new Vue({
             xhr.onload = function () {
                 conf = JSON.parse(xhr.responseText)
                 self.lstFullTree = self.lstFullTree.concat(conf.SCAC)
-                if (conf.Plugins)
+                if (conf.Plugins) {
+                    console.log("Plugins: " + conf.Plugins)
                     conf.Plugins.forEach(function (item) {
                       self.plugins.push(item)
                     })
+                }
                 if (conf.S3BaseURL) {
                     self.S3BaseURL = conf.S3BaseURL
                 }
