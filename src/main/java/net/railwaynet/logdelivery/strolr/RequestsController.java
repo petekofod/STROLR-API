@@ -43,12 +43,16 @@ public class RequestsController {
     public static final String SCAC = "SCAC";
     public static final String SCAC_MARK = "SCACMark";
     public static final String REQUEST_TYPE = "RequestType";
+    public static final String MESSAGE_TYPE = "messageType";
 
     @Autowired
     private Environment env;
 
     @Autowired
     private RailroadsService railroadsService;
+
+    @Autowired
+    LocomotiveMessagesService locomotiveMessagesService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -165,15 +169,13 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Time zone is not specified!");
         }
 
-        String startDateTime=payloadMap.get(START_DATE) + ":" + payloadMap.get(START_TIME);
-        String endDateTime=payloadMap.get(END_DATE) + ":" + payloadMap.get(END_TIME);
         try {
-            logger.debug("startDateTime: " + startDateTime);
-            logger.debug("endDateTime:    " + endDateTime);
-            Date startDate = new SimpleDateFormat(DATE_PATTERN).parse(startDateTime);
-            Date endDate = new SimpleDateFormat(DATE_PATTERN).parse(endDateTime);
-            startDate = tzModifiedDate(startDate, payloadMap.get(TIME_ZONE), payloadMap.get("dst"));
-            endDate = tzModifiedDate(endDate, payloadMap.get(TIME_ZONE), payloadMap.get("dst"));
+            Date startDate = tzModifiedDate(
+                    getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
+                    payloadMap.get(TIME_ZONE), payloadMap.get("dst"));
+            Date endDate = tzModifiedDate(
+                    getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
+                    payloadMap.get(TIME_ZONE), payloadMap.get("dst"));
             String sStartDate = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
             String sStartTime = new SimpleDateFormat("HH:mm").format(startDate);
             String sEndDate = new SimpleDateFormat("yyyy-MM-dd").format(endDate);
@@ -216,13 +218,42 @@ public class RequestsController {
     }
 
     @RequestMapping(
-            value = "/data-request",
+            value = "/locomotive-messages",
             method = RequestMethod.POST)
-    public String requestLogs(Principal principal, @RequestBody String payload) {
+    public String locomotiveMessages(Principal principal, @RequestBody String payload) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " sent a request:");
+        logger.debug(currentUser.getUsername() + " requesting the list of locomotive messages");
         logger.debug(payload);
 
+        final Map<String, String> payloadMap = payloadMap(payload);
+
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            result.put("messages", locomotiveMessagesService.getMessages(
+                    getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
+                    getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
+                    payloadMap.get(SCAC_MARK),
+                    payloadMap.get(MESSAGE_TYPE)
+            ));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            String s = objectMapper.writeValueAsString(result);
+            logger.info("====================================");
+            logger.info(s);
+            logger.info("====================================");
+            return s;
+        } catch (JsonProcessingException e) {
+            logger.error("Can't generate JSON with a list of messages!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate JSON with a list of messages!", e);
+        }
+    }
+
+    private Map<String, String> payloadMap(String payload) {
         final Map<String, String> payloadMap;
 
         try {
@@ -232,6 +263,19 @@ public class RequestsController {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the log request JSON", e);
         }
+
+        return payloadMap;
+    }
+
+    @RequestMapping(
+            value = "/data-request",
+            method = RequestMethod.POST)
+    public String requestLogs(Principal principal, @RequestBody String payload) {
+        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
+        logger.debug(currentUser.getUsername() + " sent a request:");
+        logger.debug(payload);
+
+        final Map<String, String> payloadMap = payloadMap(payload);
 
         if (!payloadMap.containsKey(REQUEST_TYPE) || payloadMap.get(REQUEST_TYPE).isEmpty()) {
             logger.error("Request type is not specified!");
@@ -272,7 +316,17 @@ public class RequestsController {
         }
         return status;
     }
-    
+
+    /**
+     * Convert string values of date and time from the request form into Date object
+     * @param d Date
+     * @param t Time
+     * @return Date object of this datetime
+     */
+    private Date getDateFromParams(String d, String t) throws ParseException {
+        return new SimpleDateFormat(DATE_PATTERN).parse(d + ":" + t);
+    }
+
     public Date tzModifiedDate(Date unModifiedDate, String stringOffset, String stringDst) {
     	int offset = Integer.parseInt(stringOffset);
     	boolean dst = Boolean.parseBoolean(stringDst);

@@ -13,6 +13,7 @@ var vue_det = new Vue({
             RequestType: null,
             timeZone: 0,
             dst: false,
+            messageType: 0
         },
         lstFullTree: [{
             value: null,
@@ -26,6 +27,12 @@ var vue_det = new Vue({
             	{ text: 'Pacific' , value: 8},
             	{ text: 'UTC' , value: 0}
             	],
+        lstMessageType:
+        		[
+            	{ text: 'All' , value: 0},
+            	{ text: '2080' , value: 2080},
+            	{ text: '2083' , value: 2083}
+            	],
         tab_data_Array: [],
         show: true,
         timeUTC: '',
@@ -36,7 +43,7 @@ var vue_det = new Vue({
         active_tab: '',
         plugins: [],
         S3BaseUrl: '',
-        isLocomotivesView: false,
+        mode: 'main',
         locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
                                  {label: "ATT Modem", field: "ATTModem", filterable:true},
                                  {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
@@ -47,8 +54,13 @@ var vue_det = new Vue({
                                  {label: "220", field: "Radio", filterable:true},
                                  {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
         locomotives_rows: [],
-        locomotivesText: "See Locomotives",
-        locomotives_timestamp: ""
+        locomotives_timestamp: "",
+        messages_rows: [],
+        messages_columns: [
+            {label: "Locomotive ID", field: "address", filterable:true},
+            {label: "Message Type", field: "messageType", filterable:true},
+            {label: "Timestamp", field: "timestamp", filterable:true},
+        ],
     },
     created: function () {
         this.getUserName()
@@ -70,12 +82,50 @@ var vue_det = new Vue({
            return this.form.LocoID != null
         },
         GetLocomotivesReportBack() {
-           this.isLocomotivesView = false;
-           this.locomotivesText = "Get Locomotives";
+           this.mode = 'main';
+        },
+
+        GetLocomotiveMessages() {
+           this.mode = 'messages';
+
+           var xhr = new XMLHttpRequest()
+           var self = this
+           xhr.open('POST', 'locomotive-messages')
+           xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+           self.messages_rows = [];
+
+           xhr.onload = async function () {
+             if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                   var data = JSON.parse(xhr.responseText);
+                   if (!data.messages || data.messages.length == 0)
+                        return;
+                   console.log("Number of records: " + data.messages.length)
+                   for (var i = 0; i < data.messages.length - 1; i++)
+                      console.log("data.messages[i] = " + data.messages[i]);
+                      console.log("Id: " + data.messages[i]._id);
+                      self.messages_rows.push ({
+                        "id": i,
+                        "address": data.messages[i].srcAddress,
+                        "messageType": data.messages[i].idType,
+                        "timestamp": data.messages[i].time
+                        });
+                } else {
+                    var errorMessage = JSON.parse(xhr.responseText).message
+                    self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                    console.error('error - ' + errorMessage)
+                }
+             }
+           }
+            xhr.send(JSON.stringify(this.form, (key, value)=> {
+              if ((value === null) && (key === 'LocoID')) return undefined
+                  return value
+            }))
         },
 
         GetLocomotivesReport() {
-           this.isLocomotivesView = true;
+           this.mode = 'locomotives';
            this.locomotivesText = "Back to main page"
 
            var xhr = new XMLHttpRequest()
@@ -118,8 +168,6 @@ var vue_det = new Vue({
             var self = this
             var requestSCACMark = self.form.SCACMark
             var requestLocoID = self.form.LocoID
-
-            this.isLocomotivesView = false;
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')

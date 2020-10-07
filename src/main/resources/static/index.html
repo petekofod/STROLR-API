@@ -31,6 +31,7 @@
             display: none;
         }
 
+
     </style>
     <style>
         .button-container-div-right {
@@ -48,6 +49,7 @@
             left: 5%
         }
 
+
     </style>
 </head>
 
@@ -57,15 +59,15 @@
         <h1>Rockwell Collins</h1>
     </b-alert>
 
-    <div class="container">
+    <div v-if="mode == 'locomotives'" class="container">
 
-        <div v-if="plugins.includes('STRL') && isLocomotivesView" style="margin-bottom: 10px;">
-            <b-button type="button" v-on:click="GetLocomotivesReportBack" variant="info" class="btn btn-default">
-                <span class="glyphicon glyphicon-triangle-left">{{locomotivesText}}</span></b-button>
+        <div style="margin-bottom: 10px;">
+            <b-button type="button" v-on:click="mode = 'main'" variant="info" class="btn btn-default">
+                <span class="glyphicon glyphicon-triangle-left">Back to main page</span></b-button>
             <div v-if="locomotives_timestamp" class="float-right">Data gathered at {{locomotives_timestamp}}</div>
         </div>
 
-        <vue-good-table v-if="isLocomotivesView" title="Fleet Communications Report"
+        <vue-good-table title="Fleet Communications Report"
                         :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="true"
                         :pagination-options="{ enabled: true, perPage: 20}"
                         styleClass="vgt-table striped bordered condensed">
@@ -93,7 +95,34 @@
         </vue-good-table>
     </div>
 
-    <div v-if="!isLocomotivesView" class="container">
+    <div v-if="mode == 'messages'" class="container">
+
+        <div style="margin-bottom: 10px;">
+            <b-button type="button" v-on:click="mode = 'main'" variant="info" class="btn btn-default">
+                <span class="glyphicon glyphicon-triangle-left">Back to main page</span>
+            </b-button>
+        </div>
+
+        <vue-good-table title="Message Report"
+                        :columns=this.messages_columns :rows=this.messages_rows :paginate="true"
+                        :pagination-options="{ enabled: true, perPage: 20}"
+                        styleClass="vgt-table striped bordered condensed">
+            <template slot="table-row" slot-scope="props">
+                 <span class="col-sm-6">
+                       <span>{{props.row.address}}</span>
+                 </span>
+                <span class="col-sm-6">
+                       <span>{{props.row.messageType}}</span>
+                 </span>
+                <span class="col-sm-6">
+                       <span>{{props.row.timestamp}}</span>
+                 </span>
+            </template>
+        </vue-good-table>
+    </div>
+
+
+    <div v-if="mode == 'main'" class="container">
         <div class="row">
             <div class="col m-3">
                 <b-card no-body>
@@ -137,18 +166,16 @@
                 <b-form @submit="onSubmit" @reset="onReset" v-if="show">
                     <div class="form-group row">
                         <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
-                        <div class="col">
+                        <div class="col-sm-4">
                             <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree"
                                            required
                                            size="sm" @change1="onChange($event)"></b-form-select>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col">
-                            <div class="float-right" v-if="plugins.includes('STRL') && !isLocomotivesView">
+                        <div class="col-sm-3">
+                            <div class="float-right" v-if="plugins.includes('STRL')">
                                 <b-button type="button" v-on:click="GetLocomotivesReport" variant="info"
                                           class="btn btn-default">
-                                    <span class="glyphicon glyphicon-triangle-right">{{locomotivesText}}</span>
+                                    <span class="glyphicon glyphicon-triangle-right">See locomotives</span>
                                 </b-button>
                             </div>
                         </div>
@@ -216,15 +243,40 @@
                     <div class="form-group row">
                         <label class="col-sm-5 "> </label>
                         <div class="col">
-                            <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs
-                            </b-button>
-                            <b-button v-if="plugins.includes('STROS')" type="submit"
-                                      v-on:click="setRequestType('get-status')" variant="primary">Get System Status
-                            </b-button>
-                            <b-button v-if="plugins.includes('STROB')" type="submit"
-                                      v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice
-                                Status
-                            </b-button>
+                            <div class="float-right">
+                                <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get
+                                    Logs
+                                </b-button>
+                                <b-button v-if="plugins.includes('STROS')" type="submit"
+                                          v-on:click="setRequestType('get-status')" variant="primary">Get System Status
+                                </b-button>
+                                <b-button v-if="plugins.includes('STROB')" type="submit"
+                                          v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice
+                                    Status
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Message Type</label>
+                        <div class="col-sm-4">
+                            <b-form-select id="selMessageType" v-model="form.messageType" :options="lstMessageType"
+                                           required
+                                           size="sm" @change1="onChange($event)"></b-form-select>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="float-right">
+                                <b-button type="submit" v-on:click="GetLocomotiveMessages" variant="info">
+                                    Get Messages
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-sm-5 "> </label>
+                        <div class="col">
                             <b-button type="reset" variant="light">Reset</b-button>
                         </div>
                     </div>
