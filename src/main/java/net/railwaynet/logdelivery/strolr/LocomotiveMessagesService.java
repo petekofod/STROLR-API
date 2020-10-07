@@ -34,19 +34,23 @@ public class LocomotiveMessagesService {
 
         logger.debug("Start millis: " + startDate.getTime());
         logger.debug("End millis: " + endDate.getTime());
+        logger.debug("messageType: " + messageType);
+        logger.debug("mark = " + mark);
 
         List<Bson> conditions = new ArrayList<>();
         conditions.add(gt("time", startDate.getTime() / 1000));
         conditions.add(lt("time", endDate.getTime() / 1000));
-//        if (messageType == null) {
+
+        if (Integer.parseInt(messageType) == 0) {
             conditions.add(or(
                     eq("idType", 2083),
                     eq("idType", 2080)
             ));
-//        } else {
-//            conditions.add(eq("idType", Integer.parseInt(messageType)));
-//        }
-//        conditions.add(regex("srcAddress", mark + "\\..*"));
+        } else {
+            conditions.add(eq("idType", Integer.parseInt(messageType)));
+        }
+//        conditions.add(regex("srcAddress", "/" + mark.toLowerCase() + "\\..*/"));
+        conditions.add(in("destAddress", "amtk.b:gb.nec", "amtk.b:gb.me"));
         Bson filter = and(conditions);
 
         try (MongoCursor<Document> cursor = messages.find(filter)

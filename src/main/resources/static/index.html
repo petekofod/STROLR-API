@@ -54,6 +54,7 @@
 </head>
 
 <body>
+
 <div id="MainApp" v-cloak>
     <b-alert show>
         <h1>Rockwell Collins</h1>
@@ -105,16 +106,16 @@
 
         <vue-good-table title="Message Report"
                         :columns=this.messages_columns :rows=this.messages_rows :paginate="true"
-                        :pagination-options="{ enabled: true, perPage: 20}"
+                        :pagination-options="{ enabled: true, perPage: 200}"
                         styleClass="vgt-table striped bordered condensed">
             <template slot="table-row" slot-scope="props">
-                 <span class="col-sm-6">
+                 <span v-if="props.column.field == 'address'">
                        <span>{{props.row.address}}</span>
                  </span>
-                <span class="col-sm-6">
+                <span v-if="props.column.field == 'messageType'">
                        <span>{{props.row.messageType}}</span>
                  </span>
-                <span class="col-sm-6">
+                <span v-if="props.column.field == 'timestamp'">
                        <span>{{props.row.timestamp}}</span>
                  </span>
             </template>

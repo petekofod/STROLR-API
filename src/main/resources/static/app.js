@@ -3,6 +3,7 @@ Vue.config.devtools = true
 var vue_det = new Vue({
     el: '#MainApp',
     data: {
+        showModal: false,
         form: {
             LocoID: null,
             StartDate: null,
@@ -56,6 +57,7 @@ var vue_det = new Vue({
         locomotives_rows: [],
         locomotives_timestamp: "",
         messages_rows: [],
+        messages_additional_rows: [],
         messages_columns: [
             {label: "Locomotive ID", field: "address", filterable:true},
             {label: "Message Type", field: "messageType", filterable:true},
@@ -85,48 +87,66 @@ var vue_det = new Vue({
            this.mode = 'main';
         },
 
+        getLocoID(source) {
+            var dot = source.indexOf(".")
+            var locoID = source.substring(dot + 1)
+            dot = locoID.indexOf(".")
+            locoID = locoID.substring(dot + 1)
+            var colon = locoID.indexOf(":")
+            locoID = locoID.substring(0, colon)
+            return locoID
+        },
+
         GetLocomotiveMessages() {
-           this.mode = 'messages';
+            this.mode = 'messages';
 
-           var xhr = new XMLHttpRequest()
-           var self = this
-           xhr.open('POST', 'locomotive-messages')
-           xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+            var xhr = new XMLHttpRequest()
+            var self = this
+            xhr.open('POST', 'locomotive-messages')
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
 
-           self.messages_rows = [];
+            self.messages_rows = [];
+            self.messages_additional_rows = [];
+            var formatter = new Intl.DateTimeFormat('en', {
+//                weekday: 'long',
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true,
+                timeZone: 'UTC'
+            })
 
-           xhr.onload = async function () {
-             if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                   var data = JSON.parse(xhr.responseText);
-                   if (!data.messages || data.messages.length == 0)
-                        return;
-                   console.log("Number of records: " + data.messages.length)
-                   for (var i = 0; i < data.messages.length - 1; i++)
-                      console.log("data.messages[i] = " + data.messages[i]);
-                      console.log("Id: " + data.messages[i]._id);
-                      self.messages_rows.push ({
-                        "id": i,
-                        "address": data.messages[i].srcAddress,
-                        "messageType": data.messages[i].idType,
-                        "timestamp": data.messages[i].time
-                        });
-                } else {
-                    var errorMessage = JSON.parse(xhr.responseText).message
-                    self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
-                    console.error('error - ' + errorMessage)
+            xhr.onload = async function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        for (var i = 0; i < data.messages.length; i++) {
+                            self.messages_rows.push ({
+                                "id": i,
+                                "address": self.getLocoID(data.messages[i].srcAddress),
+                                "messageType": data.messages[i].idType.toString(),
+                                "timestamp": formatter.format(new Date(data.messages[i].time * 1000))
+                            });
+                            self.messages_additional_rows.push(data.messages[i]);
+                        }
+                    } else {
+                        var errorMessage = JSON.parse(xhr.responseText).message
+                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                        console.error('error - ' + errorMessage)
+                    }
                 }
-             }
-           }
+            }
             xhr.send(JSON.stringify(this.form, (key, value)=> {
-              if ((value === null) && (key === 'LocoID')) return undefined
-                  return value
+                if ((value === null) && (key === 'LocoID')) return undefined
+                return value
             }))
         },
 
         GetLocomotivesReport() {
            this.mode = 'locomotives';
-           this.locomotivesText = "Back to main page"
 
            var xhr = new XMLHttpRequest()
            var self = this
