@@ -47,6 +47,18 @@ var vue_det = new Vue({
                                  {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
                                  {label: "220", field: "Radio", filterable:true},
                                  {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
+
+        locomotives_updates_columns: [
+                                         {label: "ATT Modem", field: "ATTModem", filterable:true},
+                                         {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
+                                         {label: "VZW Modem", field: "VZWModem", filterable:true},
+                                         {label: "VZW Modem IsOnline", field: "VZWModemIsOnline", hidden:true},
+                                         {label: "WiFi", field: "WiFi", filterable:true},
+                                         {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
+                                         {label: "220", field: "Radio", filterable:true},
+                                         {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true},
+                                         {label: "Timestamp", field: "Timestamp", filterable:true},
+                                         ],
         locomotives_rows: [],
         locomotivesText: "See Locomotives",
         locomotives_timestamp: ""
@@ -74,11 +86,14 @@ var vue_det = new Vue({
            this.isLocomotivesView = false;
            this.locomotivesText = "Get Locomotives";
            this.locomotives_rows = [];
+           this.isLocomotiveUpdateRequest = false;
         },
 
         GetLocomotivesReport() {
            this.isLocomotivesView = true;
            this.locomotivesText = "Back to main page"
+
+           this.isLocomotiveUpdateRequest = false;
 
            var xhr = new XMLHttpRequest()
            var self = this
@@ -122,6 +137,7 @@ var vue_det = new Vue({
             var requestLocoID = self.form.LocoID
 
             this.isLocomotivesView = false;
+            this.isLocomotiveUpdateRequest = false;
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
@@ -214,6 +230,7 @@ var vue_det = new Vue({
              xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
 
              var self = this
+             self.locomotives_rows = [];
 
              xhr.onload = async function () {
                 if (xhr.readyState !== 4)
@@ -231,7 +248,8 @@ var vue_det = new Vue({
                                WiFi: locomotivesData.status_updates[i].WiFi.Address,
                                WiFiIsOnline: locomotivesData.status_updates[i].WiFi.IsOnline,
                                Radio: locomotivesData.status_updates[i].Radio.Address,
-                               RadioIsOnline: locomotivesData.status_updates[i].Radio.IsOnline,});
+                               RadioIsOnline: locomotivesData.status_updates[i].Radio.IsOnline,
+                               Timestamp: locomotivesData.status_updates[i].Timestamp});
                      console.log("locomotives_rows=", self.locomotives_rows)
                 }
               }

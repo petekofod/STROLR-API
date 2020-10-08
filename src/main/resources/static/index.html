@@ -523,12 +523,9 @@
             </v-tab>
         </vue-tabs>
         <vue-good-table v-if="isLocomotiveUpdateRequest" title="Locomotives Updates Report"
-                        :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="false"
+                        :columns=this.locomotives_updates_columns :rows=this.locomotives_rows :paginate="false"
                         styleClass="vgt-table striped bordered condensed">
             <template slot="table-row" slot-scope="props">
-                <span v-if="props.column.field == 'Locomotive' && !isLocomotiveUpdateRequest" class="col-sm-6">
-                                       <span>Not now</span>
-                                 </span>
                 <span v-if="props.column.field == 'ATTModem'">
                                        <span v-if="!props.row.ATTModemIsOnline" class="badge badge-danger">{{props.row.ATTModem}}</span>
                                        <span v-if="props.row.ATTModemIsOnline" class="badge badge-success">{{props.row.ATTModem}}</span>
@@ -544,6 +541,9 @@
                 <span v-if="props.column.field == 'Radio'">
                                        <span v-if="!props.row.RadioIsOnline" class="badge badge-danger">{{props.row.Radio}}</span>
                                        <span v-if="props.row.RadioIsOnline" class="badge badge-success">{{props.row.Radio}}</span>
+                                 </span>
+                <span v-if="props.column.field == 'Timestamp'">
+                                       <span>{{props.row.Timestamp}}</span>
                                  </span>
             </template>
         </vue-good-table>
