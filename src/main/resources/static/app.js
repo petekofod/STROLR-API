@@ -134,6 +134,9 @@ var vue_det = new Vue({
                         if (self.form.RequestType == "get-status") {
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " status"
                             var tabItem = createStatusTab(title, index, self.form, messageId, timer)
+                            // send additional request to get the list of the last statuses
+                            console.log("Going to send additional request to get the list of the last statuses")
+                            self.sendLocomotiveUpdateRequest(requestSCACMark, requestLocoID)
                         } else if (self.form.RequestType == "get-logs") {
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " logs"
                             var tabItem = createLogsTab(title, index, self.form, messageId, timer)
@@ -200,6 +203,25 @@ var vue_det = new Vue({
                 }
             }
         },
+        sendLocomotiveUpdateRequest(SCACMark, locoId) {
+             var xhr = new XMLHttpRequest()
+             const requestUrl = 'locomotive-update.json/'+SCACMark+'/'+locoId;
+             console.log("requestUrl =", requestUrl);
+             xhr.open('GET', requestUrl)
+             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+             var self = this
+
+             xhr.onload = async function () {
+                if (xhr.readyState !== 4)
+                   return
+                if (xhr.status === 200) {
+                     console.log("sendLocomotiveUpdateRequest result is ", xhr.responseText)
+                }
+              }
+             xhr.send()
+        },
+
         onReset(evt) {
             evt.preventDefault()
             this.form.LocoID = null
