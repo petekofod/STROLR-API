@@ -3,6 +3,8 @@ Vue.config.devtools = true
 var vue_det = new Vue({
     el: '#MainApp',
     data: {
+        message_2080: false,
+        message_2083: false,
         showModal: false,
         form: {
             LocoID: null,
@@ -16,6 +18,8 @@ var vue_det = new Vue({
             dst: false,
             messageType: 0
         },
+        data_2080: null,
+        data_2083: null,
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
@@ -72,6 +76,23 @@ var vue_det = new Vue({
         this.timer = setInterval(this.getUTCTime, 5000)
     },
     methods: {
+        openMessageDetails(messageIndex) {
+            console.log("messageIndex = " + messageIndex)
+            var details = this.messages_additional_rows[messageIndex]
+            var messageType = details.idType
+            console.log("messageType = " + messageType)
+
+            if (messageType === 2080) {
+                this.data_2080 = JSON.parse(JSON.stringify(details))
+            }
+            if (messageType === 2083) {
+                this.data_2083 = JSON.parse(JSON.stringify(details))
+            }
+
+            this.message_2083 = messageType === 2083
+            this.message_2080 = messageType === 2080
+
+        },
         setRequestType(value) {
             this.form.RequestType = value
             if (this.form.RequestType == "get-status")
@@ -108,7 +129,6 @@ var vue_det = new Vue({
             self.messages_rows = [];
             self.messages_additional_rows = [];
             var formatter = new Intl.DateTimeFormat('en', {
-//                weekday: 'long',
                 year: 'numeric',
                 month: 'numeric',
                 day: 'numeric',
@@ -130,6 +150,27 @@ var vue_det = new Vue({
                                 "messageType": data.messages[i].idType.toString(),
                                 "timestamp": formatter.format(new Date(data.messages[i].time * 1000))
                             });
+                            var warningTimeUTC
+                            var emergencyEnforcementTimeUTC
+                            var currentTimeUTC
+                            if (data.messages[i].warningTime > 0) {
+                                warningTimeUTC = formatter.format(new Date(data.messages[i].warningTime * 1000))
+                            } else {
+                                warningTimeUTC = "Invalid"
+                            }
+                            if (data.messages[i].emergencyEnforcementTime > 0) {
+                                emergencyEnforcementTimeUTC = formatter.format(new Date(data.messages[i].emergencyEnforcementTime * 1000))
+                            } else {
+                                emergencyEnforcementTimeUTC = "Invalid"
+                            }
+                            if (data.messages[i].currentTime > 0) {
+                                currentTimeUTC = formatter.format(new Date(data.messages[i].currentTime * 1000))
+                            } else {
+                                currentTimeUTC = "Invalid"
+                            }
+                            data.messages[i].warningTimeUTC = warningTimeUTC
+                            data.messages[i].emergencyEnforcementTimeUTC =  emergencyEnforcementTimeUTC
+                            data.messages[i].currentTimeUTC = currentTimeUTC
                             self.messages_additional_rows.push(data.messages[i]);
                         }
                     } else {
