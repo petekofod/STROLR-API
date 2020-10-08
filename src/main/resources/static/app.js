@@ -37,6 +37,7 @@ var vue_det = new Vue({
         plugins: [],
         S3BaseUrl: '',
         isLocomotivesView: false,
+        isLocomotiveUpdateRequest: false,
         locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
                                  {label: "ATT Modem", field: "ATTModem", filterable:true},
                                  {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
@@ -72,6 +73,7 @@ var vue_det = new Vue({
         GetLocomotivesReportBack() {
            this.isLocomotivesView = false;
            this.locomotivesText = "Get Locomotives";
+           this.locomotives_rows = [];
         },
 
         GetLocomotivesReport() {
@@ -204,6 +206,7 @@ var vue_det = new Vue({
             }
         },
         sendLocomotiveUpdateRequest(SCACMark, locoId) {
+             this.isLocomotiveUpdateRequest = true;
              var xhr = new XMLHttpRequest()
              const requestUrl = 'locomotive-update.json/'+SCACMark+'/'+locoId;
              console.log("requestUrl =", requestUrl);
@@ -216,7 +219,20 @@ var vue_det = new Vue({
                 if (xhr.readyState !== 4)
                    return
                 if (xhr.status === 200) {
-                     console.log("sendLocomotiveUpdateRequest result is ", xhr.responseText)
+                     console.log("sendLocomotiveUpdateRequest result is ", xhr.responseText);
+                     var locomotivesData = JSON.parse(xhr.responseText);
+                     for (var i = 0; i < locomotivesData.status_updates.length; i++)
+                        self.locomotives_rows.push (
+                           {id:i, Locomotive: null,
+                               ATTModem: locomotivesData.status_updates[i].ATTModem.Address,
+                               ATTModemIsOnline: locomotivesData.status_updates[i].ATTModem.IsOnline,
+                               VZWModem: locomotivesData.status_updates[i].VZWModem.Address,
+                               VZWModemIsOnline: locomotivesData.status_updates[i].VZWModem.IsOnline,
+                               WiFi: locomotivesData.status_updates[i].WiFi.Address,
+                               WiFiIsOnline: locomotivesData.status_updates[i].WiFi.IsOnline,
+                               Radio: locomotivesData.status_updates[i].Radio.Address,
+                               RadioIsOnline: locomotivesData.status_updates[i].Radio.IsOnline,});
+                     console.log("locomotives_rows=", self.locomotives_rows)
                 }
               }
              xhr.send()
@@ -226,6 +242,8 @@ var vue_det = new Vue({
             evt.preventDefault()
             this.form.LocoID = null
             this.form.SCACMark = null
+            this.isLocomotiveUpdateRequest = false;
+            this.locomotives_rows=[]
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
             this.show = false
