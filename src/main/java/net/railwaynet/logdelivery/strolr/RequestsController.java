@@ -120,6 +120,9 @@ public class RequestsController {
     private String sendRequest (final Map<String, String> payloadMap, UserDetails currentUser, String queue) {
 
         String payload;
+
+        payloadMap.remove(MESSAGE_TYPE);
+
         try {
             payload = objectMapper.writeValueAsString(payloadMap);
         } catch (JsonProcessingException e) {
