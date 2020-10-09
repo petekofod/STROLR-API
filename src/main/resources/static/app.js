@@ -128,16 +128,6 @@ var vue_det = new Vue({
 
             self.messages_rows = [];
             self.messages_additional_rows = [];
-            var formatter = new Intl.DateTimeFormat('en', {
-                year: 'numeric',
-                month: 'numeric',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                second: 'numeric',
-                hour12: true,
-                timeZone: 'UTC'
-            })
 
             xhr.onload = async function () {
                 if (xhr.readyState === 4) {
@@ -731,3 +721,14 @@ function fillOfficeData() {
 
     return new_office_data
 }
+
+formatter = new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true,
+    timeZone: 'UTC'
+})
