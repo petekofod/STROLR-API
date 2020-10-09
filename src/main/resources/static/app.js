@@ -5,6 +5,7 @@ var vue_det = new Vue({
     data: {
         message_2080: false,
         message_2083: false,
+        messages_download_params: null,
         form: {
             LocoID: null,
             StartDate: null,
@@ -118,8 +119,53 @@ var vue_det = new Vue({
             return locoID
         },
 
+        downloadMessages() {
+            var xhr = new XMLHttpRequest()
+            var self = this
+            xhr.open('POST', 'locomotive-messages.csv', true)
+            xhr.responseType = 'blob';
+            xhr.onload = function () {
+                if (this.status === 200) {
+                    var blob = this.response;
+                    var filename = "test.csv";
+
+                    if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                        // IE workaround for "HTML7007: One or more blob URLs were revoked by closing the blob for which they were created. These URLs will no longer resolve as the data backing the URL has been freed."
+                        window.navigator.msSaveBlob(blob, filename);
+                    } else {
+                        var URL = window.URL || window.webkitURL;
+                        var downloadUrl = URL.createObjectURL(blob);
+
+                        if (filename) {
+                            // use HTML5 a[download] attribute to specify filename
+                            var a = document.createElement("a");
+                            // safari doesn't support this yet
+                            if (typeof a.download === 'undefined') {
+                                window.location.href = downloadUrl;
+                            } else {
+                                a.href = downloadUrl;
+                                a.download = filename;
+                                document.body.appendChild(a);
+                                a.click();
+                            }
+                        } else {
+                            window.location.href = downloadUrl;
+                        }
+
+                        setTimeout(function () { URL.revokeObjectURL(downloadUrl); }, 100); // cleanup
+                    }
+                }
+            };
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+            xhr.send(this.messages_download_params)
+        },
+
         GetLocomotiveMessages() {
             this.mode = 'messages';
+            this.messages_download_params = JSON.stringify(this.form, (key, value)=> {
+                    if ((value === null) && (key === 'LocoID')) return undefined
+                    return value
+            })
 
             var xhr = new XMLHttpRequest()
             var self = this
@@ -140,27 +186,9 @@ var vue_det = new Vue({
                                 "messageType": data.messages[i].idType.toString(),
                                 "timestamp": formatter.format(new Date(data.messages[i].time * 1000))
                             });
-                            var warningTimeUTC
-                            var emergencyEnforcementTimeUTC
-                            var currentTimeUTC
-                            if (data.messages[i].warningTime > 0) {
-                                warningTimeUTC = formatter.format(new Date(data.messages[i].warningTime * 1000))
-                            } else {
-                                warningTimeUTC = "Invalid"
-                            }
-                            if (data.messages[i].emergencyEnforcementTime > 0) {
-                                emergencyEnforcementTimeUTC = formatter.format(new Date(data.messages[i].emergencyEnforcementTime * 1000))
-                            } else {
-                                emergencyEnforcementTimeUTC = "Invalid"
-                            }
-                            if (data.messages[i].currentTime > 0) {
-                                currentTimeUTC = formatter.format(new Date(data.messages[i].currentTime * 1000))
-                            } else {
-                                currentTimeUTC = "Invalid"
-                            }
-                            data.messages[i].warningTimeUTC = warningTimeUTC
-                            data.messages[i].emergencyEnforcementTimeUTC =  emergencyEnforcementTimeUTC
-                            data.messages[i].currentTimeUTC = currentTimeUTC
+                            data.messages[i].warningTimeUTC = formatToUTC(data.messages[i].warningTimeUTC)
+                            data.messages[i].emergencyEnforcementTimeUTC =  formatToUTC(data.messages[i].emergencyEnforcementTimeUTC)
+                            data.messages[i].currentTimeUTC = formatToUTC(data.messages[i].currentTimeUTC)
                             self.messages_additional_rows.push(data.messages[i]);
                         }
                     } else {
@@ -170,10 +198,7 @@ var vue_det = new Vue({
                     }
                 }
             }
-            xhr.send(JSON.stringify(this.form, (key, value)=> {
-                if ((value === null) && (key === 'LocoID')) return undefined
-                return value
-            }))
+            xhr.send(this.messages_download_params)
         },
 
         GetLocomotivesReport() {
@@ -732,3 +757,11 @@ formatter = new Intl.DateTimeFormat('en', {
     hour12: true,
     timeZone: 'UTC'
 })
+
+function formatToUTC(millis) {
+    if (millis > 0) {
+        return formatter.format(new Date(millis * 1000))
+    } else {
+        return "Invalid"
+    }
+}

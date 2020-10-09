@@ -100,7 +100,10 @@
 
         <div style="margin-bottom: 10px;">
             <b-button type="button" v-on:click="mode = 'main'" variant="info" class="btn btn-default">
-                <span class="glyphicon glyphicon-triangle-left">Back to main page</span>
+                <span>Back to main page</span>
+            </b-button>
+            <b-button type="button" v-on:click="downloadMessages" variant="info" class="btn btn-default float-right">
+                <span>Download CSV</span>
             </b-button>
         </div>
 

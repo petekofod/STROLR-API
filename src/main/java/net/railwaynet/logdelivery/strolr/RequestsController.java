@@ -23,10 +23,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletResponse;
 import java.security.Principal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 @Configuration
 @RestController
@@ -220,6 +223,52 @@ public class RequestsController {
         return sendRequest(payloadMap, currentUser, getFederationQueueUrl());
     }
 
+    private static String toCSV(List<Map<String, Object>> list) {
+        List<String> headers = list.stream().flatMap(map -> map.keySet().stream()).distinct().collect(toList());
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < headers.size(); i++) {
+            sb.append(headers.get(i));
+            sb.append(i == headers.size()-1 ? "\n" : ",");
+        }
+        for (Map<String, Object> map : list) {
+            for (int i = 0; i < headers.size(); i++) {
+                sb.append(map.get(headers.get(i)));
+                sb.append(i == headers.size()-1 ? "\n" : ",");
+            }
+        }
+        return sb.toString();
+    }
+
+    @RequestMapping(
+            value = "/locomotive-messages.csv",
+            method = RequestMethod.POST)
+    @ResponseBody
+    public String locomotiveMessagesCSV(Principal principal, @RequestBody String payload, HttpServletResponse response) {
+        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
+        logger.debug(currentUser.getUsername() + " requesting the list of locomotive messages in CSV format");
+        logger.debug(payload);
+
+        final Map<String, String> payloadMap = payloadMap(payload);
+
+        List<Map<String, Object>> locomotives;
+
+        try {
+            locomotives = locomotiveMessagesService.getMessages(
+                    getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
+                    getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
+                    payloadMap.get(SCAC_MARK),
+                    payloadMap.get(MESSAGE_TYPE)
+            );
+        } catch (ParseException e) {
+            logger.error("Can't parse dates!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse dates!", e);
+        }
+
+        response.setContentType("application/download");
+        return toCSV(locomotives);
+    }
+
     @RequestMapping(
             value = "/locomotive-messages",
             method = RequestMethod.POST)
@@ -240,7 +289,9 @@ public class RequestsController {
                     payloadMap.get(MESSAGE_TYPE)
             ));
         } catch (ParseException e) {
-            e.printStackTrace();
+            logger.error("Can't parse dates!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse dates!", e);
         }
 
         try {
