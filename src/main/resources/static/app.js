@@ -37,7 +37,6 @@ var vue_det = new Vue({
         plugins: [],
         S3BaseUrl: '',
         isLocomotivesView: false,
-        isLocomotiveUpdateRequest: false,
         locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
                                  {label: "ATT Modem", field: "ATTModem", filterable:true},
                                  {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
@@ -86,14 +85,11 @@ var vue_det = new Vue({
            this.isLocomotivesView = false;
            this.locomotivesText = "Get Locomotives";
            this.locomotives_rows = [];
-           this.isLocomotiveUpdateRequest = false;
         },
 
         GetLocomotivesReport() {
            this.isLocomotivesView = true;
            this.locomotivesText = "Back to main page"
-
-           this.isLocomotiveUpdateRequest = false;
 
            var xhr = new XMLHttpRequest()
            var self = this
@@ -137,7 +133,6 @@ var vue_det = new Vue({
             var requestLocoID = self.form.LocoID
 
             this.isLocomotivesView = false;
-            this.isLocomotiveUpdateRequest = false;
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
@@ -153,7 +148,7 @@ var vue_det = new Vue({
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " status"
                             var tabItem = createStatusTab(title, index, self.form, messageId, timer)
                             // send additional request to get the list of the last statuses
-                            self.sendLocomotiveUpdateRequest(requestSCACMark, requestLocoID)
+                            self.sendLocomotiveUpdateRequest(tabItem, requestSCACMark, requestLocoID)
                         } else if (self.form.RequestType == "get-logs") {
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " logs"
                             var tabItem = createLogsTab(title, index, self.form, messageId, timer)
@@ -220,15 +215,14 @@ var vue_det = new Vue({
                 }
             }
         },
-        sendLocomotiveUpdateRequest(SCACMark, locoId) {
-             this.isLocomotiveUpdateRequest = true;
+        sendLocomotiveUpdateRequest(tabItem, SCACMark, locoId) {
              var xhr = new XMLHttpRequest()
              const requestUrl = 'locomotive-update.json/'+SCACMark+'/'+locoId;
              xhr.open('GET', requestUrl)
              xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
 
              var self = this
-             self.locomotives_rows = [];
+             tabItem.locomotives_rows = [];
 
              xhr.onload = async function () {
                 if (xhr.readyState !== 4)
@@ -236,7 +230,7 @@ var vue_det = new Vue({
                 if (xhr.status === 200) {
                      var locomotivesData = JSON.parse(xhr.responseText);
                      for (var i = 0; i < locomotivesData.status_updates.length; i++)
-                        self.locomotives_rows.push (
+                        tabItem.locomotives_rows.push (
                            {id:i, Locomotive: null,
                                ATTModem: locomotivesData.status_updates[i].ATTModem.Address,
                                ATTModemIsOnline: locomotivesData.status_updates[i].ATTModem.IsOnline,
@@ -256,7 +250,6 @@ var vue_det = new Vue({
             evt.preventDefault()
             this.form.LocoID = null
             this.form.SCACMark = null
-            this.isLocomotiveUpdateRequest = false;
             this.locomotives_rows=[]
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
@@ -392,7 +385,8 @@ function createStatusTab(title, index, form, messageId, timer) {
         messages:["Loading locomotive system status"],
         timer: timer,
         sLogRequestStatus: "Request submitted successfully",
-        showFooter: false, isLogs: false, isStatus: true, isOffice: false, showLinks: false
+        showFooter: false, isLogs: false, isStatus: true, isOffice: false, showLinks: false,
+        locomotives_rows: []
     }
 }
 
