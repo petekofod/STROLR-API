@@ -5,7 +5,6 @@ var vue_det = new Vue({
     data: {
         message_2080: false,
         message_2083: false,
-        showModal: false,
         form: {
             LocoID: null,
             StartDate: null,
@@ -18,8 +17,8 @@ var vue_det = new Vue({
             dst: false,
             messageType: 0
         },
-        data_2080: null,
-        data_2083: null,
+        data_2080: {},
+        data_2083: {},
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
@@ -92,6 +91,7 @@ var vue_det = new Vue({
             this.message_2083 = messageType === 2083
             this.message_2080 = messageType === 2080
 
+            this.showModal = true;
         },
         setRequestType(value) {
             this.form.RequestType = value
