@@ -680,3 +680,14 @@ function fillOfficeData() {
 
     return new_office_data
 }
+
+formatter = new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true,
+    timeZone: 'UTC'
+})
