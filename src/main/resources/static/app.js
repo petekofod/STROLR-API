@@ -49,6 +49,7 @@ var vue_det = new Vue({
                                  {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
 
         locomotives_updates_columns: [
+                                         {label: "Timestamp", field: "Timestamp", filterable:true},
                                          {label: "ATT Modem", field: "ATTModem", filterable:true},
                                          {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
                                          {label: "VZW Modem", field: "VZWModem", filterable:true},
@@ -57,7 +58,6 @@ var vue_det = new Vue({
                                          {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
                                          {label: "220", field: "Radio", filterable:true},
                                          {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true},
-                                         {label: "Timestamp", field: "Timestamp", filterable:true},
                                          ],
         locomotives_rows: [],
         locomotivesText: "See Locomotives",
@@ -153,7 +153,6 @@ var vue_det = new Vue({
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " status"
                             var tabItem = createStatusTab(title, index, self.form, messageId, timer)
                             // send additional request to get the list of the last statuses
-                            console.log("Going to send additional request to get the list of the last statuses")
                             self.sendLocomotiveUpdateRequest(requestSCACMark, requestLocoID)
                         } else if (self.form.RequestType == "get-logs") {
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " logs"
@@ -225,7 +224,6 @@ var vue_det = new Vue({
              this.isLocomotiveUpdateRequest = true;
              var xhr = new XMLHttpRequest()
              const requestUrl = 'locomotive-update.json/'+SCACMark+'/'+locoId;
-             console.log("requestUrl =", requestUrl);
              xhr.open('GET', requestUrl)
              xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
 
@@ -236,7 +234,6 @@ var vue_det = new Vue({
                 if (xhr.readyState !== 4)
                    return
                 if (xhr.status === 200) {
-                     console.log("sendLocomotiveUpdateRequest result is ", xhr.responseText);
                      var locomotivesData = JSON.parse(xhr.responseText);
                      for (var i = 0; i < locomotivesData.status_updates.length; i++)
                         self.locomotives_rows.push (
@@ -249,8 +246,7 @@ var vue_det = new Vue({
                                WiFiIsOnline: locomotivesData.status_updates[i].WiFi.IsOnline,
                                Radio: locomotivesData.status_updates[i].Radio.Address,
                                RadioIsOnline: locomotivesData.status_updates[i].Radio.IsOnline,
-                               Timestamp: locomotivesData.status_updates[i].Timestamp});
-                     console.log("locomotives_rows=", self.locomotives_rows)
+                               Timestamp: formatter.format(new Date(locomotivesData.status_updates[i].Timestamp))});
                 }
               }
              xhr.send()
