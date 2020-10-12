@@ -720,7 +720,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group row">
+                    <div v-if="plugins.includes('MESSAGES')" class="form-group row">
                         <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Message Type</label>
                         <div class="col-sm-4">
                             <b-form-select id="selMessageType" v-model="form.messageType" :options="lstMessageType"
