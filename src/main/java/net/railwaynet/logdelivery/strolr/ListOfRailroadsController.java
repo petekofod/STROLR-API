@@ -9,6 +9,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -78,8 +79,38 @@ public class ListOfRailroadsController {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate JSON with a list of locomotives!", e);
         }
+    }
 
+    @RequestMapping("/locomotive-update.json/{mark}/{locoID}")
+    public String locomotivesUpdates(Principal principal,
+                                     @PathVariable("mark") String mark,
+                                     @PathVariable("locoID") String locoID) {
 
+        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
+        logger.debug(currentUser.getUsername() + " requesting the locomotive updates");
+
+        if (mark.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_ACCEPTABLE, "Please specify the mark");
+        }
+
+        if (locoID.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_ACCEPTABLE, "Please specify the locoID");
+        }
+
+        try {
+            Map<String, Object> result = locomotivesService.getLast10Updates(mark, locoID);
+            return objectMapper.writeValueAsString(result);
+        } catch (SQLException e) {
+            logger.error("Can't get updates from RDS!", e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't get updates from RDS!", e);
+        } catch (JsonProcessingException e) {
+            logger.error("Can't generate JSON with a list of updates!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't generate JSON with a list of updates!", e);
+        }
     }
 
 }

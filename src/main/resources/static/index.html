@@ -973,6 +973,31 @@
                             </div>
                         </div>
                     </b-card-body>
+                    <vue-good-table v-if="tab.isStatus" title="Locomotives Updates Report"
+                                    :columns=locomotives_updates_columns :rows=tab.locomotives_rows :paginate="false"
+                                    styleClass="vgt-table striped bordered condensed">
+                        <template slot="table-row" slot-scope="props">
+                                <span v-if="props.column.field == 'ATTModem'">
+                                       <span v-if="!props.row.ATTModemIsOnline" class="badge badge-danger">{{props.row.ATTModem}}</span>
+                                       <span v-if="props.row.ATTModemIsOnline" class="badge badge-success">{{props.row.ATTModem}}</span>
+                                 </span>
+                            <span v-if="props.column.field == 'VZWModem'">
+                                       <span v-if="!props.row.VZWModemIsOnline" class="badge badge-danger">{{props.row.VZWModem}}</span>
+                                       <span v-if="props.row.VZWModemIsOnline" class="badge badge-success">{{props.row.VZWModem}}</span>
+                                 </span>
+                            <span v-if="props.column.field == 'WiFi'">
+                                       <span v-if="!props.row.WiFiIsOnline" class="badge badge-danger">{{props.row.WiFi}}</span>
+                                       <span v-if="props.row.WiFiIsOnline" class="badge badge-success">{{props.row.WiFi}}</span>
+                                 </span>
+                            <span v-if="props.column.field == 'Radio'">
+                                       <span v-if="!props.row.RadioIsOnline" class="badge badge-danger">{{props.row.Radio}}</span>
+                                       <span v-if="props.row.RadioIsOnline" class="badge badge-success">{{props.row.Radio}}</span>
+                                 </span>
+                            <span v-if="props.column.field == 'Timestamp'">
+                                       <span>{{props.row.Timestamp}}</span>
+                                 </span>
+                        </template>
+                    </vue-good-table>
                     <b-card-footer v-if="tab.showFooter">
                         Locomotive System Status Server is currently processing request. You will be
                         shown the information when the backend server provides it.
