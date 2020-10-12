@@ -46,6 +46,18 @@ var vue_det = new Vue({
                                  {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
                                  {label: "220", field: "Radio", filterable:true},
                                  {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true}],
+
+        locomotives_updates_columns: [
+                                         {label: "Timestamp", field: "Timestamp", filterable:true},
+                                         {label: "ATT Modem", field: "ATTModem", filterable:true},
+                                         {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
+                                         {label: "VZW Modem", field: "VZWModem", filterable:true},
+                                         {label: "VZW Modem IsOnline", field: "VZWModemIsOnline", hidden:true},
+                                         {label: "WiFi", field: "WiFi", filterable:true},
+                                         {label: "WiFi IsOnline", field: "WiFiIsOnline", hidden:true},
+                                         {label: "220", field: "Radio", filterable:true},
+                                         {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true},
+                                         ],
         locomotives_rows: [],
         locomotivesText: "See Locomotives",
         locomotives_timestamp: ""
@@ -72,6 +84,7 @@ var vue_det = new Vue({
         GetLocomotivesReportBack() {
            this.isLocomotivesView = false;
            this.locomotivesText = "Get Locomotives";
+           this.locomotives_rows = [];
         },
 
         GetLocomotivesReport() {
@@ -134,6 +147,8 @@ var vue_det = new Vue({
                         if (self.form.RequestType == "get-status") {
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " status"
                             var tabItem = createStatusTab(title, index, self.form, messageId, timer)
+                            // send additional request to get the list of the last statuses
+                            self.sendLocomotiveUpdateRequest(tabItem, requestSCACMark, requestLocoID)
                         } else if (self.form.RequestType == "get-logs") {
                             var title = "(" + index + ") " + requestSCACMark + " " + requestLocoID + " logs"
                             var tabItem = createLogsTab(title, index, self.form, messageId, timer)
@@ -200,10 +215,42 @@ var vue_det = new Vue({
                 }
             }
         },
+        sendLocomotiveUpdateRequest(tabItem, SCACMark, locoId) {
+             var xhr = new XMLHttpRequest()
+             const requestUrl = 'locomotive-update.json/'+SCACMark+'/'+locoId;
+             xhr.open('GET', requestUrl)
+             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+             var self = this
+             tabItem.locomotives_rows = [];
+
+             xhr.onload = async function () {
+                if (xhr.readyState !== 4)
+                   return
+                if (xhr.status === 200) {
+                     var locomotivesData = JSON.parse(xhr.responseText);
+                     for (var i = 0; i < locomotivesData.status_updates.length; i++)
+                        tabItem.locomotives_rows.push (
+                           {id:i, Locomotive: null,
+                               ATTModem: locomotivesData.status_updates[i].ATTModem.Address,
+                               ATTModemIsOnline: locomotivesData.status_updates[i].ATTModem.IsOnline,
+                               VZWModem: locomotivesData.status_updates[i].VZWModem.Address,
+                               VZWModemIsOnline: locomotivesData.status_updates[i].VZWModem.IsOnline,
+                               WiFi: locomotivesData.status_updates[i].WiFi.Address,
+                               WiFiIsOnline: locomotivesData.status_updates[i].WiFi.IsOnline,
+                               Radio: locomotivesData.status_updates[i].Radio.Address,
+                               RadioIsOnline: locomotivesData.status_updates[i].Radio.IsOnline,
+                               Timestamp: formatter.format(new Date(locomotivesData.status_updates[i].Timestamp))});
+                }
+              }
+             xhr.send()
+        },
+
         onReset(evt) {
             evt.preventDefault()
             this.form.LocoID = null
             this.form.SCACMark = null
+            this.locomotives_rows=[]
             this.initDateTime()
             // Trick to reset/clear native browser form validation state
             this.show = false
@@ -338,7 +385,8 @@ function createStatusTab(title, index, form, messageId, timer) {
         messages:["Loading locomotive system status"],
         timer: timer,
         sLogRequestStatus: "Request submitted successfully",
-        showFooter: false, isLogs: false, isStatus: true, isOffice: false, showLinks: false
+        showFooter: false, isLogs: false, isStatus: true, isOffice: false, showLinks: false,
+        locomotives_rows: []
     }
 }
 

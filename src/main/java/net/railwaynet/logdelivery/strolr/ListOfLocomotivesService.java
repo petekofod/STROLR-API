@@ -51,6 +51,66 @@ public class ListOfLocomotivesService {
         return result;
     }
 
+    private Map<String, Object> makeStatusUpdate(ResultSet resultSet) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+
+        Map<String, Object> attModem = new HashMap<>();
+        attModem.put("Address", resultSet.getString("ATTModem_Address"));
+        attModem.put("IsOnline", resultSet.getBoolean("ATTModem_Status"));
+        result.put("ATTModem", attModem);
+
+        Map<String, Object> vzwModem = new HashMap<>();
+        vzwModem.put("Address", resultSet.getString("VZWModem_Address"));
+        vzwModem.put("IsOnline", resultSet.getBoolean("VZWModem_Status"));
+        result.put("VZWModem", vzwModem);
+
+        Map<String, Object> wifiModem = new HashMap<>();
+        wifiModem.put("Address", resultSet.getString("WiFi_Address"));
+        wifiModem.put("IsOnline", resultSet.getBoolean("WiFi_Status"));
+        result.put("WiFi", wifiModem);
+
+        Map<String, Object> radioModem = new HashMap<>();
+        radioModem.put("Address", resultSet.getString("Radio_Address"));
+        radioModem.put("IsOnline", resultSet.getBoolean("Radio_Status"));
+        result.put("Radio", radioModem);
+
+        result.put("Timestamp", resultSet.getTimestamp("created_at"));
+
+        return result;
+    }
+
+    public Map<String, Object> getLast10Updates(String mark, String locoID) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+
+        String endpoint = Objects.requireNonNull(env.getProperty("aws.rds.endpoint"));
+        String jdbc_url = "jdbc:postgresql://" + endpoint + ":5432/postgres";
+
+        List<Map<String, Object>> updates = new ArrayList<>();
+        String db_username = Objects.requireNonNull(env.getProperty("aws.rds.username"));
+        String db_password = Objects.requireNonNull(env.getProperty("aws.rds.password"));
+        Connection conn = DriverManager.getConnection(jdbc_url, db_username, db_password);
+        String sql = "SELECT " +
+                "ATTModem_Address, ATTModem_Status, " +
+                "VZWModem_Address, VZWModem_Status, " +
+                "WiFi_Address, WiFi_Status, " +
+                "Radio_Address, Radio_Status, created_at " +
+                "FROM locomotives JOIN history ON history.id = locomotives.history_id " +
+                "WHERE mark = ? AND locoID = ? " +
+                "ORDER BY created_at DESC LIMIT 10";
+        PreparedStatement statement = conn.prepareStatement(sql);
+        statement.setString(1, mark.toUpperCase());
+        statement.setString(2, locoID);
+
+        ResultSet resultSet = statement.executeQuery();
+
+        while (resultSet.next()) {
+            updates.add(makeStatusUpdate(resultSet));
+        }
+        result.put("status_updates", updates);
+
+        return result;
+    }
+
     public Map<String, Object> getLocomotives() throws SQLException {
         Map<String, Object> result = new HashMap<>();
 
