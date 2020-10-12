@@ -119,7 +119,7 @@ var vue_det = new Vue({
             return locoID
         },
 
-        downloadMessages() {
+        downloadMessages(messageType) {
             var xhr = new XMLHttpRequest()
             var self = this
             xhr.open('POST', 'locomotive-messages.csv', true)
@@ -127,7 +127,10 @@ var vue_det = new Vue({
             xhr.onload = function () {
                 if (this.status === 200) {
                     var blob = this.response;
-                    var filename = "test.csv";
+                    var filename = "report_" + messageType + "_" +
+                        self.form.StartDate + "_" + self.form.StartTime + "_" +
+                        self.form.EndDate + "_" + self.form.EndTime +
+                        ".csv";
 
                     if (typeof window.navigator.msSaveBlob !== 'undefined') {
                         // IE workaround for "HTML7007: One or more blob URLs were revoked by closing the blob for which they were created. These URLs will no longer resolve as the data backing the URL has been freed."
@@ -156,12 +159,15 @@ var vue_det = new Vue({
                     }
                 }
             };
+            var formData = JSON.parse(this.messages_download_params)
+            formData.messageType = messageType
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
-            xhr.send(this.messages_download_params)
+            xhr.send(JSON.stringify(formData))
         },
 
         GetLocomotiveMessages() {
             this.mode = 'messages';
+
             this.messages_download_params = JSON.stringify(this.form, (key, value)=> {
                     if ((value === null) && (key === 'LocoID')) return undefined
                     return value

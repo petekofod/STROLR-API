@@ -250,15 +250,14 @@ public class RequestsController {
 
         final Map<String, String> payloadMap = payloadMap(payload);
 
-        List<Map<String, Object>> locomotives;
+        List<Map<String, Object>> messages;
 
         try {
-            locomotives = locomotiveMessagesService.getMessages(
+            messages = locomotiveMessagesService.getMessagesForCSV(
                     getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
                     getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
                     payloadMap.get(SCAC_MARK),
-                    payloadMap.get(MESSAGE_TYPE)
-            );
+                    payloadMap.get(MESSAGE_TYPE));
         } catch (ParseException e) {
             logger.error("Can't parse dates!");
             throw new ResponseStatusException(
@@ -266,7 +265,7 @@ public class RequestsController {
         }
 
         response.setContentType("application/download");
-        return toCSV(locomotives);
+        return toCSV(messages);
     }
 
     @RequestMapping(
@@ -295,11 +294,7 @@ public class RequestsController {
         }
 
         try {
-            String s = objectMapper.writeValueAsString(result);
-            logger.info("====================================");
-            logger.info(s);
-            logger.info("====================================");
-            return s;
+            return objectMapper.writeValueAsString(result);
         } catch (JsonProcessingException e) {
             logger.error("Can't generate JSON with a list of messages!");
             throw new ResponseStatusException(
@@ -314,8 +309,9 @@ public class RequestsController {
             payloadMap = objectMapper.readValue(payload,
                     new TypeReference<Map<String, String>>() {});
         } catch (JsonProcessingException e) {
+            logger.error("Can't parse the request JSON", e);
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the log request JSON", e);
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the request JSON", e);
         }
 
         return payloadMap;

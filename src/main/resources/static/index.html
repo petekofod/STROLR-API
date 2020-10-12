@@ -99,11 +99,21 @@
     <div v-if="mode == 'messages'" class="container">
 
         <div style="margin-bottom: 10px;">
-            <b-button type="button" v-on:click="mode = 'main'" variant="info" class="btn btn-default">
+            <b-button type="button" v-on:click="mode = 'main'" variant="info">
                 <span>Back to main page</span>
             </b-button>
-            <b-button type="button" v-on:click="downloadMessages" variant="info" class="btn btn-default float-right">
-                <span>Download CSV</span>
+            <b-button type="button"
+                      v-if="form.messageType == 0 || form.messageType == 2080"
+                      v-on:click="downloadMessages(2080)"
+                      variant="outline-primary" size="sm"
+                      class="float-right align-baseline ml-3 mt-3">
+                <span>Download 2080 CSV</span>
+            </b-button>
+            <b-button type="button"
+                      v-if="form.messageType == 0 || form.messageType == 2083"
+                      v-on:click="downloadMessages(2083)" variant="outline-primary" size="sm"
+                      class="float-right align-baseline mt-3">
+                <span>Download 2083 CSV</span>
             </b-button>
         </div>
 
