@@ -204,11 +204,13 @@ var vue_det = new Vue({
                                 "id": i,
                                 "address": self.getLocoID(data.messages[i].srcAddress),
                                 "messageType": data.messages[i].idType.toString(),
-                                "timestamp": formatter.format(new Date(data.messages[i].time * 1000))
+                                "timestamp": formatToUTC(data.messages[i].time * 1000)
                             });
-                            data.messages[i].warningTimeUTC = formatToUTC(data.messages[i].warningTimeUTC)
-                            data.messages[i].emergencyEnforcementTimeUTC =  formatToUTC(data.messages[i].emergencyEnforcementTimeUTC)
-                            data.messages[i].currentTimeUTC = formatToUTC(data.messages[i].currentTimeUTC)
+                            data.messages[i].stateTimeUTC = formatToUTC(data.messages[i].stateTime)
+                            data.messages[i].warningTimeUTC = formatToUTC(data.messages[i].warningTime)
+                            data.messages[i].enforcementTimeUTC =  formatToUTC(data.messages[i].enforcementTime)
+                            data.messages[i].emergencyEnforcementTimeUTC =  formatToUTC(data.messages[i].emergencyEnforcementTime)
+                            data.messages[i].currentTimeUTC = formatToUTC(data.messages[i].currentTime)
                             self.messages_additional_rows.push(data.messages[i]);
                         }
                     } else {
@@ -814,8 +816,9 @@ formatter = new Intl.DateTimeFormat('en', {
 })
 
 function formatToUTC(millis) {
+    console.log("millis = " + millis)
     if (millis > 0) {
-        return formatter.format(new Date(millis * 1000))
+        return formatter.format(new Date(millis))
     } else {
         return "Invalid"
     }
