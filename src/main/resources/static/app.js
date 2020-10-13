@@ -816,7 +816,6 @@ formatter = new Intl.DateTimeFormat('en', {
 })
 
 function formatToUTC(millis) {
-    console.log("millis = " + millis)
     if (millis > 0) {
         return formatter.format(new Date(millis))
     } else {
