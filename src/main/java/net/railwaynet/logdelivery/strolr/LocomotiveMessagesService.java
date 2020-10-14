@@ -1,5 +1,7 @@
 package net.railwaynet.logdelivery.strolr;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.mongodb.client.model.Filters.*;
@@ -125,12 +129,24 @@ public class LocomotiveMessagesService {
         destMessage.put("scac", message.get("scac"));
     }
 
-    private List<Map<String, Object>> columns2080(List<Map<String, Object>> source) {
+    private String getTrainIDFrom2004(List<Map<String, Object>> messages2004, String srcAddress) {
+        for (int i = messages2004.size() - 1; i > 0; i--) {
+            Map<String, Object> message = messages2004.get(i);
+            if (message.get("srcAddress").equals(srcAddress))
+                return (String) message.get("trainID");
+        }
+
+        logger.warn("Can't find TrainID for " + srcAddress);
+        return "";
+    }
+
+    private List<Map<String, Object>> columns2080(List<Map<String, Object>> source, List<Map<String, Object>> messages2004) {
         List<Map<String, Object>> dest = new ArrayList<>();
         for (Map<String, Object> message: source) {
             Map<String, Object> destMessage = new LinkedHashMap<>();
             copyHeader(message, destMessage);
             destMessage.put("ptcAuthorityReferenceNumber", message.get("ptcAuthorityReferenceNumber"));
+            destMessage.put("trainID", getTrainIDFrom2004(messages2004, (String) message.get("srcAddress")));
             destMessage.put("headEndMilepost", message.get("headEndMilepost"));
             destMessage.put("headEndMilepostPrefix", message.get("headEndMilepostPrefix"));
             destMessage.put("headEndMilepostSuffix", message.get("headEndMilepostSuffix"));
@@ -251,27 +267,34 @@ public class LocomotiveMessagesService {
         return dest;
     }
 
-    public List<Map<String, Object>> getMessagesForCSV(Date startDate, Date endDate, String mark, String messageType) {
+    public List<Map<String, Object>> getMessagesForCSV(Date startDate, Date endDate, String messageType) {
 
-        List<Map<String, Object>> result = getMessages(startDate, endDate, mark, messageType);
+        List<Map<String, Object>> result = getMessages(startDate, endDate, messageType);
         handleTime(result);
         handleCoordinates(result);
 
-        if (messageType.equals("2080"))
-            return columns2080(result);
+        if (messageType.equals("2080")) {
+            LocalDateTime dt = new Timestamp(startDate.getTime()).toLocalDateTime().minusHours(48);
+            List<Map<String, Object>> messages2004 = getMessages2003(Timestamp.valueOf(dt), endDate);
+            try {
+                logger.debug(new ObjectMapper().writeValueAsString(messages2004));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            return columns2080(result, messages2004);
+        }
         if (messageType.equals("2083"))
             return columns2083(result);
 
         return result;
     }
 
-    public List<Map<String, Object>> getMessages(Date startDate, Date endDate, String mark, String messageType) {
+    public List<Map<String, Object>> getMessages(Date startDate, Date endDate, String messageType) {
         List<Map<String, Object>> result = new ArrayList<>();
 
         logger.debug("Start millis: " + startDate.getTime());
         logger.debug("End millis: " + endDate.getTime());
         logger.debug("messageType: " + messageType);
-        logger.debug("mark = " + mark);
 
         List<Bson> conditions = new ArrayList<>();
         conditions.add(gt("time", startDate.getTime() / 1000));
@@ -286,6 +309,30 @@ public class LocomotiveMessagesService {
             conditions.add(eq("idType", Integer.parseInt(messageType)));
         }
         conditions.add(in("destAddress", "amtk.b:gb.nec", "amtk.b:gb.me"));
+        Bson filter = and(conditions);
+
+        try (MongoCursor<Document> cursor = getMessagesCollection().find(filter)
+                .iterator()) {
+            while (cursor.hasNext()) {
+                result.add(cursor.next());
+            }
+        }
+
+        return result;
+    }
+
+    public List<Map<String, Object>> getMessages2003(Date startDate, Date endDate) {
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        logger.debug("Getting 2004");
+        logger.debug("Start millis: " + startDate.getTime());
+        logger.debug("End millis: " + endDate.getTime());
+
+        List<Bson> conditions = new ArrayList<>();
+        conditions.add(gt("time", startDate.getTime() / 1000));
+        conditions.add(lt("time", endDate.getTime() / 1000));
+
+        conditions.add(eq("idType", 2003));
         Bson filter = and(conditions);
 
         try (MongoCursor<Document> cursor = getMessagesCollection().find(filter)

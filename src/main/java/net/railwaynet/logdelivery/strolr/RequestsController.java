@@ -256,7 +256,6 @@ public class RequestsController {
             messages = locomotiveMessagesService.getMessagesForCSV(
                     getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
                     getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
-                    payloadMap.get(SCAC_MARK),
                     payloadMap.get(MESSAGE_TYPE));
         } catch (ParseException e) {
             logger.error("Can't parse dates!");
@@ -284,7 +283,6 @@ public class RequestsController {
             result.put("messages", locomotiveMessagesService.getMessages(
                     getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
                     getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
-                    payloadMap.get(SCAC_MARK),
                     payloadMap.get(MESSAGE_TYPE)
             ));
         } catch (ParseException e) {
