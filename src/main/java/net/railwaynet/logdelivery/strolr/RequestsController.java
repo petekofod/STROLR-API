@@ -11,6 +11,7 @@ import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.security.Principal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
@@ -252,19 +256,29 @@ public class RequestsController {
 
         List<Map<String, Object>> messages;
 
-        try {
-            messages = locomotiveMessagesService.getMessagesForCSV(
-                    getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
-                    getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
-                    payloadMap.get(MESSAGE_TYPE));
-        } catch (ParseException e) {
-            logger.error("Can't parse dates!");
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse dates!", e);
-        }
+        Date startDate = getUTC(payloadMap.get(START_DATE), payloadMap.get(START_TIME), payloadMap.get("timeZone"), payloadMap.get("dst"));
+        Date endDate = getUTC(payloadMap.get(END_DATE), payloadMap.get(END_TIME), payloadMap.get("timeZone"), payloadMap.get("dst"));
+
+        messages = locomotiveMessagesService.getMessagesForCSV(
+                startDate, endDate,
+                payloadMap.get(MESSAGE_TYPE));
 
         response.setContentType("application/download");
         return toCSV(messages);
+    }
+
+    private Date getUTC(String d, String t, String tz, String dstString) {
+        LocalDateTime ldt = LocalDateTime.parse(d + "T" + t + ":00");
+
+        int offset = Integer.parseInt(tz);
+        boolean dst = Boolean.parseBoolean(dstString);
+
+        //Apply DST to everything except UTC
+        if (dst && offset != 0) {
+            offset = offset - 1;
+        }
+
+        return new Date(ldt.plusHours(offset).atOffset(ZoneOffset.UTC).toInstant().toEpochMilli());
     }
 
     @RequestMapping(
@@ -277,19 +291,13 @@ public class RequestsController {
 
         final Map<String, String> payloadMap = payloadMap(payload);
 
+        Date startDate = getUTC(payloadMap.get(START_DATE), payloadMap.get(START_TIME), payloadMap.get("timeZone"), payloadMap.get("dst"));
+        Date endDate = getUTC(payloadMap.get(END_DATE), payloadMap.get(END_TIME), payloadMap.get("timeZone"), payloadMap.get("dst"));
+
         Map<String, Object> result = new HashMap<>();
 
-        try {
-            result.put("messages", locomotiveMessagesService.getMessages(
-                    getDateFromParams(payloadMap.get(START_DATE), payloadMap.get(START_TIME)),
-                    getDateFromParams(payloadMap.get(END_DATE), payloadMap.get(END_TIME)),
-                    payloadMap.get(MESSAGE_TYPE)
-            ));
-        } catch (ParseException e) {
-            logger.error("Can't parse dates!");
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse dates!", e);
-        }
+        result.put("messages",
+            locomotiveMessagesService.getMessages(startDate, endDate,payloadMap.get(MESSAGE_TYPE)));
 
         try {
             return objectMapper.writeValueAsString(result);
@@ -372,6 +380,10 @@ public class RequestsController {
      * @return Date object of this datetime
      */
     private Date getDateFromParams(String d, String t) throws ParseException {
+        return new SimpleDateFormat(DATE_PATTERN).parse(d + ":" + t);
+    }
+
+    private Date getDateFromParamsTZ(String d, String t, String tz) throws ParseException {
         return new SimpleDateFormat(DATE_PATTERN).parse(d + ":" + t);
     }
 
