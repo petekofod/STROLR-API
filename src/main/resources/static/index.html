@@ -124,9 +124,10 @@
                 <span>Download 2083 CSV</span>
             </b-button>
         </div>
-        <div><pulse v-if="this.message_loading"></pulse ></div>
+        
+        <div><pulse v-if="message_loading"></pulse ></div>
 
-        <div class="row">
+        <div class="row" v-if="!message_loading">
             <vue-good-table title="Message Report" class="col m-4"
                             :columns=this.messages_columns :rows=this.messages_rows :paginate="true"
                             :pagination-options="{ enabled: true, perPage: 100}"
