@@ -152,9 +152,14 @@
                             <td>Railroad SCAC</td>
                             <td>{{this.data_2080.scac}}</td>
                         </tr>
-                        <tr v-if="data_2080.locomotiveStateSummary === 'CONTROLLING'">
+                        <tr>
                             <td>Train ID</td>
-                            <td>{{this.data_2080.trainID}}</td>
+                            <td v-if="data_2080.locomotiveStateSummary === 'CONTROLLING'">
+                                {{this.data_2080.trainID}}
+                            </td>
+                            <td v-else>
+                                NA
+                            </td>
                         </tr>
                         <tr>
                             <td>Source Address</td>
