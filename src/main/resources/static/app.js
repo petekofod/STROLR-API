@@ -49,6 +49,7 @@ var vue_det = new Vue({
         plugins: [],
         S3BaseUrl: '',
         mode: 'main',
+        message_loading: false,
         locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
                                  {label: "ATT Modem", field: "ATTModem", filterable:true},
                                  {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
@@ -181,6 +182,7 @@ var vue_det = new Vue({
 
         GetLocomotiveMessages() {
             this.mode = 'messages';
+            this.message_loading = true;
 
             this.messages_download_params = JSON.stringify(this.form, (key, value)=> {
                     if ((value === null) && (key === 'LocoID')) return undefined
@@ -213,6 +215,7 @@ var vue_det = new Vue({
                             data.messages[i].currentTimeUTC = formatToUTC(data.messages[i].currentTime)
                             self.messages_additional_rows.push(data.messages[i]);
                         }
+                        self.message_loading = false;
                     } else {
                         var errorMessage = JSON.parse(xhr.responseText).message
                         self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage

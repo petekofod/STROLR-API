@@ -20,9 +20,18 @@
     <!-- Load the following for BootstrapVueIcons support -->
     <script src="//unpkg.com/vue-good-table@2.14.1/dist/vue-good-table.js"></script>
 
+    <link rel="stylesheet" href="https://unpkg.com/vue-spinners@1.0.0/dist/vue-spinners.css">
+    <script src="https://unpkg.com/vue-spinners@1.0.0/dist/vue-spinners.browser.js"></script>
+
+    <link rel="stylesheet" href="vue-spinners/dist/vue-spinners.css"/>
+    <script src="vue.js"></script>
+    <script src="vue-spinners/dist/vue-spinners.browser.js"></script>
+
     <link type="text/css" rel="stylesheet" href="//unpkg.com/vue-good-table@2.14.1/dist/vue-good-table.css"></link>
 
     <link rel="stylesheet" href="https://unpkg.com/vue-nav-tabs/themes/vue-tabs.css">
+
+
     <script src="https://unpkg.com/vue-nav-tabs/dist/vue-tabs.js"></script>
 
     <style>
@@ -97,7 +106,6 @@
     </div>
 
     <div v-if="mode == 'messages'" class="container">
-
         <div style="margin-bottom: 10px;">
             <b-button type="button" v-on:click="mode = 'main'" variant="info">
                 <span>Back to main page</span>
@@ -116,6 +124,7 @@
                 <span>Download 2083 CSV</span>
             </b-button>
         </div>
+        <div><pulse v-if="this.message_loading"></pulse ></div>
 
         <div class="row">
             <vue-good-table title="Message Report" class="col m-4"
