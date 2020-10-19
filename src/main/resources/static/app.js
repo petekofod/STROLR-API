@@ -90,10 +90,8 @@ var vue_det = new Vue({
     },
     methods: {
         openMessageDetails(messageIndex) {
-            console.log("messageIndex = " + messageIndex)
             var details = this.messages_additional_rows[messageIndex]
             var messageType = details.idType
-            console.log("messageType = " + messageType)
 
             if (messageType === 2080) {
                 this.data_2080 = JSON.parse(JSON.stringify(details))
