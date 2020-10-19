@@ -1,7 +1,5 @@
 package net.railwaynet.logdelivery.strolr;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
@@ -129,7 +127,7 @@ public class LocomotiveMessagesService {
         destMessage.put("scac", message.get("scac"));
     }
 
-    private String getTrainIDFrom2004(List<Map<String, Object>> messages2004, String srcAddress) {
+    private String getTrainIDFrom2003(List<Map<String, Object>> messages2004, String srcAddress) {
         for (int i = messages2004.size() - 1; i > 0; i--) {
             Map<String, Object> message = messages2004.get(i);
             if (message.get("srcAddress").equals(srcAddress))
@@ -146,7 +144,7 @@ public class LocomotiveMessagesService {
             Map<String, Object> destMessage = new LinkedHashMap<>();
             copyHeader(message, destMessage);
             destMessage.put("ptcAuthorityReferenceNumber", message.get("ptcAuthorityReferenceNumber"));
-            destMessage.put("trainID", getTrainIDFrom2004(messages2004, (String) message.get("srcAddress")));
+            destMessage.put("trainID", getTrainIDFrom2003(messages2004, (String) message.get("srcAddress")));
             destMessage.put("headEndMilepost", message.get("headEndMilepost"));
             destMessage.put("headEndMilepostPrefix", message.get("headEndMilepostPrefix"));
             destMessage.put("headEndMilepostSuffix", message.get("headEndMilepostSuffix"));
@@ -275,13 +273,8 @@ public class LocomotiveMessagesService {
 
         if (messageType.equals("2080")) {
             LocalDateTime dt = new Timestamp(startDate.getTime()).toLocalDateTime().minusHours(48);
-            List<Map<String, Object>> messages2004 = getMessages2003(Timestamp.valueOf(dt), endDate);
-            try {
-                logger.debug(new ObjectMapper().writeValueAsString(messages2004));
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            return columns2080(result, messages2004);
+            List<Map<String, Object>> messages2003 = getMessages2003(Timestamp.valueOf(dt), endDate);
+            return columns2080(result, messages2003);
         }
         if (messageType.equals("2083"))
             return columns2083(result);
@@ -295,6 +288,15 @@ public class LocomotiveMessagesService {
         logger.debug("Start millis: " + startDate.getTime());
         logger.debug("End millis: " + endDate.getTime());
         logger.debug("messageType: " + messageType);
+
+        int type = Integer.parseInt(messageType);
+
+        List<Map<String, Object>> messages2003 = null;
+
+        if (type == 0 || type == 2080) {
+            LocalDateTime dt = new Timestamp(startDate.getTime()).toLocalDateTime().minusHours(48);
+            messages2003 = getMessages2003(Timestamp.valueOf(dt), endDate);
+        }
 
         List<Bson> conditions = new ArrayList<>();
         conditions.add(gt("time", startDate.getTime() / 1000));
@@ -316,6 +318,11 @@ public class LocomotiveMessagesService {
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
+        }
+
+        if (messages2003 != null) {
+            for (Map<String, Object> message: result)
+                message.put("trainID", getTrainIDFrom2003(messages2003, (String) message.get("srcAddress")));
         }
 
         return result;
