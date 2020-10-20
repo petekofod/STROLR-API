@@ -120,7 +120,7 @@
             </b-button>
         </div>
 
-        <div><pulse v-if="message_loading"></pulse ></div>
+        <div><pulse v-if="message_loading||downloading"></pulse ></div>
 
         <div class="row" v-if="!message_loading">
             <vue-good-table title="Message Report" class="col m-4"

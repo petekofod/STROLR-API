@@ -50,6 +50,7 @@ var vue_det = new Vue({
         S3BaseUrl: '',
         mode: 'main',
         message_loading: false,
+        downloading: false,
         locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
                                  {label: "ATT Modem", field: "ATTModem", filterable:true},
                                  {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
@@ -133,6 +134,7 @@ var vue_det = new Vue({
         },
 
         downloadMessages(messageType) {
+            this.downloading = true;
             var xhr = new XMLHttpRequest()
             var self = this
             xhr.open('POST', 'locomotive-messages.csv', true)
@@ -170,6 +172,7 @@ var vue_det = new Vue({
 
                         setTimeout(function () { URL.revokeObjectURL(downloadUrl); }, 100); // cleanup
                     }
+                    self.downloading = false;
                 }
             };
             var formData = JSON.parse(this.messages_download_params)
