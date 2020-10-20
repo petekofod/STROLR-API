@@ -105,8 +105,14 @@ public class StatusesService {
                 .withWaitTimeSeconds(10)
                 .withMaxNumberOfMessages(10);
 
-        List<Message> sqsMessages = getSQS().receiveMessage(receiveMessageRequest).getMessages();
-        logger.info("Getting new messages: " + sqsMessages.size());
+        List<Message> sqsMessages;
+        try {
+            sqsMessages = getSQS().receiveMessage(receiveMessageRequest).getMessages();
+            logger.info("Getting new messages: " + sqsMessages.size());
+        } catch (IllegalStateException e) {
+            logger.warn("Can't connect to output SQS queue, skipping...");
+            return;
+        }
 
         if (!sqsMessages.isEmpty()) {
             for (Message m: sqsMessages) {

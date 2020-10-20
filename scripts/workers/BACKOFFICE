@@ -49,7 +49,7 @@ if [ "$SCAC" = "amtk" ]; then
   checkAWSServers \
     "Amazon Web Service MIS System Status" \
     "$ARIS_KEY_FILE" \
-    "ARIS" \
+    "AWS" \
     "$AWS_REMOTE_SCRIPT" \
     10.103.3.39 10.103.3.40 10.103.3.41
 

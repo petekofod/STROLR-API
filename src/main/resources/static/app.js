@@ -3,6 +3,9 @@ Vue.config.devtools = true
 var vue_det = new Vue({
     el: '#MainApp',
     data: {
+        message_2080: false,
+        message_2083: false,
+        messages_download_params: null,
         form: {
             LocoID: null,
             StartDate: null,
@@ -13,7 +16,10 @@ var vue_det = new Vue({
             RequestType: null,
             timeZone: 0,
             dst: false,
+            messageType: 0
         },
+        data_2080: {},
+        data_2083: {},
         lstFullTree: [{
             value: null,
             text: 'Please select an option'
@@ -26,6 +32,12 @@ var vue_det = new Vue({
             	{ text: 'Pacific' , value: 8},
             	{ text: 'UTC' , value: 0}
             	],
+        lstMessageType:
+        		[
+            	{ text: 'All' , value: 0},
+            	{ text: '2080' , value: 2080},
+            	{ text: '2083' , value: 2083}
+            	],
         tab_data_Array: [],
         show: true,
         timeUTC: '',
@@ -36,7 +48,9 @@ var vue_det = new Vue({
         active_tab: '',
         plugins: [],
         S3BaseUrl: '',
-        isLocomotivesView: false,
+        mode: 'main',
+        message_loading: false,
+        downloading: false,
         locomotives_columns: [   {label: "Locomotive", field: "Locomotive", filterable:true},
                                  {label: "ATT Modem", field: "ATTModem", filterable:true},
                                  {label: "ATT Modem IsOnline", field: "ATTModemIsOnline", hidden:true},
@@ -59,8 +73,14 @@ var vue_det = new Vue({
                                          {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true},
                                          ],
         locomotives_rows: [],
-        locomotivesText: "See Locomotives",
-        locomotives_timestamp: ""
+        locomotives_timestamp: "",
+        messages_rows: [],
+        messages_additional_rows: [],
+        messages_columns: [
+            {label: "Locomotive ID", field: "address", filterable:true},
+            {label: "Message Type", field: "messageType", filterable:true},
+            {label: "Timestamp", field: "timestamp", filterable:true},
+        ],
     },
     created: function () {
         this.getUserName()
@@ -70,6 +90,22 @@ var vue_det = new Vue({
         this.timer = setInterval(this.getUTCTime, 5000)
     },
     methods: {
+        openMessageDetails(messageIndex) {
+            var details = this.messages_additional_rows[messageIndex]
+            var messageType = details.idType
+
+            if (messageType === 2080) {
+                this.data_2080 = JSON.parse(JSON.stringify(details))
+            }
+            if (messageType === 2083) {
+                this.data_2083 = JSON.parse(JSON.stringify(details))
+            }
+
+            this.message_2083 = messageType === 2083
+            this.message_2080 = messageType === 2080
+
+            this.showModal = true;
+        },
         setRequestType(value) {
             this.form.RequestType = value
             if (this.form.RequestType == "get-status")
@@ -78,18 +114,121 @@ var vue_det = new Vue({
                LocoIdElement.setCustomValidity(this.validateLocoId()? "" : "LocoId should be set for this request");
             }
         },
+
         validateLocoId() {
            return this.form.LocoID != null
         },
+
         GetLocomotivesReportBack() {
-           this.isLocomotivesView = false;
-           this.locomotivesText = "Get Locomotives";
-           this.locomotives_rows = [];
+           this.mode = 'main';
+        },
+
+        getLocoID(source) {
+            var dot = source.indexOf(".")
+            var locoID = source.substring(dot + 1)
+            dot = locoID.indexOf(".")
+            locoID = locoID.substring(dot + 1)
+            var colon = locoID.indexOf(":")
+            locoID = locoID.substring(0, colon)
+            return locoID
+        },
+
+        downloadMessages(messageType) {
+            this.downloading = true;
+            var xhr = new XMLHttpRequest()
+            var self = this
+            xhr.open('POST', 'locomotive-messages.csv', true)
+            xhr.responseType = 'blob';
+            xhr.onload = function () {
+                if (this.status === 200) {
+                    var blob = this.response;
+                    var filename = "report_" + messageType + "_" +
+                        self.form.StartDate + "_" + self.form.StartTime + "_" +
+                        self.form.EndDate + "_" + self.form.EndTime +
+                        ".csv";
+
+                    if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                        // IE workaround for "HTML7007: One or more blob URLs were revoked by closing the blob for which they were created. These URLs will no longer resolve as the data backing the URL has been freed."
+                        window.navigator.msSaveBlob(blob, filename);
+                    } else {
+                        var URL = window.URL || window.webkitURL;
+                        var downloadUrl = URL.createObjectURL(blob);
+
+                        if (filename) {
+                            // use HTML5 a[download] attribute to specify filename
+                            var a = document.createElement("a");
+                            // safari doesn't support this yet
+                            if (typeof a.download === 'undefined') {
+                                window.location.href = downloadUrl;
+                            } else {
+                                a.href = downloadUrl;
+                                a.download = filename;
+                                document.body.appendChild(a);
+                                a.click();
+                            }
+                        } else {
+                            window.location.href = downloadUrl;
+                        }
+
+                        setTimeout(function () { URL.revokeObjectURL(downloadUrl); }, 100); // cleanup
+                    }
+                    self.downloading = false;
+                }
+            };
+            var formData = JSON.parse(this.messages_download_params)
+            formData.messageType = messageType
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+            xhr.send(JSON.stringify(formData))
+        },
+
+        GetLocomotiveMessages() {
+            this.mode = 'messages';
+            this.message_loading = true;
+
+            this.messages_download_params = JSON.stringify(this.form, (key, value)=> {
+                    if ((value === null) && (key === 'LocoID')) return undefined
+                    return value
+            })
+
+            var xhr = new XMLHttpRequest()
+            var self = this
+            xhr.open('POST', 'locomotive-messages')
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+            self.messages_rows = [];
+            self.messages_additional_rows = [];
+
+            xhr.onload = async function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        for (var i = 0; i < data.messages.length; i++) {
+                            self.messages_rows.push ({
+                                "id": i,
+                                "address": self.getLocoID(data.messages[i].srcAddress),
+                                "messageType": data.messages[i].idType.toString(),
+                                "timestamp": formatToUTC(data.messages[i].time * 1000)
+                            });
+                            data.messages[i].stateTimeUTC = formatToUTC(data.messages[i].stateTime)
+                            data.messages[i].warningTimeUTC = formatToUTC(data.messages[i].warningTime)
+                            data.messages[i].enforcementTimeUTC =  formatToUTC(data.messages[i].enforcementTime)
+                            data.messages[i].emergencyEnforcementTimeUTC =  formatToUTC(data.messages[i].emergencyEnforcementTime)
+                            data.messages[i].currentTimeUTC = formatToUTC(data.messages[i].currentTime)
+                            self.messages_additional_rows.push(data.messages[i]);
+                        }
+                        self.message_loading = false;
+                    } else {
+                        var errorMessage = JSON.parse(xhr.responseText).message
+                        self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                        console.error('error - ' + errorMessage)
+                    }
+                }
+            }
+            xhr.send(this.messages_download_params)
         },
 
         GetLocomotivesReport() {
-           this.isLocomotivesView = true;
-           this.locomotivesText = "Back to main page"
+           this.mode = 'locomotives';
 
            var xhr = new XMLHttpRequest()
            var self = this
@@ -131,8 +270,6 @@ var vue_det = new Vue({
             var self = this
             var requestSCACMark = self.form.SCACMark
             var requestLocoID = self.form.LocoID
-
-            this.isLocomotivesView = false;
 
             xhr.open('POST', 'data-request')
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
@@ -681,3 +818,11 @@ formatter = new Intl.DateTimeFormat('en', {
     hour12: true,
     timeZone: 'UTC'
 })
+
+function formatToUTC(millis) {
+    if (millis > 0) {
+        return formatter.format(new Date(millis))
+    } else {
+        return "Invalid"
+    }
+}

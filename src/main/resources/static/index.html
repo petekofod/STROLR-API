@@ -2,9 +2,8 @@
 <html xmlns:v-bind="http://www.w3.org/1999/xhtml">
 
 <head>
+
     <title>Rockwell Collins</title>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
-    <script type="text/javascript" src1="https://cdn.jsdelivr.net/npm/vue"></script>
 
     <!-- Load required Bootstrap and BootstrapVue CSS -->
     <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
@@ -15,21 +14,26 @@
     </script>
 
     <!-- Load Vue followed by BootstrapVue -->
+    <script src="//unpkg.com/vue@latest/dist/vue.min.js"></script>
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
-
-    <script src="//unpkg.com/"></script>
 
     <!-- Load the following for BootstrapVueIcons support -->
     <script src="//unpkg.com/vue-good-table@2.14.1/dist/vue-good-table.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/vue-spinners@1.0.0/dist/vue-spinners.css">
+    <script src="https://unpkg.com/vue-spinners@1.0.0/dist/vue-spinners.browser.js"></script>
+
     <link type="text/css" rel="stylesheet" href="//unpkg.com/vue-good-table@2.14.1/dist/vue-good-table.css"></link>
 
     <link rel="stylesheet" href="https://unpkg.com/vue-nav-tabs/themes/vue-tabs.css">
+
     <script src="https://unpkg.com/vue-nav-tabs/dist/vue-tabs.js"></script>
 
     <style>
         [v-cloak] {
             display: none;
         }
+
 
     </style>
     <style>
@@ -48,24 +52,27 @@
             left: 5%
         }
 
+
     </style>
 </head>
 
 <body>
+
 <div id="MainApp" v-cloak>
+
     <b-alert show>
         <h1>Rockwell Collins</h1>
     </b-alert>
 
-    <div class="container">
+    <div v-if="mode == 'locomotives'" class="container">
 
-        <div v-if="plugins.includes('STRL') && isLocomotivesView" style="margin-bottom: 10px;">
-            <b-button type="button" v-on:click="GetLocomotivesReportBack" variant="info" class="btn btn-default">
-                <span class="glyphicon glyphicon-triangle-left">{{locomotivesText}}</span></b-button>
+        <div style="margin-bottom: 10px;">
+            <b-button type="button" v-on:click="mode = 'main'" variant="info" class="btn btn-default">
+                <span class="glyphicon glyphicon-triangle-left">Back to main page</span></b-button>
             <div v-if="locomotives_timestamp" class="float-right">Data gathered at {{locomotives_timestamp}}</div>
         </div>
 
-        <vue-good-table v-if="isLocomotivesView" title="Fleet Communications Report"
+        <vue-good-table title="Fleet Communications Report"
                         :columns=this.locomotives_columns :rows=this.locomotives_rows :paginate="true"
                         :pagination-options="{ enabled: true, perPage: 20}"
                         styleClass="vgt-table striped bordered condensed">
@@ -93,7 +100,501 @@
         </vue-good-table>
     </div>
 
-    <div v-if="!isLocomotivesView" class="container">
+    <div v-if="mode == 'messages'" class="container">
+        <div style="margin-bottom: 10px;">
+            <b-button type="button" v-on:click="mode = 'main'" variant="info">
+                <span>Back to main page</span>
+            </b-button>
+            <b-button type="button"
+                      v-if="form.messageType == 0 || form.messageType == 2080"
+                      v-on:click="downloadMessages(2080)"
+                      variant="outline-primary" size="sm"
+                      class="float-right align-baseline ml-3 mt-3">
+                <span>Download 2080 CSV</span>
+            </b-button>
+            <b-button type="button"
+                      v-if="form.messageType == 0 || form.messageType == 2083"
+                      v-on:click="downloadMessages(2083)" variant="outline-primary" size="sm"
+                      class="float-right align-baseline mt-3">
+                <span>Download 2083 CSV</span>
+            </b-button>
+        </div>
+
+        <div><pulse v-if="message_loading||downloading"></pulse ></div>
+
+        <div class="row" v-if="!message_loading">
+            <vue-good-table title="Message Report" class="col m-4"
+                            :columns=this.messages_columns :rows=this.messages_rows :paginate="true"
+                            :pagination-options="{ enabled: true, perPage: 100}"
+                            styleClass="vgt-table striped bordered condensed">
+                <template slot="table-row" slot-scope="props">
+                    <span v-if="props.column.field == 'address'">
+                        <span>{{props.row.address}}</span>
+                    </span>
+                    <span v-if="props.column.field == 'messageType'">
+                        <span>{{props.row.messageType}}</span>
+                    </span>
+                    <span v-if="props.column.field == 'timestamp'">
+                        <span>{{props.row.timestamp}}</span>
+                        <span class="float-right">
+                            <button class="btn btn-outline-info btn-sm" v-on:click="openMessageDetails(props.row.id)">
+                                Details
+                            </button>
+                        </span>
+                    </span>
+                </template>
+            </vue-good-table>
+            <div v-if="message_2080">
+                <b-modal v-model="message_2080" size="lg" scrollable ok-only title="Locomotive Position Report">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Railroad SCAC</td>
+                            <td>{{this.data_2080.scac}}</td>
+                        </tr>
+                        <tr v-if="data_2080.locomotiveStateSummary === 'CONTROLLING'">
+                            <td>Train ID</td>
+                            <td>{{this.data_2080.trainID}}</td>
+                        </tr>
+                        <tr>
+                            <td>Source Address</td>
+                            <td>{{this.data_2080.srcAddress}}</td>
+                        </tr>
+                        <tr>
+                            <td>Destination Address</td>
+                            <td>{{this.data_2080.destAddress}}</td>
+                        </tr>
+                        <tr>
+                            <td>Current PTC Authority Reference Number</td>
+                            <td>{{this.data_2080.ptcAuthorityReferenceNumber}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Milepost</td>
+                            <td>{{this.data_2080.headEndMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Milepost Prefix</td>
+                            <td>{{this.data_2080.headEndMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Milepost Suffix</td>
+                            <td>{{this.data_2080.headEndMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Track name</td>
+                            <td>{{this.data_2080.headEndTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Railroad SCAC</td>
+                            <td>{{this.data_2080.headEndScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End PTC Subdivision/District ID</td>
+                            <td>{{this.data_2080.headEndSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rear End Milepost</td>
+                            <td>{{this.data_2080.rearEndMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rear End Milepost Prefix</td>
+                            <td>{{this.data_2080.rearEndMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rear End Milepost Suffix</td>
+                            <td>{{this.data_2080.rearEndMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rear End Track name</td>
+                            <td>{{this.data_2080.rearEndTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rear End Railroad SCAC</td>
+                            <td>{{this.data_2080.rearEndScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>Rear End PTC Subdivision/District ID</td>
+                            <td>{{this.data_2080.rearEndSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Speed</td>
+                            <td>{{this.data_2080.speed}}</td>
+                        </tr>
+                        <tr>
+                            <td>Current Position Uncertainty</td>
+                            <td>{{this.data_2080.positionUncertainty}}</td>
+                        </tr>
+                        <tr>
+                            <td>Direction of Travel</td>
+                            <td>{{this.data_2080.travelDirection}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Current Position</td>
+                            <td>
+                                x: {{this.data_2080.headEndPosition.x}} <br>
+                                y: {{this.data_2080.headEndPosition.y}} <br>
+                                z: {{this.data_2080.headEndPosition.z}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Position Validity</td>
+                            <td>{{this.data_2080.positionValidity}}</td>
+                        </tr>
+                        <tr>
+                            <td>Reason for Report</td>
+                            <td>{{this.data_2080.positionReportReason}}</td>
+                        </tr>
+                        <tr>
+                            <td>State Time</td>
+                            <td>{{this.data_2080.stateTimeUTC}}</td>
+                        </tr>
+                        <tr>
+                            <td>Locomotive State Summary</td>
+                            <td>{{this.data_2080.locomotiveStateSummary}}</td>
+                        </tr>
+                        <tr>
+                            <td>Locomotive State</td>
+                            <td>{{this.data_2080.locomotiveState}}</td>
+                        </tr>
+                        <tr>
+                            <td>Control Brake</td>
+                            <td>{{this.data_2080.controlBrake}}</td>
+                        </tr>
+                        <tr>
+                            <td>Time Elapsed Parameter</td>
+                            <td>{{this.data_2080.timeElapsed}}</td>
+                        </tr>
+                        <tr>
+                            <td>Distance Elapsed Parameter</td>
+                            <td>{{this.data_2080.distanceElapsed}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </b-modal>
+            </div>
+            <div v-if="message_2083">
+                <b-modal v-model="message_2083" size="lg" scrollable ok-only title="Enforcement Warning/Braking Notification">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Railroad SCAC</td>
+                            <td>{{this.data_2083.scac}}</td>
+                        </tr>
+                        <tr>
+                            <td>Train ID</td>
+                            <td>{{this.data_2083.trainID}}</td>
+                        </tr>
+                        <tr>
+                            <td>Source Address</td>
+                            <td>{{this.data_2083.srcAddress}}</td>
+                        </tr>
+                        <tr>
+                            <td>Destination Address</td>
+                            <td>{{this.data_2083.destAddress}}</td>
+                        </tr>
+                        <tr>
+                            <td>Warning/Enforcement Type</td>
+                            <td>{{this.data_2083.warningEnforcementType}}</td>
+                        </tr>
+                        <tr>
+                            <td>Onboard Software Version</td>
+                            <td>{{this.data_2083.onboardSoftwareVersion}}</td>
+                        </tr>
+                        <tr>
+                            <th colspan="2">Target Information</th>
+                        </tr>
+                        <tr>
+                            <td>Target Type</td>
+                            <td>{{this.data_2083.targetType}}</td>
+                        </tr>
+                        <tr>
+                            <td>Target Description</td>
+                            <td>{{this.data_2083.targetDescription}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost</td>
+                            <td>{{this.data_2083.startTargetMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Prefix</td>
+                            <td>{{this.data_2083.startTargetMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Suffix</td>
+                            <td>{{this.data_2083.startTargetMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Track name</td>
+                            <td>{{this.data_2083.startTargetTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Railroad SCAC</td>
+                            <td>{{this.data_2083.startTargetScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start PTC Subdivision/District ID</td>
+                            <td>{{this.data_2083.startTargetSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>End Milepost</td>
+                            <td>{{this.data_2083.endTargetMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>End Milepost Prefix</td>
+                            <td>{{this.data_2083.endTargetMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>End Milepost Suffix</td>
+                            <td>{{this.data_2083.endTargetMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>End Track name</td>
+                            <td>{{this.data_2083.endTargetTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>End Railroad SCAC</td>
+                            <td>{{this.data_2083.endTargetScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>End PTC Subdivision/District ID</td>
+                            <td>{{this.data_2083.endTargetSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Target Speed</td>
+                            <td>{{this.data_2083.targetSpeed}}</td>
+                        </tr>
+                        <tr>
+                            <th colspan="2">Warning Information</th>
+                        </tr>
+                        <tr>
+                            <td>Warning Time</td>
+                            <td>
+                                {{this.data_2083.warningTimeUTC}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost</td>
+                            <td>{{this.data_2083.warningMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Prefix</td>
+                            <td>{{this.data_2083.warningMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Suffix</td>
+                            <td>{{this.data_2083.warningMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Track name</td>
+                            <td>{{this.data_2083.warningTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Railroad SCAC</td>
+                            <td>{{this.data_2083.warningScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>PTC Subdivision/District ID</td>
+                            <td>{{this.data_2083.warningSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Position Uncertainty</td>
+                            <td>{{this.data_2083.warningUncertainty}}</td>
+                        </tr>
+                        <tr>
+                            <td>Warning Distance</td>
+                            <td>{{this.data_2083.warningDistance}}</td>
+                        </tr>
+                        <tr>
+                            <td>Direction of Travel</td>
+                            <td>{{this.data_2083.warningTravelDirection}}</td>
+                        </tr>
+                        <tr>
+                            <td>Train Speed</td>
+                            <td>{{this.data_2083.warningSpeed}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Position</td>
+                            <td>
+                                x: {{this.data_2083.warningHeadEndPosition.x}} <br>
+                                y: {{this.data_2083.warningHeadEndPosition.y}} <br>
+                                z: {{this.data_2083.warningHeadEndPosition.z}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th colspan="2">Enforcement Information</th>
+                        </tr>
+                        <tr>
+                            <td>Enforcement Time</td>
+                            <td>{{this.data_2083.enforcementTimeUTC}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost</td>
+                            <td>{{this.data_2083.enforcementMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Prefix</td>
+                            <td>{{this.data_2083.enforcementMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Suffix</td>
+                            <td>{{this.data_2083.enforcementMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Track name</td>
+                            <td>{{this.data_2083.enforcementTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Railroad SCAC</td>
+                            <td>{{this.data_2083.enforcementScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>PTC Subdivision/District ID</td>
+                            <td>{{this.data_2083.enforcementSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Position Uncertainty</td>
+                            <td>{{this.data_2083.enforcementUncertainty}}</td>
+                        </tr>
+                        <tr>
+                            <td>Braking Distance</td>
+                            <td>{{this.data_2083.enforcementDistance}}</td>
+                        </tr>
+                        <tr>
+                            <td>Direction of Travel</td>
+                            <td>{{this.data_2083.enforcementTravelDirection}}</td>
+                        </tr>
+                        <tr>
+                            <td>Train Speed</td>
+                            <td>{{this.data_2083.enforcementSpeed}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Position</td>
+                            <td>
+                                x: {{this.data_2083.enforcementHeadEndPosition.x}} <br>
+                                y: {{this.data_2083.enforcementHeadEndPosition.y}} <br>
+                                z: {{this.data_2083.enforcementHeadEndPosition.z}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th colspan="2">Emergency Enforcement Braking Information</th>
+                        </tr>
+                        <tr>
+                            <td>Emergency Enforcement Braking Time</td>
+                            <td>
+                                {{this.data_2083.emergencyEnforcementTimeUTC}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost</td>
+                            <td>{{this.data_2083.emergencyEnforcementMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Prefix</td>
+                            <td>{{this.data_2083.emergencyEnforcementMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Milepost Suffix</td>
+                            <td>{{this.data_2083.emergencyEnforcementMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Track name</td>
+                            <td>{{this.data_2083.emergencyEnforcementTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Railroad SCAC</td>
+                            <td>{{this.data_2083.emergencyEnforcementScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>PTC Subdivision/District ID</td>
+                            <td>{{this.data_2083.emergencyEnforcementSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Start Position Uncertainty</td>
+                            <td>{{this.data_2083.emergencyEnforcementUncertainty}}</td>
+                        </tr>
+                        <tr>
+                            <td>Braking Distance</td>
+                            <td>{{this.data_2083.emergencyEnforcementDistance}}</td>
+                        </tr>
+                        <tr>
+                            <td>Direction of Travel</td>
+                            <td>{{this.data_2083.emergencyEnforcementTravelDirection}}</td>
+                        </tr>
+                        <tr>
+                            <td>Train Speed</td>
+                            <td>{{this.data_2083.emergencyEnforcementSpeed}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Position</td>
+                            <td>
+                                x: {{this.data_2083.emergencyEnforcementHeadEndPosition.x}} <br>
+                                y: {{this.data_2083.emergencyEnforcementHeadEndPosition.y}} <br>
+                                z: {{this.data_2083.emergencyEnforcementHeadEndPosition.z}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th colspan="2">Current Information</th>
+                        </tr>
+                        <tr>
+                            <td>Time</td>
+                            <td>
+                                {{this.data_2083.currentTimeUTC}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Milepost</td>
+                            <td>{{this.data_2083.currentMilepost}}</td>
+                        </tr>
+                        <tr>
+                            <td>Milepost Prefix</td>
+                            <td>{{this.data_2083.currentMilepostPrefix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Milepost Suffix</td>
+                            <td>{{this.data_2083.currentMilepostSuffix}}</td>
+                        </tr>
+                        <tr>
+                            <td>Track name</td>
+                            <td>{{this.data_2083.currentTrackName}}</td>
+                        </tr>
+                        <tr>
+                            <td>Railroad SCAC</td>
+                            <td>{{this.data_2083.currentScac}}</td>
+                        </tr>
+                        <tr>
+                            <td>PTC Subdivision/District ID</td>
+                            <td>{{this.data_2083.currentSubdivDistrictId}}</td>
+                        </tr>
+                        <tr>
+                            <td>Current Position Uncertainty</td>
+                            <td>{{this.data_2083.currentUncertainty}}</td>
+                        </tr>
+                        <tr>
+                            <td>Direction of Travel</td>
+                            <td>{{this.data_2083.currentTravelDirection}}</td>
+                        </tr>
+                        <tr>
+                            <td>Train Speed</td>
+                            <td>{{this.data_2083.currentSpeed}}</td>
+                        </tr>
+                        <tr>
+                            <td>Head End Position</td>
+                            <td>
+                                x: {{this.data_2083.currentHeadEndPosition.x}} <br>
+                                y: {{this.data_2083.currentHeadEndPosition.y}} <br>
+                                z: {{this.data_2083.currentHeadEndPosition.z}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </b-modal>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div v-if="mode == 'main'" class="container">
         <div class="row">
             <div class="col m-3">
                 <b-card no-body>
@@ -137,18 +638,16 @@
                 <b-form @submit="onSubmit" @reset="onReset" v-if="show">
                     <div class="form-group row">
                         <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
-                        <div class="col">
+                        <div class="col-sm-4">
                             <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree"
                                            required
                                            size="sm" @change1="onChange($event)"></b-form-select>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col">
-                            <div class="float-right" v-if="plugins.includes('STRL') && !isLocomotivesView">
+                        <div class="col-sm-3">
+                            <div class="float-right" v-if="plugins.includes('STRL')">
                                 <b-button type="button" v-on:click="GetLocomotivesReport" variant="info"
                                           class="btn btn-default">
-                                    <span class="glyphicon glyphicon-triangle-right">{{locomotivesText}}</span>
+                                    <span class="glyphicon glyphicon-triangle-right">See locomotives</span>
                                 </b-button>
                             </div>
                         </div>
@@ -216,15 +715,40 @@
                     <div class="form-group row">
                         <label class="col-sm-5 "> </label>
                         <div class="col">
-                            <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get Logs
-                            </b-button>
-                            <b-button v-if="plugins.includes('STROS')" type="submit"
-                                      v-on:click="setRequestType('get-status')" variant="primary">Get System Status
-                            </b-button>
-                            <b-button v-if="plugins.includes('STROB')" type="submit"
-                                      v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice
-                                Status
-                            </b-button>
+                            <div class="float-right">
+                                <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get
+                                    Logs
+                                </b-button>
+                                <b-button v-if="plugins.includes('STROS')" type="submit"
+                                          v-on:click="setRequestType('get-status')" variant="primary">Get System Status
+                                </b-button>
+                                <b-button v-if="plugins.includes('STROB')" type="submit"
+                                          v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice
+                                    Status
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="plugins.includes('MESSAGES')" class="form-group row">
+                        <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Message Type</label>
+                        <div class="col-sm-4">
+                            <b-form-select id="selMessageType" v-model="form.messageType" :options="lstMessageType"
+                                           required
+                                           size="sm" @change1="onChange($event)"></b-form-select>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="float-right">
+                                <b-button v-on:click="GetLocomotiveMessages" variant="info">
+                                    Get Messages
+                                </b-button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-sm-5 "> </label>
+                        <div class="col">
                             <b-button type="reset" variant="light">Reset</b-button>
                         </div>
                     </div>
