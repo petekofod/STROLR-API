@@ -1,0 +1,23 @@
+[
+  {
+    "type": "Loco_Position_Report",
+    "period": "month",
+    "term": 1,
+    "year": 2020,
+    "url": "http://s3.amazonaws.com/bucket_name/file_name"
+  },
+  {
+    "type": "Loco_Position_Report",
+    "period": "quarter",
+    "term": 2,
+    "year": 2020,
+    "url": "http://s3.amazonaws.com/bucket_name/file_name"
+  },
+  {
+    "type": "Enforcement_Report",
+    "period": "quarter",
+    "term": 3,
+    "year": 2020,
+    "url": "http://s3.amazonaws.com/bucket_name/file_name"
+  }
+]
