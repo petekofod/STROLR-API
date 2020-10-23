@@ -74,7 +74,7 @@ var vue_det = new Vue({
                                          ],
         reports_columns: [{label: "Type", field: "type", filterable:true},
                           {label: "Period", field: "period", filterable:true},
-                          {label: "Month", field: "month", filterable:true},
+                          {label: "Month/Quoter", field: "month", filterable:true},
                           {label: "Year", field: "year", filterable:true},
                           {label: "URL", field: "url", filterable:true},
                          ],
@@ -520,15 +520,15 @@ var vue_det = new Vue({
             this.timeUTC = res
             return res
         },
-        getMonth: function (monthNum, period) {
+        getMonth: function (num, period) {
          if (period === "month") {
            const monthNames = ["January", "February", "March", "April", "May", "June",
              "July", "August", "September", "October", "November", "December"
            ];
-           return monthNames[monthNum];
+           return monthNames[num];
           }
 
-          return "";
+          return num;
         },
 
         checkResponse: function (ourMessageId) {
