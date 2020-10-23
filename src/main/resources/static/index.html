@@ -593,6 +593,35 @@
 
     </div>
 
+    <div v-if="mode == 'reports'" class="container">
+        <div style="margin-bottom: 10px;">
+            <b-button type="button" v-on:click="mode = 'main'" variant="info">
+                <span>Back to main page</span>
+            </b-button>
+        </div>
+        <vue-good-table title="Reports"
+                        :columns=this.reports_columns :rows=this.reports_rows :paginate="true"
+                        :pagination-options="{ enabled: true, perPage: 20}"
+                        styleClass="vgt-table striped bordered condensed">
+            <template slot="table-row" slot-scope="props">
+                 <span v-if="props.column.field == 'type'" class="col-sm-6">
+                     <span>{{props.row.type}}</span>
+                 </span>
+                <span v-if="props.column.field == 'period'" class="col-sm-6">
+                     <span>{{props.row.period}}</span>
+                 </span>
+                <span v-if="props.column.field == 'term'" class="col-sm-6">
+                     <span>{{props.row.term}}</span>
+                 </span>
+                <span v-if="props.column.field == 'year'" class="col-sm-6">
+                     <span>{{props.row.year}}</span>
+                 </span>
+                <span v-if="props.column.field == 'url'" class="col-sm-6">
+                      <a v-bind:href=props.row.url download>{{props.row.url}}</a>
+                 </span>
+            </template>
+        </vue-good-table>
+    </div>
 
     <div v-if="mode == 'main'" class="container">
         <div class="row">
@@ -637,18 +666,27 @@
             <div class="col m-3">
                 <b-form @submit="onSubmit" @reset="onReset" v-if="show">
                     <div class="form-group row">
-                        <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
-                        <div class="col-sm-4">
-                            <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree"
-                                           required
-                                           size="sm" @change1="onChange($event)"></b-form-select>
-                        </div>
-                        <div class="col-sm-3">
-                            <div class="float-right" v-if="plugins.includes('STRL')">
-                                <b-button type="button" v-on:click="GetLocomotivesReport" variant="info"
+                        <div class="col">
+                            <div class="btn-toolbar mb-3" role="toolbar" v-if="plugins.includes('STRL')">
+                                <div class="input-group">
+                                    <label for="selSCACMark" size="sm" class="col-sm-5 col-form-label">SCAC - Mark</label>
+                                <!-- <div class="col-sm-4"> -->
+                                    <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree"
+                                                   required
+                                                   size="sm" @change1="onChange($event)"></b-form-select>
+                                <!--</div>-->
+                                </div>
+                                <div class="btn-group mr-2" role="group">
+                                  <b-button type="button" v-on:click="GetLocomotivesReport" variant="info"
                                           class="btn btn-default">
                                     <span class="glyphicon glyphicon-triangle-right">See locomotives</span>
-                                </b-button>
+                                  </b-button>
+                                    <span> </span>
+                                  <b-button type="button" v-on:click="GetQuoterMonthReports" variant="info"
+                                          class="btn btn-default">
+                                    <span class="glyphicon glyphicon-triangle-right">Get quoter/month reports</span>
+                                  </b-button>
+                                </div>
                             </div>
                         </div>
                     </div>
