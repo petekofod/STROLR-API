@@ -287,7 +287,7 @@ var vue_det = new Vue({
                          self.reports_rows.push (
                              {type: reportsData[i].type,
                               period: reportsData[i].period,
-                              month: self.getMonth(reportsData[i].term),
+                              month: self.getMonth(reportsData[i].term, reportsData[i].period),
                               year: reportsData[i].year,
                               url: reportsData[i].url});
 
@@ -520,11 +520,15 @@ var vue_det = new Vue({
             this.timeUTC = res
             return res
         },
-        getMonth: function (monthNum) {
+        getMonth: function (monthNum, period) {
+         if (period === "month") {
            const monthNames = ["January", "February", "March", "April", "May", "June",
              "July", "August", "September", "October", "November", "December"
            ];
            return monthNames[monthNum];
+          }
+
+          return "";
         },
 
         checkResponse: function (ourMessageId) {
