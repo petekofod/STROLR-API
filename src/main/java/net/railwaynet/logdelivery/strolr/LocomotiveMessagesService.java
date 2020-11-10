@@ -127,19 +127,37 @@ public class LocomotiveMessagesService {
         destMessage.put("scac", message.get("scac"));
     }
 
-    private String getTrainIDFrom2003(List<Map<String, Object>> messages2003, String srcAddress, String state) {
+    /**
+     * Get the train ID from the last 2003 message for given train and time
+     * @param messages2003  2003 messages collection
+     * @param srcAddress    train
+     * @param t             time
+     * @param state         train state
+     * @return              Train ID
+     */
+    private String getTrainIDFrom2003(List<Map<String, Object>> messages2003, String srcAddress, Integer t, String state) {
         if (state == null || !state.equals("CONTROLLING"))
             return "NA";
 
-        for (int i = messages2003.size() - 1; i > 0; i--) {
-            Map<String, Object> message = messages2003.get(i);
+        int last2003Time = 0;
+        String trainId = null;
+
+        for (Map<String, Object> message : messages2003) {
             if (message.get("srcAddress").equals(srcAddress)) {
-                return (String) message.get("trainID");
+                int time2003 = (int) message.get("time");
+                if (time2003 < t && time2003 > last2003Time) {
+                    last2003Time = time2003;
+                    trainId = (String) message.get("trainID");
+                }
             }
         }
 
-        logger.warn("Can't find TrainID for " + srcAddress);
-        return "";
+        if (trainId == null) {
+            logger.warn("Can't find TrainID for " + srcAddress);
+            return "";
+        } else {
+            return trainId;
+        }
     }
 
     private List<Map<String, Object>> columns2080(List<Map<String, Object>> source, List<Map<String, Object>> messages2003) {
@@ -148,7 +166,7 @@ public class LocomotiveMessagesService {
             Map<String, Object> destMessage = new LinkedHashMap<>();
             copyHeader(message, destMessage);
             destMessage.put("ptcAuthorityReferenceNumber", message.get("ptcAuthorityReferenceNumber"));
-            destMessage.put("trainID", getTrainIDFrom2003(messages2003, (String) message.get("srcAddress"), (String) message.get("locomotiveStateSummary")));
+            destMessage.put("trainID", getTrainIDFrom2003(messages2003, (String) message.get("srcAddress"), (Integer) message.get("time"), (String) message.get("locomotiveStateSummary")));
             destMessage.put("headEndMilepost", message.get("headEndMilepost"));
             destMessage.put("headEndMilepostPrefix", message.get("headEndMilepostPrefix"));
             destMessage.put("headEndMilepostSuffix", message.get("headEndMilepostSuffix"));
@@ -298,8 +316,10 @@ public class LocomotiveMessagesService {
         List<Map<String, Object>> messages2003 = null;
 
         if (type == 0 || type == 2080) {
+            logger.debug("Loading 2003 messages...");
             LocalDateTime dt = new Timestamp(startDate.getTime()).toLocalDateTime().minusHours(48);
             messages2003 = getMessages2003(Timestamp.valueOf(dt), endDate);
+            logger.debug("Loaded " + messages2003.size() + " messages of type 2003");
         }
 
         List<Bson> conditions = new ArrayList<>();
@@ -317,20 +337,24 @@ public class LocomotiveMessagesService {
         conditions.add(in("destAddress", "amtk.b:gb.nec", "amtk.b:gb.me"));
         Bson filter = and(conditions);
 
+        logger.debug("Requesting data from MongoDB...");
         try (MongoCursor<Document> cursor = getMessagesCollection().find(filter)
                 .iterator()) {
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
         }
+        logger.debug("Loaded " + result.size() + " messages");
 
         if (messages2003 != null) {
+            logger.debug("Updating 2080 messages with TrainID...");
             for (Map<String, Object> message : result)
                 if (!message.containsKey("trainID"))
                     // 2080 doesn't contain train ID
                     message.put("trainID",
                             getTrainIDFrom2003(messages2003,
                                     (String) message.get("srcAddress"),
+                                    (Integer) message.get("time"),
                                     (String) message.get("locomotiveStateSummary"))
                     );
         }
@@ -341,7 +365,7 @@ public class LocomotiveMessagesService {
     public List<Map<String, Object>> getMessages2003(Date startDate, Date endDate) {
         List<Map<String, Object>> result = new ArrayList<>();
 
-        logger.debug("Getting 2004");
+        logger.debug("Getting 2003 messages");
         logger.debug("Start millis: " + startDate.getTime());
         logger.debug("End millis: " + endDate.getTime());
 
