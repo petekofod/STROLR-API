@@ -11,7 +11,6 @@ import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,6 @@ import java.security.Principal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 
@@ -380,10 +378,6 @@ public class RequestsController {
      * @return Date object of this datetime
      */
     private Date getDateFromParams(String d, String t) throws ParseException {
-        return new SimpleDateFormat(DATE_PATTERN).parse(d + ":" + t);
-    }
-
-    private Date getDateFromParamsTZ(String d, String t, String tz) throws ParseException {
         return new SimpleDateFormat(DATE_PATTERN).parse(d + ":" + t);
     }
 
