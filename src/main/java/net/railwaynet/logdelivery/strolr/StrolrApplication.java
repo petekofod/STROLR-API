@@ -22,7 +22,7 @@ import java.sql.SQLException;
 @EnableWebSecurity
 @SpringBootApplication
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class StrolrApplication extends WebSecurityConfigurerAdapter {
+public class StrolrApplication extends WebSecurityConfigurerAdapter implements WebMvcConfigurer {
 
 	public static void main(String[] args) {
 		SpringApplication.run(StrolrApplication.class, args);
