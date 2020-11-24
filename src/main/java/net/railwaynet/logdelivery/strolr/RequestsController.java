@@ -245,6 +245,7 @@ public class RequestsController {
             value = "/locomotive-messages.csv",
             method = RequestMethod.POST)
     @ResponseBody
+    @CrossOrigin
     public String locomotiveMessagesCSV(Principal principal, @RequestBody String payload, HttpServletResponse response) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of locomotive messages in CSV format");
@@ -282,6 +283,7 @@ public class RequestsController {
     @RequestMapping(
             value = "/locomotive-messages",
             method = RequestMethod.POST)
+    @CrossOrigin
     public String locomotiveMessages(Principal principal, @RequestBody String payload) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of locomotive messages");
@@ -324,6 +326,7 @@ public class RequestsController {
     @RequestMapping(
             value = "/data-request",
             method = RequestMethod.POST)
+    @CrossOrigin
     public String requestLogs(Principal principal, @RequestBody String payload) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " sent a request:");

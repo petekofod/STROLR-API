@@ -9,6 +9,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +37,7 @@ public class ListOfRailroadsController {
     private Environment env;
 
     @RequestMapping("/railroads.json")
+    @CrossOrigin
     public String railroads(Principal principal) {
 
         if (env == null) {
@@ -63,6 +65,7 @@ public class ListOfRailroadsController {
     }
 
     @RequestMapping("/locomotives.json")
+    @CrossOrigin
     public String locomotives(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
         logger.debug(currentUser.getUsername() + " requesting the list of locomotives");
@@ -82,6 +85,7 @@ public class ListOfRailroadsController {
     }
 
     @RequestMapping("/locomotive-update.json/{mark}/{locoID}")
+    @CrossOrigin
     public String locomotivesUpdates(Principal principal,
                                      @PathVariable("mark") String mark,
                                      @PathVariable("locoID") String locoID) {
