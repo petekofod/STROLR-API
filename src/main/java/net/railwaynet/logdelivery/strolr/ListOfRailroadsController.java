@@ -46,11 +46,17 @@ public class ListOfRailroadsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't access application.properties, skipping the request");
         }
 
-        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting the list of railroads");
+        String userName;
+        if (principal == null) {
+            // TODO KeyCloak
+            userName = "AMTK";
+        } else {
+            UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
+            userName = currentUser.getUsername();
+        }
 
         @SuppressWarnings("unchecked") Map<String, Object> userConfiguration =
-                (Map<String, Object>) railroadsService.getRailroadsBySCAC(currentUser.getUsername());
+                (Map<String, Object>) railroadsService.getRailroadsBySCAC(userName);
         userConfiguration.put("S3BaseURL", Objects.requireNonNull(env.getProperty("S3.base.URL")));
 
         try {
@@ -67,9 +73,6 @@ public class ListOfRailroadsController {
     @RequestMapping("/locomotives.json")
     @CrossOrigin
     public String locomotives(Principal principal) {
-        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting the list of locomotives");
-
         try {
             Map<String, Object> result = locomotivesService.getLocomotives();
             return objectMapper.writeValueAsString(result);
@@ -89,9 +92,6 @@ public class ListOfRailroadsController {
     public String locomotivesUpdates(Principal principal,
                                      @PathVariable("mark") String mark,
                                      @PathVariable("locoID") String locoID) {
-
-        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting the locomotive updates");
 
         if (mark.isEmpty()) {
             throw new ResponseStatusException(

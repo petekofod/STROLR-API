@@ -122,7 +122,7 @@ public class RequestsController {
         return FEDERATION_QUEUE_URL;
     }
 
-    private String sendRequest (final Map<String, String> payloadMap, UserDetails currentUser, String queue) {
+    private String sendRequest (final Map<String, String> payloadMap, String scac, String queue) {
 
         String payload;
 
@@ -139,7 +139,7 @@ public class RequestsController {
         final Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
         messageAttributes.put(SCAC, new MessageAttributeValue()
                 .withDataType("String")
-                .withStringValue(railroadsService.getSCACbyMARK(currentUser.getUsername(), payloadMap.get(SCAC_MARK))));
+                .withStringValue(railroadsService.getSCACbyMARK(scac, payloadMap.get(SCAC_MARK))));
 
         for (Map.Entry<String, String> entry : payloadMap.entrySet()) {
             messageAttributes.put(entry.getKey(), new MessageAttributeValue()
@@ -168,7 +168,7 @@ public class RequestsController {
         return result.getMessageId();
     }
 
-    private String sendLogsRequest (final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendLogsRequest (final Map<String, String> payloadMap, String userName) {
         logger.info("Handling logs retrieval request");
 
         if (!payloadMap.containsKey(TIME_ZONE) || payloadMap.get(TIME_ZONE).isEmpty()) {
@@ -204,25 +204,25 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the payload!");
         }
 
-        return sendRequest(payloadMap, currentUser, getQueueUrl());
+        return sendRequest(payloadMap, userName, getQueueUrl());
     }
 
-    private String sendStatusRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendStatusRequest(final Map<String, String> payloadMap, String scac) {
         logger.info("Handling locomotive status request");
-        return sendRequest(payloadMap, currentUser, getStatusQueueUrl());
+        return sendRequest(payloadMap, scac, getStatusQueueUrl());
     }
 
-    private String sendBackofficeRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendBackofficeRequest(final Map<String, String> payloadMap, String scac) {
         logger.info("Handling backoffice status request");
         payloadMap.remove("LocoID");
-        return sendRequest(payloadMap, currentUser, getBackofficeQueueUrl());
+        return sendRequest(payloadMap, scac, getBackofficeQueueUrl());
     }
 
-    private String sendFederationRequest(final Map<String, String> payloadMap, UserDetails currentUser) {
+    private String sendFederationRequest(final Map<String, String> payloadMap, String scac) {
         logger.info("Handling federation status request");
-        List<String> federations = railroadsService.getFederationsBySCAC(currentUser.getUsername());
+        List<String> federations = railroadsService.getFederationsBySCAC(scac);
         payloadMap.put("federations", String.join(",", federations));
-        return sendRequest(payloadMap, currentUser, getFederationQueueUrl());
+        return sendRequest(payloadMap, scac, getFederationQueueUrl());
     }
 
     private static String toCSV(List<Map<String, Object>> list) {
@@ -247,8 +247,6 @@ public class RequestsController {
     @ResponseBody
     @CrossOrigin
     public String locomotiveMessagesCSV(Principal principal, @RequestBody String payload, HttpServletResponse response) {
-        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting the list of locomotive messages in CSV format");
         logger.debug(payload);
 
         final Map<String, String> payloadMap = payloadMap(payload);
@@ -285,8 +283,6 @@ public class RequestsController {
             method = RequestMethod.POST)
     @CrossOrigin
     public String locomotiveMessages(Principal principal, @RequestBody String payload) {
-        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " requesting the list of locomotive messages");
         logger.debug(payload);
 
         final Map<String, String> payloadMap = payloadMap(payload);
@@ -328,9 +324,17 @@ public class RequestsController {
             method = RequestMethod.POST)
     @CrossOrigin
     public String requestLogs(Principal principal, @RequestBody String payload) {
-        UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-        logger.debug(currentUser.getUsername() + " sent a request:");
         logger.debug(payload);
+
+        // TODO KeyCloak
+        String scac;
+        if (principal == null) {
+            scac = "AMTK";
+        }
+        else {
+            UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
+            scac = currentUser.getUsername();
+        }
 
         final Map<String, String> payloadMap = payloadMap(payload);
 
@@ -341,16 +345,16 @@ public class RequestsController {
         }
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-logs"))
-            return sendLogsRequest(payloadMap, currentUser);
+            return sendLogsRequest(payloadMap, scac);
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-status"))
-            return sendStatusRequest(payloadMap, currentUser);
+            return sendStatusRequest(payloadMap, scac);
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-backoffice"))
-            return sendBackofficeRequest(payloadMap, currentUser);
+            return sendBackofficeRequest(payloadMap, scac);
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-federation"))
-            return sendFederationRequest(payloadMap, currentUser);
+            return sendFederationRequest(payloadMap, scac);
 
         logger.error("Unknown request type!");
         throw new ResponseStatusException(

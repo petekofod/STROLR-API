@@ -28,16 +28,25 @@ public class UsersController {
     public String data(Principal principal) {
         UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
 
+        String userName;
+
         if (currentUser == null) {
             logger.error("Can't find the user name!");
+            // TODO: KeyCloak
+            userName = "AMTK";
+            /*
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR, "User name is NULL!");
+
+             */
+        } else {
+            userName = currentUser.getUsername();
         }
 
-        logger.debug("User name is " + currentUser.getUsername());
+        logger.debug("User name is " + userName);
 
         Map<String, String> result = new HashMap<>();
-        result.put("userName", currentUser.getUsername());
+        result.put("userName", userName);
 
         try {
             return objectMapper.writeValueAsString(result);

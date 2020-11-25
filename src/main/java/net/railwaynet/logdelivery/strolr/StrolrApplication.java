@@ -47,6 +47,8 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter implements W
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests().anyRequest().anonymous();
+		/*
 		http.authorizeRequests().anyRequest().authenticated()
 				.and().csrf().disable()
 				.x509()
@@ -54,6 +56,8 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter implements W
 				//.subjectPrincipalRegex("CN=(.*?),")
 	
 				.userDetailsService(userDetailsService());
+
+		 */
 	}
 
 	@Bean
