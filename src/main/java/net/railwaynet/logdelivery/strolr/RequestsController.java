@@ -14,12 +14,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,9 +31,7 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
-@Configuration
 @RestController
-@Component
 public class RequestsController {
     private static final Logger logger = LoggerFactory.getLogger(RequestsController.class);
 

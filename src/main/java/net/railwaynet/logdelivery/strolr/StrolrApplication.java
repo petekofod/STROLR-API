@@ -17,8 +17,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.sql.SQLException;
-
 @EnableWebSecurity
 @SpringBootApplication
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -30,9 +28,6 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter implements W
 
 	@Autowired
 	private StatusesService statusesService;
-
-	@Autowired
-	private ListOfLocomotivesService locomotivesService;
 
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
@@ -47,7 +42,8 @@ public class StrolrApplication extends WebSecurityConfigurerAdapter implements W
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().anyRequest().anonymous();
+		http.authorizeRequests().antMatchers("/").permitAll().and().csrf().disable();
+		//http.authorizeRequests().anyRequest().anonymous();
 		/*
 		http.authorizeRequests().anyRequest().authenticated()
 				.and().csrf().disable()
