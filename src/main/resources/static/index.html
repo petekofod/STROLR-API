@@ -35,6 +35,9 @@
         }
 
 
+
+
+
     </style>
     <style>
         .button-container-div-right {
@@ -51,6 +54,9 @@
             position: fixed;
             left: 5%
         }
+
+
+
 
 
     </style>
@@ -120,7 +126,9 @@
             </b-button>
         </div>
 
-        <div><pulse v-if="message_loading||downloading"></pulse ></div>
+        <div>
+            <pulse v-if="message_loading||downloading"></pulse>
+        </div>
 
         <div class="row" v-if="!message_loading">
             <vue-good-table title="Message Report" class="col m-4"
@@ -146,8 +154,8 @@
             </vue-good-table>
             <div v-if="message_2080">
                 <b-modal v-model="message_2080" size="lg" scrollable ok-only title="Locomotive Position Report">
-                <table class="table">
-                    <tbody>
+                    <table class="table">
+                        <tbody>
                         <tr>
                             <td>Railroad SCAC</td>
                             <td>{{this.data_2080.scac}}</td>
@@ -268,14 +276,15 @@
                             <td>Distance Elapsed Parameter</td>
                             <td>{{this.data_2080.distanceElapsed}}</td>
                         </tr>
-                    </tbody>
-                </table>
-            </b-modal>
+                        </tbody>
+                    </table>
+                </b-modal>
             </div>
             <div v-if="message_2083">
-                <b-modal v-model="message_2083" size="lg" scrollable ok-only title="Enforcement Warning/Braking Notification">
-                <table class="table">
-                    <tbody>
+                <b-modal v-model="message_2083" size="lg" scrollable ok-only
+                         title="Enforcement Warning/Braking Notification">
+                    <table class="table">
+                        <tbody>
                         <tr>
                             <td>Railroad SCAC</td>
                             <td>{{this.data_2083.scac}}</td>
@@ -585,9 +594,9 @@
                                 z: {{this.data_2083.currentHeadEndPosition.z}}
                             </td>
                         </tr>
-                    </tbody>
-                </table>
-            </b-modal>
+                        </tbody>
+                    </table>
+                </b-modal>
             </div>
         </div>
 
@@ -671,17 +680,25 @@
                             <b-form-select id="selSCACMark" min="0" v-model="form.SCACMark" :options="lstFullTree"
                                            required
                                            size="sm" @change1="onChange($event)"></b-form-select>
+                        </div>
+                    </div>
 
-                        <!-- <div class="float-right"> -->
-                                <b-button v-if="plugins.includes('STRL')" type="button" v-on:click="GetLocomotivesReport" variant="info"
+                    <div class="form-group row">
+                        <label class="col-sm-5 "> </label>
+                        <div class="col">
+                            <div class="float-right">
+                                <b-button v-if="plugins.includes('STRL')" type="button"
+                                          v-on:click="GetLocomotivesReport" variant="info"
                                           class="btn btn-default">
-                                    <span class="glyphicon glyphicon-triangle-right">See locomotives</span>
+                                    <span>See locomotives</span>
                                 </b-button>
-                                <b-button type="button" v-on:click="GetQuoterMonthReports" variant="info"
+                                <b-button v-if="plugins.includes('REPORTS')" type="button"
+                                          v-on:click="GetQuoterMonthReports" variant="info"
                                           class="btn btn-default">
-                                    <span class="glyphicon glyphicon-triangle-right">Reports</span>
+                                    <span>Reports</span>
                                 </b-button>
-                       <!-- </div> --> </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group row">
@@ -692,6 +709,7 @@
                             </b-form-input>
                         </div>
                     </div>
+
                     <div class="form-group row">
                         <label for="inpTimeZone" size="sm" class="col-sm-5 col-form-label">Time Zone</label>
                         <div class="col-sm-3">
@@ -709,7 +727,8 @@
                         </div>
                         <div class="col-sm-3">
                             <b-input-group size="sm" prepend="UTC clock">
-                                <b-form-input id="inpStartTime" v-model="timeUTC" type="text" size="sm" disabled="true">
+                                <b-form-input id="inpStartTime" v-model="timeUTC" type="text" size="sm"
+                                              disabled="true">
                                 </b-form-input>
                             </b-input-group>
                         </div>
@@ -748,14 +767,17 @@
                         <label class="col-sm-5 "> </label>
                         <div class="col">
                             <div class="float-right">
-                                <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">Get
+                                <b-button type="submit" v-on:click="setRequestType('get-logs')" variant="primary">
+                                    Get
                                     Logs
                                 </b-button>
                                 <b-button v-if="plugins.includes('STROS')" type="submit"
-                                          v-on:click="setRequestType('get-status')" variant="primary">Get System Status
+                                          v-on:click="setRequestType('get-status')" variant="primary">Get System
+                                    Status
                                 </b-button>
                                 <b-button v-if="plugins.includes('STROB')" type="submit"
-                                          v-on:click="setRequestType('get-backoffice')" variant="primary">Get Backoffice
+                                          v-on:click="setRequestType('get-backoffice')" variant="primary">Get
+                                    Backoffice
                                     Status
                                 </b-button>
                             </div>

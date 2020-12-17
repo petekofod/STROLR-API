@@ -11,6 +11,7 @@ import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bson.Document;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,9 @@ public class RequestsController {
 
     @Autowired
     private RailroadsService railroadsService;
+
+    @Autowired
+    private ReportsService reportsService;
 
     @Autowired
     LocomotiveMessagesService locomotiveMessagesService;
@@ -400,5 +404,21 @@ public class RequestsController {
         calendar.setTime(unModifiedDate);
         calendar.add(Calendar.HOUR_OF_DAY, offset);
         return calendar.getTime();
+    }
+
+    @RequestMapping("/reports.json")
+    public String reports(Principal principal) {
+
+        List<Document> reports = reportsService.readReports();
+
+        try {
+            String result = objectMapper.writeValueAsString(reports);
+            logger.debug("Reports JSON: \n" + result);
+            return result;
+        } catch (JsonProcessingException e) {
+            logger.error("Can't read reports!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't read reports!", e);
+        }
     }
 }
