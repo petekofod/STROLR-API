@@ -74,7 +74,7 @@ var vue_det = new Vue({
                                          ],
         reports_columns: [{label: "Type", field: "type", filterable:true},
                           {label: "Period", field: "period", filterable:true},
-                          {label: "Month/Quoter", field: "month", filterable:true},
+                          {label: "Month/Quarter", field: "month", filterable:true},
                           {label: "Year", field: "year", filterable:true},
                           {label: "URL", field: "url", filterable:true},
                          ],
