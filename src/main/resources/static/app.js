@@ -72,9 +72,16 @@ var vue_det = new Vue({
                                          {label: "220", field: "Radio", filterable:true},
                                          {label: "Radio IsOnline", field: "RadioIsOnline", hidden:true},
                                          ],
+        reports_columns: [{label: "Type", field: "type", filterable:true},
+                          {label: "Period", field: "period", filterable:true},
+                          {label: "Month/Quarter", field: "month", filterable:true},
+                          {label: "Year", field: "year", filterable:true},
+                          {label: "URL", field: "url", filterable:true},
+                         ],
         locomotives_rows: [],
         locomotives_timestamp: "",
         messages_rows: [],
+        reports_rows: [],
         messages_additional_rows: [],
         messages_columns: [
             {label: "Locomotive ID", field: "address", filterable:true},
@@ -262,6 +269,36 @@ var vue_det = new Vue({
              }
            }
            xhr.send()
+        },
+        GetQuoterMonthReports() {
+           this.mode = 'reports';
+           var xhr = new XMLHttpRequest()
+           var self = this
+           xhr.open('GET', 'reports.json')
+           xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8')
+
+           self.reports_rows = [];
+
+           xhr.onload = async function () {
+           if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    var reportsData = JSON.parse(xhr.responseText);
+                    for (var i = 0; i < reportsData.length; i++)
+                         self.reports_rows.push (
+                             {type: reportsData[i].type,
+                              period: reportsData[i].period,
+                              month: self.getMonth(reportsData[i].term, reportsData[i].period),
+                              year: reportsData[i].year,
+                              url: reportsData[i].url});
+
+                           } else {
+                               var errorMessage = JSON.parse(xhr.responseText).message
+                               self.sLogRequestStatus = "Request status: ERROR while sending request! Contact the system administrator. " + errorMessage
+                               console.error('error - ' + errorMessage)
+                           }
+                        }
+                      }
+                 xhr.send()
         },
 
         onSubmit(evt) {
@@ -482,6 +519,16 @@ var vue_det = new Vue({
             res = hr + ":" + min
             this.timeUTC = res
             return res
+        },
+        getMonth: function (num, period) {
+         if (period === "month") {
+           const monthNames = ["January", "February", "March", "April", "May", "June",
+             "July", "August", "September", "October", "November", "December"
+           ];
+           return monthNames[num];
+          }
+
+          return num;
         },
 
         checkResponse: function (ourMessageId) {
