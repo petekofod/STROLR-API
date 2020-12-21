@@ -107,76 +107,65 @@ public class LocomotiveMessagesService {
         }
     }
 
-    private void copyHeader(Map<String, Object> message, Map<String, Object> destMessage) {
-        destMessage.put("_id", message.get("_id"));
-        destMessage.put("idType", message.get("idType"));
-        destMessage.put("version", message.get("version"));
-        destMessage.put("dataLength", message.get("dataLength"));
-        destMessage.put("number", message.get("number"));
-        destMessage.put("time", message.get("time"));
-        destMessage.put("timeUTC", message.get("timeUTC"));
-        destMessage.put("timeToLive", message.get("timeToLive"));
-        destMessage.put("msgClass", message.get("msgClass"));
-        destMessage.put("priority", message.get("priority"));
-        destMessage.put("networkPreference", message.get("networkPreference"));
-        destMessage.put("specialHandling", message.get("specialHandling"));
-        destMessage.put("serviceRequest", message.get("serviceRequest"));
-        destMessage.put("srcAddress", message.get("srcAddress"));
-        destMessage.put("destAddress", message.get("destAddress"));
-        destMessage.put("crc", message.get("crc"));
-        destMessage.put("scac", message.get("scac"));
-    }
-
-    private String getTrainIDFrom2003(List<Map<String, Object>> messages2003, String srcAddress, String state) {
+    /**
+     * Get the train ID from the last 2003 message for given train and time
+     * @param messages2003  2003 messages collection
+     * @param srcAddress    train
+     * @param t             time
+     * @param state         train state
+     * @return              Train ID
+     */
+    private String getTrainIDFrom2003(List<Map<String, Object>> messages2003, String srcAddress, Integer t, String state) {
         if (state == null || !state.equals("CONTROLLING"))
             return "NA";
 
-        for (int i = messages2003.size() - 1; i > 0; i--) {
-            Map<String, Object> message = messages2003.get(i);
+        int last2003Time = 0;
+        String trainId = null;
+
+        for (Map<String, Object> message : messages2003) {
             if (message.get("srcAddress").equals(srcAddress)) {
-                return (String) message.get("trainID");
+                int time2003 = (int) message.get("time");
+                if (time2003 < t && time2003 > last2003Time) {
+                    last2003Time = time2003;
+                    trainId = (String) message.get("trainID");
+                }
             }
         }
 
-        logger.warn("Can't find TrainID for " + srcAddress);
-        return "";
+        if (trainId == null) {
+            logger.warn("Can't find TrainID for " + srcAddress);
+            return "";
+        } else {
+            return trainId;
+        }
     }
 
     private List<Map<String, Object>> columns2080(List<Map<String, Object>> source, List<Map<String, Object>> messages2003) {
         List<Map<String, Object>> dest = new ArrayList<>();
         for (Map<String, Object> message : source) {
             Map<String, Object> destMessage = new LinkedHashMap<>();
-            copyHeader(message, destMessage);
-            destMessage.put("ptcAuthorityReferenceNumber", message.get("ptcAuthorityReferenceNumber"));
-            destMessage.put("trainID", getTrainIDFrom2003(messages2003, (String) message.get("srcAddress"), (String) message.get("locomotiveStateSummary")));
+            destMessage.put("idType", message.get("idType"));
+            destMessage.put("timeUTC", message.get("timeUTC"));
+            destMessage.put("srcAddress", message.get("srcAddress"));
+            destMessage.put("destAddress", message.get("destAddress"));
+            destMessage.put("scac", message.get("scac"));
+            destMessage.put("trainID", getTrainIDFrom2003(messages2003, (String) message.get("srcAddress"), (Integer) message.get("time"), (String) message.get("locomotiveStateSummary")));
             destMessage.put("headEndMilepost", message.get("headEndMilepost"));
-            destMessage.put("headEndMilepostPrefix", message.get("headEndMilepostPrefix"));
-            destMessage.put("headEndMilepostSuffix", message.get("headEndMilepostSuffix"));
             destMessage.put("headEndTrackName", message.get("headEndTrackName"));
             destMessage.put("headEndScac", message.get("headEndScac"));
             destMessage.put("headEndSubdivDistrictId", message.get("headEndSubdivDistrictId"));
             destMessage.put("rearEndMilepost", message.get("rearEndMilepost"));
-            destMessage.put("rearEndMilepostPrefix", message.get("rearEndMilepostPrefix"));
-            destMessage.put("rearEndMilepostSuffix", message.get("rearEndMilepostSuffix"));
             destMessage.put("rearEndTrackName", message.get("rearEndTrackName"));
             destMessage.put("rearEndScac", message.get("rearEndScac"));
             destMessage.put("rearEndSubdivDistrictId", message.get("rearEndSubdivDistrictId"));
             destMessage.put("speed", message.get("speed"));
             destMessage.put("positionUncertainty", message.get("positionUncertainty"));
             destMessage.put("travelDirection", message.get("travelDirection"));
-            destMessage.put("headEndPositionX", message.get("headEndPositionX"));
-            destMessage.put("headEndPositionY", message.get("headEndPositionY"));
-            destMessage.put("headEndPositionZ", message.get("headEndPositionZ"));
-            destMessage.put("positionValidity", message.get("positionValidity"));
             destMessage.put("positionReportReason", message.get("positionReportReason"));
-            destMessage.put("stateTime", message.get("stateTime"));
             destMessage.put("stateTimeUTC", message.get("stateTimeUTC"));
             destMessage.put("locomotiveStateSummary", message.get("locomotiveStateSummary"));
             destMessage.put("locomotiveState", message.get("locomotiveState"));
             destMessage.put("controlBrake", message.get("controlBrake"));
-            destMessage.put("timeElapsed", message.get("timeElapsed"));
-            destMessage.put("distanceElapsed", message.get("distanceElapsed"));
-            destMessage.put("dataIntegrity", message.get("dataIntegrity"));
             dest.add(destMessage);
         }
         return dest;
@@ -186,30 +175,21 @@ public class LocomotiveMessagesService {
         List<Map<String, Object>> dest = new ArrayList<>();
         for (Map<String, Object> message : source) {
             Map<String, Object> destMessage = new LinkedHashMap<>();
-            copyHeader(message, destMessage);
+            destMessage.put("srcAddress", message.get("srcAddress"));
             destMessage.put("warningEnforcementType", message.get("warningEnforcementType"));
             destMessage.put("trainID", message.get("trainID"));
             destMessage.put("onboardSoftwareVersion", message.get("onboardSoftwareVersion"));
             destMessage.put("targetType", message.get("targetType"));
             destMessage.put("targetDescription", message.get("targetDescription"));
             destMessage.put("startTargetMilepost", message.get("startTargetMilepost"));
-            destMessage.put("startTargetMilepostPrefix", message.get("startTargetMilepostPrefix"));
-            destMessage.put("startTargetMilepostSuffix", message.get("startTargetMilepostSuffix"));
             destMessage.put("startTargetTrackName", message.get("startTargetTrackName"));
             destMessage.put("startTargetScac", message.get("startTargetScac"));
             destMessage.put("startTargetSubdivDistrictId", message.get("startTargetSubdivDistrictId"));
             destMessage.put("endTargetMilepost", message.get("endTargetMilepost"));
-            destMessage.put("endTargetMilepostPrefix", message.get("endTargetMilepostPrefix"));
-            destMessage.put("endTargetMilepostSuffix", message.get("endTargetMilepostSuffix"));
             destMessage.put("endTargetTrackName", message.get("endTargetTrackName"));
-            destMessage.put("endTargetScac", message.get("endTargetScac"));
-            destMessage.put("endTargetSubdivDistrictId", message.get("endTargetSubdivDistrictId"));
             destMessage.put("targetSpeed", message.get("targetSpeed"));
-            destMessage.put("warningTime", message.get("warningTime"));
             destMessage.put("warningTimeUTC", message.get("warningTimeUTC"));
             destMessage.put("warningMilepost", message.get("warningMilepost"));
-            destMessage.put("warningMilepostPrefix", message.get("warningMilepostPrefix"));
-            destMessage.put("warningMilepostSuffix", message.get("warningMilepostSuffix"));
             destMessage.put("warningTrackName", message.get("warningTrackName"));
             destMessage.put("warningScac", message.get("warningScac"));
             destMessage.put("warningSubdivDistrictId", message.get("warningSubdivDistrictId"));
@@ -220,11 +200,8 @@ public class LocomotiveMessagesService {
             destMessage.put("warningHeadEndPositionY", message.get("warningHeadEndPositionY"));
             destMessage.put("warningHeadEndPositionZ", message.get("warningHeadEndPositionZ"));
             destMessage.put("warningSpeed", message.get("warningSpeed"));
-            destMessage.put("enforcementTime", message.get("enforcementTime"));
             destMessage.put("enforcementTimeUTC", message.get("enforcementTimeUTC"));
             destMessage.put("enforcementMilepost", message.get("enforcementMilepost"));
-            destMessage.put("enforcementMilepostPrefix", message.get("enforcementMilepostPrefix"));
-            destMessage.put("enforcementMilepostSuffix", message.get("enforcementMilepostSuffix"));
             destMessage.put("enforcementTrackName", message.get("enforcementTrackName"));
             destMessage.put("enforcementScac", message.get("enforcementScac"));
             destMessage.put("enforcementSubdivDistrictId", message.get("enforcementSubdivDistrictId"));
@@ -234,11 +211,8 @@ public class LocomotiveMessagesService {
             destMessage.put("enforcementHeadEndPositionY", message.get("enforcementHeadEndPositionY"));
             destMessage.put("enforcementHeadEndPositionZ", message.get("enforcementHeadEndPositionZ"));
             destMessage.put("enforcementSpeed", message.get("enforcementSpeed"));
-            destMessage.put("emergencyEnforcementTime", message.get("emergencyEnforcementTime"));
             destMessage.put("emergencyEnforcementTimeUTC", message.get("emergencyEnforcementTimeUTC"));
             destMessage.put("emergencyEnforcementMilepost", message.get("emergencyEnforcementMilepost"));
-            destMessage.put("emergencyEnforcementMilepostPrefix", message.get("emergencyEnforcementMilepostPrefix"));
-            destMessage.put("emergencyEnforcementMilepostSuffix", message.get("emergencyEnforcementMilepostSuffix"));
             destMessage.put("emergencyEnforcementTrackName", message.get("emergencyEnforcementTrackName"));
             destMessage.put("emergencyEnforcementScac", message.get("emergencyEnforcementScac"));
             destMessage.put("emergencyEnforcementSubdivDistrictId", message.get("emergencyEnforcementSubdivDistrictId"));
@@ -249,11 +223,8 @@ public class LocomotiveMessagesService {
             destMessage.put("emergencyEnforcementHeadEndPositionY", message.get("emergencyEnforcementHeadEndPositionY"));
             destMessage.put("emergencyEnforcementHeadEndPositionZ", message.get("emergencyEnforcementHeadEndPositionZ"));
             destMessage.put("emergencyEnforcementSpeed", message.get("emergencyEnforcementSpeed"));
-            destMessage.put("currentTime", message.get("currentTime"));
             destMessage.put("currentTimeUTC", message.get("currentTimeUTC"));
             destMessage.put("currentMilepost", message.get("currentMilepost"));
-            destMessage.put("currentMilepostPrefix", message.get("currentMilepostPrefix"));
-            destMessage.put("currentMilepostSuffix", message.get("currentMilepostSuffix"));
             destMessage.put("currentTrackName", message.get("currentTrackName"));
             destMessage.put("currentScac", message.get("currentScac"));
             destMessage.put("currentSubdivDistrictId", message.get("currentSubdivDistrictId"));
@@ -262,8 +233,6 @@ public class LocomotiveMessagesService {
             destMessage.put("currentHeadEndPositionX", message.get("currentHeadEndPositionX"));
             destMessage.put("currentHeadEndPositionY", message.get("currentHeadEndPositionY"));
             destMessage.put("currentHeadEndPositionZ", message.get("currentHeadEndPositionZ"));
-            destMessage.put("currentSpeed", message.get("currentSpeed"));
-            destMessage.put("dataIntegrity", message.get("dataIntegrity"));
             dest.add(destMessage);
         }
         return dest;
@@ -298,8 +267,10 @@ public class LocomotiveMessagesService {
         List<Map<String, Object>> messages2003 = null;
 
         if (type == 0 || type == 2080) {
+            logger.debug("Loading 2003 messages...");
             LocalDateTime dt = new Timestamp(startDate.getTime()).toLocalDateTime().minusHours(48);
             messages2003 = getMessages2003(Timestamp.valueOf(dt), endDate);
+            logger.debug("Loaded " + messages2003.size() + " messages of type 2003");
         }
 
         List<Bson> conditions = new ArrayList<>();
@@ -317,20 +288,24 @@ public class LocomotiveMessagesService {
         conditions.add(in("destAddress", "amtk.b:gb.nec", "amtk.b:gb.me"));
         Bson filter = and(conditions);
 
+        logger.debug("Requesting data from MongoDB...");
         try (MongoCursor<Document> cursor = getMessagesCollection().find(filter)
                 .iterator()) {
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
         }
+        logger.debug("Loaded " + result.size() + " messages");
 
         if (messages2003 != null) {
+            logger.debug("Updating 2080 messages with TrainID...");
             for (Map<String, Object> message : result)
                 if (!message.containsKey("trainID"))
                     // 2080 doesn't contain train ID
                     message.put("trainID",
                             getTrainIDFrom2003(messages2003,
                                     (String) message.get("srcAddress"),
+                                    (Integer) message.get("time"),
                                     (String) message.get("locomotiveStateSummary"))
                     );
         }
@@ -341,7 +316,7 @@ public class LocomotiveMessagesService {
     public List<Map<String, Object>> getMessages2003(Date startDate, Date endDate) {
         List<Map<String, Object>> result = new ArrayList<>();
 
-        logger.debug("Getting 2004");
+        logger.debug("Getting 2003 messages");
         logger.debug("Start millis: " + startDate.getTime());
         logger.debug("End millis: " + endDate.getTime());
 
