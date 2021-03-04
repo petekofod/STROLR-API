@@ -2,12 +2,14 @@ package net.railwaynet.logdelivery.strolr;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 public class ListOfRailroadsController {
@@ -40,23 +41,8 @@ public class ListOfRailroadsController {
     @CrossOrigin
     public String railroads(Principal principal) {
 
-        if (env == null) {
-            logger.error("Can't access application.properties, skipping the request");
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't access application.properties, skipping the request");
-        }
-
-        String userName;
-        if (principal == null) {
-            // TODO KeyCloak
-            userName = "AMTK";
-        } else {
-            UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-            userName = currentUser.getUsername();
-        }
-
         @SuppressWarnings("unchecked") Map<String, Object> userConfiguration =
-                (Map<String, Object>) railroadsService.getRailroadsBySCAC(userName);
+                (Map<String, Object>) railroadsService.getRailroadsBySCAC("RCAX");
         userConfiguration.put("S3BaseURL", Objects.requireNonNull(env.getProperty("S3.base.URL")));
 
         try {
@@ -73,8 +59,16 @@ public class ListOfRailroadsController {
     @RequestMapping("/locomotives.json")
     @CrossOrigin
     public String locomotives(Principal principal) {
+
+        List<String> scacs = new ArrayList<>();
+
+        for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
+            if (role.getAuthority().endsWith(".locomotive.status.reader"))
+                scacs.add("'" + role.getAuthority().substring(5, 9).toUpperCase() + "'");
+        }
+
         try {
-            Map<String, Object> result = locomotivesService.getLocomotives();
+            Map<String, Object> result = locomotivesService.getLocomotives(scacs);
             return objectMapper.writeValueAsString(result);
         } catch (SQLException e) {
             logger.error("Can't get locomotives from RDS!", e);
@@ -103,8 +97,15 @@ public class ListOfRailroadsController {
                     HttpStatus.NOT_ACCEPTABLE, "Please specify the locoID");
         }
 
+        List<String> scacs = new ArrayList<>();
+
+        for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
+            if (role.getAuthority().endsWith(".locomotive.status.reader"))
+                scacs.add("'" + role.getAuthority().substring(5, 9).toUpperCase() + "'");
+        }
+
         try {
-            Map<String, Object> result = locomotivesService.getLast10Updates(mark, locoID);
+            Map<String, Object> result = locomotivesService.getLast10Updates(mark, locoID, scacs);
             return objectMapper.writeValueAsString(result);
         } catch (SQLException e) {
             logger.error("Can't get updates from RDS!", e);

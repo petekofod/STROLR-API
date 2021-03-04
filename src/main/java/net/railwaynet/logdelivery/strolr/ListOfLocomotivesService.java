@@ -79,7 +79,7 @@ public class ListOfLocomotivesService {
         return result;
     }
 
-    public Map<String, Object> getLast10Updates(String mark, String locoID) throws SQLException {
+    public Map<String, Object> getLast10Updates(String mark, String locoID, List<String> scacs) throws SQLException {
         Map<String, Object> result = new HashMap<>();
 
         String endpoint = Objects.requireNonNull(env.getProperty("aws.rds.endpoint"));
@@ -96,6 +96,7 @@ public class ListOfLocomotivesService {
                 "Radio_Address, Radio_Status, created_at " +
                 "FROM locomotives JOIN history ON history.id = locomotives.history_id " +
                 "WHERE mark = ? AND locoID = ? " +
+                "AND scac in (" + String.join(",", scacs) + ")" +
                 "ORDER BY created_at DESC LIMIT 10";
         PreparedStatement statement = conn.prepareStatement(sql);
         statement.setString(1, mark.toUpperCase());
@@ -111,7 +112,7 @@ public class ListOfLocomotivesService {
         return result;
     }
 
-    public Map<String, Object> getLocomotives() throws SQLException {
+    public Map<String, Object> getLocomotives(List<String> scacs) throws SQLException {
         Map<String, Object> result = new HashMap<>();
 
         String endpoint = Objects.requireNonNull(env.getProperty("aws.rds.endpoint"));
@@ -129,7 +130,9 @@ public class ListOfLocomotivesService {
                 "WiFi_Address, WiFi_Status, " +
                 "Radio_Address, Radio_Status, created_at " +
                 " FROM locomotives join history on history.id = locomotives.history_id " +
-                " where history_id = (select id from history order by created_at desc limit 1);";
+                " where history_id = (select id from history order by created_at desc limit 1) " +
+                " and scac in (" + String.join(",", scacs) + ")" +
+                ";";
         ResultSet resultSet = statement.executeQuery(sql);
 
         boolean firstLine = true;

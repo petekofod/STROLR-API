@@ -8,8 +8,7 @@
           "options": [ "AMTK", "CDTX", "WDTX", "IDTX", "RNCX" ],
           "federations": [ "amtk", "bnsf", "cn", "cprs", "csao", "csxt", "htix", "kcs", "metx", "nctc", "njtr", "ns", "pjpb", "rcax", "scax", "sepa", "up", "xorr" ]
         }
-      ],
-      "Plugins": [ "STROS", "STROB", "STRL", "MESSAGES", "REPORTS" ]
+      ]
     },
     {
       "AccessSCAC": "VREX",
@@ -19,8 +18,7 @@
           "options": [ "VREX" ],
           "federations": [ "vrex" ]
         }
-      ],
-      "Plugins": [ "STROS" ]
+      ]
     },
     {
       "AccessSCAC": "RCAX",
@@ -35,8 +33,7 @@
           "options": [ "VREX" ],
           "federations": [ "vrex" ]
         }
-      ],
-      "Plugins": [ "STROS", "STROB", "STRL", "MESSAGES", "REPORTS" ]
+      ]
     },
     {
       "AccessSCAC": "WABT",

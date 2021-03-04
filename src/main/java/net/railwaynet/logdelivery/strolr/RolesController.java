@@ -1,0 +1,64 @@
+package net.railwaynet.logdelivery.strolr;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
+import org.keycloak.representations.IDToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.lang.reflect.Array;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+public class RolesController {
+
+    private static final Logger logger = LoggerFactory.getLogger(RolesController.class);
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @RequestMapping("/roles.json")
+    @CrossOrigin
+    public String roles(Principal principal) {
+
+        logger.debug("Username: " + principal.getName());
+
+        List<Map<String, String>> userRoles = new ArrayList<>();
+
+        for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
+            String originalRole = role.getAuthority();
+            String scac = originalRole.substring(5, 9).toUpperCase();
+            String roleName = originalRole.substring(10);
+
+            Map<String, String> newRole = new HashMap<>();
+            newRole.put("SCAC", scac);
+            newRole.put("role", roleName);
+
+            userRoles.add(newRole);
+        }
+
+        try {
+            String result = objectMapper.writeValueAsString(userRoles);
+            logger.debug("User roles is: " + result);
+            return result;
+        } catch (JsonProcessingException e) {
+            logger.error("Can't get roles for the user!");
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Can't get roles for the user!", e);
+        }
+    }
+
+}

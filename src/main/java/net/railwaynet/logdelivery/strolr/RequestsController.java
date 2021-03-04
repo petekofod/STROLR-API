@@ -12,12 +12,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.Document;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -168,8 +170,26 @@ public class RequestsController {
         return result.getMessageId();
     }
 
-    private String sendLogsRequest (final Map<String, String> payloadMap, String userName) {
+    private boolean checkPermission (String scac, String roleName, Principal principal) {
+        boolean hasPermission = false;
+        for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
+            if (role.getAuthority().endsWith("." + roleName) &&
+                    role.getAuthority().startsWith("ROLE_" + scac)) {
+                hasPermission = true;
+                break;
+            }
+        }
+        return hasPermission;
+    }
+
+    private String sendLogsRequest (final Map<String, String> payloadMap, String scac, Principal principal) {
         logger.info("Handling logs retrieval request");
+
+        if (!checkPermission(scac, "log.status.reader", principal)) {
+            logger.error("No permissions for getting logs!");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "No permissions for getting logs!");
+        }
 
         if (!payloadMap.containsKey(TIME_ZONE) || payloadMap.get(TIME_ZONE).isEmpty()) {
             logger.error("Time zone is not specified!");
@@ -204,22 +224,43 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Can't parse the payload!");
         }
 
-        return sendRequest(payloadMap, userName, getQueueUrl());
+        return sendRequest(payloadMap, scac, getQueueUrl());
     }
 
-    private String sendStatusRequest(final Map<String, String> payloadMap, String scac) {
+    private String sendStatusRequest(final Map<String, String> payloadMap, String scac, Principal principal) {
         logger.info("Handling locomotive status request");
+
+        if (!checkPermission(scac, "locomotive.status.reader", principal)) {
+            logger.error("No permissions for getting locomotive status!");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "No permissions for getting locomotive status!");
+        }
+
         return sendRequest(payloadMap, scac, getStatusQueueUrl());
     }
 
-    private String sendBackofficeRequest(final Map<String, String> payloadMap, String scac) {
+    private String sendBackofficeRequest(final Map<String, String> payloadMap, String scac, Principal principal) {
         logger.info("Handling backoffice status request");
+
+        if (!checkPermission(scac, "backoffice.status.reader", principal)) {
+            logger.error("No permissions for getting backoffice status!");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "No permissions for getting backoffice status!");
+        }
+
         payloadMap.remove("LocoID");
         return sendRequest(payloadMap, scac, getBackofficeQueueUrl());
     }
 
-    private String sendFederationRequest(final Map<String, String> payloadMap, String scac) {
+    private String sendFederationRequest(final Map<String, String> payloadMap, String scac, Principal principal) {
         logger.info("Handling federation status request");
+
+        if (!checkPermission(scac, "backoffice.status.reader", principal)) {
+            logger.error("No permissions for getting backoffice status!");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "No permissions for getting backoffice status!");
+        }
+
         List<String> federations = railroadsService.getFederationsBySCAC(scac);
         payloadMap.put("federations", String.join(",", federations));
         return sendRequest(payloadMap, scac, getFederationQueueUrl());
@@ -326,16 +367,6 @@ public class RequestsController {
     public String requestLogs(Principal principal, @RequestBody String payload) {
         logger.debug(payload);
 
-        // TODO KeyCloak
-        String scac;
-        if (principal == null) {
-            scac = "AMTK";
-        }
-        else {
-            UserDetails currentUser = (UserDetails) ((Authentication) principal).getPrincipal();
-            scac = currentUser.getUsername();
-        }
-
         final Map<String, String> payloadMap = payloadMap(payload);
 
         if (!payloadMap.containsKey(REQUEST_TYPE) || payloadMap.get(REQUEST_TYPE).isEmpty()) {
@@ -344,17 +375,19 @@ public class RequestsController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Request type is not specified!");
         }
 
-        if (payloadMap.get(REQUEST_TYPE).equals("get-logs"))
-            return sendLogsRequest(payloadMap, scac);
+        if (payloadMap.get(REQUEST_TYPE).equals("get-logs")) {
+            return sendLogsRequest(payloadMap, railroadsService.getSCACbyMARK("RCAX", payloadMap.get("SCACMark")), principal);
+        }
 
-        if (payloadMap.get(REQUEST_TYPE).equals("get-status"))
-            return sendStatusRequest(payloadMap, scac);
+        if (payloadMap.get(REQUEST_TYPE).equals("get-status")) {
+            return sendStatusRequest(payloadMap, railroadsService.getSCACbyMARK("RCAX", payloadMap.get("SCACMark")), principal);
+        }
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-backoffice"))
-            return sendBackofficeRequest(payloadMap, scac);
+            return sendBackofficeRequest(payloadMap, payloadMap.get("SCAC"), principal);
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-federation"))
-            return sendFederationRequest(payloadMap, scac);
+            return sendFederationRequest(payloadMap, payloadMap.get("SCAC"), principal);
 
         logger.error("Unknown request type!");
         throw new ResponseStatusException(
