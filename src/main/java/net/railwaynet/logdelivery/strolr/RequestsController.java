@@ -395,6 +395,7 @@ public class RequestsController {
     }
 
     @RequestMapping(value = "/status-update/{messageId}")
+    @CrossOrigin
     public String statusUpdate(Principal principal, @PathVariable("messageId") String messageId) {
         logger.debug("Getting status of message " + messageId);
         String status;
@@ -437,6 +438,7 @@ public class RequestsController {
     }
 
     @RequestMapping("/reports.json")
+    @CrossOrigin
     public String reports(Principal principal) {
 
         List<Document> reports = reportsService.readReports();

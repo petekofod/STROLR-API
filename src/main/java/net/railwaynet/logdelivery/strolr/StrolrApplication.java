@@ -65,10 +65,11 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
 	protected void configure(HttpSecurity http) throws Exception {
 		super.configure(http);
 		http.authorizeRequests()
-				.antMatchers("/roles.json")
-				.hasRole("amtk.log.reader")
-				.anyRequest()
-				.permitAll();
+				.antMatchers("/roles.json", "/railroads.json", "/status-update/*").permitAll()
+				.antMatchers("/locomotives.json", "/locomotive-update.json/*").hasAnyRole("amtk.locomotive.status.reader")
+				.antMatchers("/locomotive-messages.csv", "/locomotive-messages").hasAnyRole("amtk.locomotive.message.reader")
+				.antMatchers("/data-request").hasAnyRole("amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.status.reader")
+				.anyRequest().permitAll();
 	}
 
 	@Bean
