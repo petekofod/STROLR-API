@@ -13,9 +13,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Array;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -31,7 +33,7 @@ public class RolesController {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @RequestMapping("/roles.json")
-    @CrossOrigin
+    @CrossOrigin(origins = "http://localhost:3000")
     public String roles(Principal principal) {
 
         logger.debug("Username: " + principal.getName());
@@ -61,4 +63,14 @@ public class RolesController {
         }
     }
 
+    @RequestMapping(value= "/**", method= RequestMethod.OPTIONS)
+    public void corsHeaders(HttpServletResponse response) {
+        logger.debug("Handling CORS preflight request");
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.addHeader("Access-Control-Allow-Headers", "origin, content-type, accept, x-requested-with");
+        response.addHeader("Access-Control-Max-Age", "3600");
+    }
+
 }
+

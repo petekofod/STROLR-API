@@ -28,6 +28,8 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 @SpringBootApplication
@@ -64,7 +66,7 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-        http.authorizeRequests()
+        http.cors().and().authorizeRequests()
                 .antMatchers("/roles.json", "/railroads.json", "/status-update/*").hasAnyRole(
                 "amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.status.reader",
                 "amtk.locomotive.status.reader", "amtk.locomotive.message.reader")
@@ -92,7 +94,9 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
             public void addCorsMappings(CorsRegistry registry) {
                 registry
                         .addMapping("/**")
-                        .allowedOrigins("http://localhost:3000", "https://localhost:3000", "https://strolr3.railwaynet.datasages.com/");
+                        .allowedOrigins("http://localhost:3000", "https://localhost:3000", "https://strolr3.railwaynet.datasages.com")
+                        .allowedHeaders("*")
+                        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
             }
         };
     }
