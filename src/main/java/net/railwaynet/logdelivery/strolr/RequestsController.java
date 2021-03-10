@@ -174,7 +174,7 @@ public class RequestsController {
         boolean hasPermission = false;
         for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
             if (role.getAuthority().endsWith("." + roleName) &&
-                    role.getAuthority().startsWith("ROLE_" + scac)) {
+                    role.getAuthority().startsWith("ROLE_" + scac.toLowerCase())) {
                 hasPermission = true;
                 break;
             }
@@ -364,7 +364,7 @@ public class RequestsController {
             value = "/data-request",
             method = RequestMethod.POST)
     @CrossOrigin
-    public String requestLogs(Principal principal, @RequestBody String payload) {
+    public String dataRequest(Principal principal, @RequestBody String payload) {
         logger.debug(payload);
 
         final Map<String, String> payloadMap = payloadMap(payload);

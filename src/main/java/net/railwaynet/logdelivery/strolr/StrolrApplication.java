@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -66,13 +67,16 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-        http.cors().and().authorizeRequests()
+        http
+                .csrf().disable()
+                .cors().and().authorizeRequests()
                 .antMatchers("/roles.json", "/railroads.json", "/status-update/*").hasAnyRole(
-                "amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.status.reader",
-                "amtk.locomotive.status.reader", "amtk.locomotive.message.reader")
+                        "amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.status.reader",
+                    "amtk.locomotive.status.reader", "amtk.locomotive.message.reader")
                 .antMatchers("/locomotives.json", "/locomotive-update.json/*").hasAnyRole("amtk.locomotive.status.reader")
-                .antMatchers("/locomotive-messages.csv", "/locomotive-messages").hasAnyRole("amtk.locomotive.message.reader")
-                .antMatchers("/data-request").hasAnyRole("amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.status.reader")
+                .antMatchers(HttpMethod.POST,"/locomotive-messages.csv", "/locomotive-messages").hasAnyRole("amtk.locomotive.message.reader")
+                .antMatchers(HttpMethod.POST, "/data-request").hasAnyRole(
+                        "amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.reader")
                 .anyRequest().permitAll();
     }
 
