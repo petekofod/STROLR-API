@@ -185,7 +185,7 @@ public class RequestsController {
     private String sendLogsRequest (final Map<String, String> payloadMap, String scac, Principal principal) {
         logger.info("Handling logs retrieval request");
 
-        if (!checkPermission(scac, "log.status.reader", principal)) {
+        if (!checkPermission(scac, "log.reader", principal)) {
             logger.error("No permissions for getting logs!");
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "No permissions for getting logs!");
