@@ -5,8 +5,7 @@ name: Maven Package
 
 on:
   push:
-    branches: [ci_cd]
-
+  
 jobs:
   build:
 
@@ -19,6 +18,6 @@ jobs:
         with:
           java-version: 1.8
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
+          
+      - name: Check Java version
+        run: java -version
