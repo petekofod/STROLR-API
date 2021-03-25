@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo Build STROLR
+
 rm build/*
 
 mvn clean install
