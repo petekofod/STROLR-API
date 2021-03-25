@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo Build STROLR
+echo Build STROLR API
 
 rm build/*
 
