@@ -39,3 +39,9 @@ jobs:
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
+
+      - name: Copy artifacts
+        run: scp target/*.jar src/main/resources/start.sh ec2-user@strolr3.railwaynet.datasages.com:~/strolr/
+
+      - name: Run application
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com 'cd /home/ec2-user/strolr ; bash start.sh < /dev/null > /tmp/log.txt 2>&1 &'
