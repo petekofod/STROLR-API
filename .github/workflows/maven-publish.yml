@@ -14,11 +14,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.CD_CI }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+          
+      - name: Adding Known Hosts
+        run: ssh-keyscan -H strolr3.railwaynet.datasages.com >> ~/.ssh/known_hosts
+        
+      - name: Check ssh connect
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com ls -la
+      
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
+      - name: Set up JDK 8.0.242
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: 8.0.242
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
           
       - name: Check Java version
