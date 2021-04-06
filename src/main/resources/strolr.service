@@ -7,7 +7,7 @@ ExecStart=/usr/bin/java -jar strolr2-0.0.2-SNAPSHOT.jar
 User=ec2-user
 Type=simple
 Restart=on-failure
-RestartSec=100
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
