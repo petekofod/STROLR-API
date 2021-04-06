@@ -49,5 +49,12 @@ jobs:
       - name: Copy artifacts
         run: scp target/*.jar src/main/resources/strolr.service ec2-user@strolr3.railwaynet.datasages.com:~/strolr/
 
+      - name: Check artifacts files
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com 'ls -la /home/ec2-user/strolr'
+
       - name: Move service to systemd dir
         run: ssh ec2-user@strolr3.railwaynet.datasages.com 'sudo mv -f /home/ec2-user/strolr/strolr.service /etc/systemd/system/'
+
+      - name: Check service file
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com 'ls -la /etc/systemd/system/'
+
