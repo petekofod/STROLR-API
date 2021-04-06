@@ -44,7 +44,10 @@ jobs:
         run: ssh ec2-user@strolr3.railwaynet.datasages.com '[ -f /etc/systemd/system/strolr.service ] && { sudo systemctl stop strolr ; sudo systemctl disable strolr ; sudo mv -f /etc/systemd/system/strolr.service /home/ec2-user/strolr/strolr.service.backup ; } || true '
 
       - name: Kill strolr process
-        run: ssh ec2-user@strolr3.railwaynet.datasages.com "kill -9 \$(ps -aux | grep strolr2 | grep java | awk '{print \$2}') || true"
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com "kill -9 \$(ps -aux | grep strolr2 | grep java | awk '{print \$2}') 2>/dev/null "
+
+      - name: Backup strolr jar
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com "mv -f /home/ec2-user/strolr/strolr2-0.0.2-SNAPSHOT.jar /home/ec2-user/strolr/strolr2-0.0.2-SNAPSHOT.jar.backup "
 
       - name: Copy artifacts
         run: scp target/*.jar src/main/resources/strolr.service ec2-user@strolr3.railwaynet.datasages.com:~/strolr/
