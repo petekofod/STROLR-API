@@ -62,4 +62,4 @@ jobs:
         run: ssh ec2-user@strolr3.railwaynet.datasages.com 'ls -la /etc/systemd/system/'
 
       - name: Enable and Start service
-        run: ssh ec2-user@strolr3.railwaynet.datasages.com '[ -f /etc/systemd/system/strolr.service ] && { sudo systemctl enable strolr ; sudo systemctl start strolr ; sudo systemctl start strolr ; } || { echo Service File does not exist ; exit 1 ; } '
+        run: ssh ec2-user@strolr3.railwaynet.datasages.com '[ -f /etc/systemd/system/strolr.service ] && { sudo systemctl enable strolr ; sudo systemctl start strolr ; sudo systemctl status strolr ; } || { echo Service File does not exist ; exit 1 ; } '
