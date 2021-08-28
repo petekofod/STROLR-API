@@ -1,0 +1,110 @@
+slack-fail-post-step: &slack-fail-post-step
+  post-steps:
+    - slack/notify:
+        custom: |
+          {
+            "text": "",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "❌ *Failure* #${CIRCLE_BUILD_NUM} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View Job"
+                    },
+                    "url": "${CIRCLE_BUILD_URL}"
+                  }
+                ]
+              }
+            ]
+          }
+        event: fail
+
+version: 2.1
+## Build STROLR-API
+orbs:
+  aws-ecr: circleci/aws-ecr@7.0.0
+  aws-ecs: circleci/aws-ecs@2.2.1
+  slack: circleci/slack@4.1.1
+
+
+
+workflows:
+  build-and-push:
+    jobs:
+      - aws-ecr/build-and-push-image:
+            remote-docker-layer-caching: true
+            dockerfile: Dockerfile.circleci
+            path: .
+            account-url: AWS_ECR_ACCOUNT_URL
+            aws-access-key-id: AWS_ACCESS_KEY_ID
+            aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+            region: AWS_DEFAULT_REGION
+            repo: "${AWS_RESOURCE_NAME_PREFIX}"
+            create-repo: true
+            tag: ${CIRCLE_SHA1},latest
+            # extra-build-args: "--build-arg GITHUB_MESSAGE_LIBRARY_USERNAME=${GITHUB_MESSAGE_LIBRARY_USERNAME} --build-arg GITHUB_MESSAGE_LIBRARY_PASSWORD=${GITHUB_MESSAGE_LIBRARY_PASSWORD}"
+            context:
+              - railwaynet
+              - slack-secrets
+            filters:
+              branches:
+                only:
+                  - circleci
+                  - master
+            <<: *slack-fail-post-step
+
+      # - aws-ecs/deploy-service-update:
+      #     requires:
+      #       - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
+      #     family: "strolr2-service"
+      #     cluster-name: "strolr2-cluster"
+      #     container-image-name-updates: "container=strolr2-container,tag=${CIRCLE_SHA1}"
+      #     context:
+      #       - railwaynet
+      #       - slack-secrets
+      #     filters:
+      #       branches:
+      #         only:
+      #           - appfile
+      #           - reorg-as-monolith
+      #     <<: *slack-fail-post-step
+
+            post-steps:
+              - slack/notify:
+                  custom: |
+                    {
+                      "text": "",
+                      "blocks": [
+                        {
+                          "type": "section",
+                          "text": {
+                            "type": "mrkdwn",
+                            "text": "✅ *Success* #${CIRCLE_BUILD_NUM} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
+                          }
+                        },
+                        {
+                          "type": "actions",
+                          "elements": [
+                            {
+                              "type": "button",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "View Job"
+                              },
+                              "url": "${CIRCLE_BUILD_URL}"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  event: pass
