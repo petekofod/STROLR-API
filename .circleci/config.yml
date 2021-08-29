@@ -52,32 +52,32 @@ workflows:
             repo: "${AWS_RESOURCE_NAME_PREFIX}"
             create-repo: true
             tag: ${CIRCLE_SHA1},latest
-            # extra-build-args: "--build-arg GITHUB_MESSAGE_LIBRARY_USERNAME=${GITHUB_MESSAGE_LIBRARY_USERNAME} --build-arg GITHUB_MESSAGE_LIBRARY_PASSWORD=${GITHUB_MESSAGE_LIBRARY_PASSWORD}"
+            extra-build-args: "--build-arg GITHUB_MESSAGE_LIBRARY_USERNAME=${GITHUB_MESSAGE_LIBRARY_USERNAME} --build-arg GITHUB_MESSAGE_LIBRARY_PASSWORD=${GITHUB_MESSAGE_LIBRARY_PASSWORD}"
             context:
               - railwaynet
               - slack-secrets
             filters:
               branches:
                 only:
-                  - circleci
                   - master
+                  - circleci
             <<: *slack-fail-post-step
 
-      # - aws-ecs/deploy-service-update:
-      #     requires:
-      #       - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
-      #     family: "strolr2-service"
-      #     cluster-name: "strolr2-cluster"
-      #     container-image-name-updates: "container=strolr2-container,tag=${CIRCLE_SHA1}"
-      #     context:
-      #       - railwaynet
-      #       - slack-secrets
-      #     filters:
-      #       branches:
-      #         only:
-      #           - appfile
-      #           - reorg-as-monolith
-      #     <<: *slack-fail-post-step
+      - aws-ecs/deploy-service-update:
+          requires:
+            - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
+          family: "ris-dev-service"
+          cluster-name: "ris-dev-cluster"
+          container-image-name-updates: "container=strolr-api-container,tag=${CIRCLE_SHA1}"
+          context:
+            - railwaynet
+            - slack-secrets
+          filters:
+            branches:
+              only:
+                - master
+                - circleci
+          <<: *slack-fail-post-step
 
             post-steps:
               - slack/notify:
