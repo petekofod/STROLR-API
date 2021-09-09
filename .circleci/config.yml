@@ -65,47 +65,47 @@ workflows:
             <<: *slack-fail-post-step
 
       - aws-ecs/deploy-service-update:
-          requires:
-            - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
-          family: "strolr-api-service"
-	  cluster-name: "strolr-api-cluster"
-	  container-image-name-updates: "container=strolr-api-container,tag=${CIRCLE_SHA1}"
-          context:
-            - railwaynet
-            - slack-secrets
-          filters:
-            branches:
-              only:
-                - master
-                - deploy
-          <<: *slack-fail-post-step
+            requires:
+              - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
+            family: "strolr-api-service"
+            cluster-name: "strolr-api-cluster"
+            container-image-name-updates: "container=strolr-api-container,tag=${CIRCLE_SHA1}"
+            context:
+              - railwaynet
+              - slack-secrets
+            filters:
+              branches:
+                only:
+                  - master
+                  - deploy
+            <<: *slack-fail-post-step
 
-          post-steps:
-            - slack/notify:
-                custom: |
-                  {
-                    "text": "",
-                    "blocks": [
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": "✅ *Success* #${CIRCLE_BUILD_NUM} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
-                        }
-                      },
-                      {
-                        "type": "actions",
-                        "elements": [
-                          {
-                            "type": "button",
-                            "text": {
-                              "type": "plain_text",
-                              "text": "View Job"
-                            },
-                            "url": "${CIRCLE_BUILD_URL}"
+            post-steps:
+              - slack/notify:
+                  custom: |
+                    {
+                      "text": "",
+                      "blocks": [
+                        {
+                          "type": "section",
+                          "text": {
+                            "type": "mrkdwn",
+                            "text": "✅ *Success* #${CIRCLE_BUILD_NUM} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
                           }
-                        ]
-                      }
-                    ]
-                  }
-                event: pass
+                        },
+                        {
+                          "type": "actions",
+                          "elements": [
+                            {
+                              "type": "button",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "View Job"
+                              },
+                            "url": "${CIRCLE_BUILD_URL}"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  event: pass
