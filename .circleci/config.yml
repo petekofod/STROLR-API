@@ -60,15 +60,17 @@ workflows:
               branches:
                 only:
                   - master
-                  - circleci
+                  - stage
+                  - dev
+                  - prod
             <<: *slack-fail-post-step
 
       - aws-ecs/deploy-service-update:
           requires:
             - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
-          family: "ris-dev-service"
-          cluster-name: "ris-dev-cluster"
-          container-image-name-updates: "container=strolr-api-container,tag=${CIRCLE_SHA1}"
+          family: "strolr-api-service"
+          cluster-name: "strolr-api-cluster"
+          container-image-name-updates: "container=strolr-api,tag=${CIRCLE_SHA1}"
           context:
             - railwaynet
             - slack-secrets
@@ -76,7 +78,8 @@ workflows:
             branches:
               only:
                 - master
-                - circleci
+                - dev
+                - prod
           <<: *slack-fail-post-step
 
           post-steps:
