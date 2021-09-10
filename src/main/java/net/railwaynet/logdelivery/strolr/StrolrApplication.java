@@ -71,12 +71,12 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
                 .csrf().disable()
                 .cors().and().authorizeRequests()
                 .antMatchers("/roles.json", "/railroads.json", "/status-update/*").hasAnyRole(
-                        "amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.status.reader",
-                    "amtk.locomotive.status.reader", "amtk.locomotive.message.reader")
-                .antMatchers("/locomotives.json", "/locomotive-update.json/*").hasAnyRole("amtk.locomotive.status.reader")
-                .antMatchers(HttpMethod.POST,"/locomotive-messages.csv", "/locomotive-messages").hasAnyRole("amtk.locomotive.message.reader")
+                        "locomotive.status.reader", "backoffice.status.reader", "log.reader",
+                    "message.reader")
+                .antMatchers("/locomotives.json", "/locomotive-update.json/*").hasAnyRole("locomotive.status.reader")
+                .antMatchers(HttpMethod.POST,"/locomotive-messages.csv", "/locomotive-messages").hasAnyRole("message.reader")
                 .antMatchers(HttpMethod.POST, "/data-request").hasAnyRole(
-                        "amtk.locomotive.status.reader", "amtk.backoffice.status.reader", "amtk.log.reader")
+                        "locomotive.status.reader", "backoffice.status.reader", "log.reader")
                 .anyRequest().permitAll();
     }
 
