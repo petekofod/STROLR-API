@@ -42,7 +42,7 @@ public class ListOfRailroadsController {
     public String railroads(Principal principal) {
 
         @SuppressWarnings("unchecked") Map<String, Object> userConfiguration =
-                (Map<String, Object>) railroadsService.getRailroadsBySCAC("RCAX");
+                (Map<String, Object>) railroadsService.getRailroadsBySCAC(Objects.requireNonNull(env.getProperty("SCAC")));
         userConfiguration.put("S3BaseURL", Objects.requireNonNull(env.getProperty("S3.base.URL")));
 
         try {
@@ -61,11 +61,7 @@ public class ListOfRailroadsController {
     public String locomotives(Principal principal) {
 
         List<String> scacs = new ArrayList<>();
-
-        for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
-            if (role.getAuthority().endsWith(".locomotive.status.reader"))
-                scacs.add("'" + role.getAuthority().substring(5, 9).toUpperCase() + "'");
-        }
+        scacs.add(Objects.requireNonNull(env.getProperty("SCAC")));
 
         try {
             Map<String, Object> result = locomotivesService.getLocomotives(scacs);
@@ -98,11 +94,7 @@ public class ListOfRailroadsController {
         }
 
         List<String> scacs = new ArrayList<>();
-
-        for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
-            if (role.getAuthority().endsWith(".locomotive.status.reader"))
-                scacs.add("'" + role.getAuthority().substring(5, 9).toUpperCase() + "'");
-        }
+        scacs.add(Objects.requireNonNull(env.getProperty("SCAC")));
 
         try {
             Map<String, Object> result = locomotivesService.getLast10Updates(mark, locoID, scacs);
