@@ -41,14 +41,8 @@ public class RolesController {
         List<Map<String, String>> userRoles = new ArrayList<>();
 
         for (GrantedAuthority role: ((KeycloakAuthenticationToken) principal).getAuthorities()) {
-            String originalRole = role.getAuthority();
-            String scac = originalRole.substring(5, 9).toUpperCase();
-            String roleName = originalRole.substring(10);
-
             Map<String, String> newRole = new HashMap<>();
-            newRole.put("SCAC", scac);
-            newRole.put("role", roleName);
-
+            newRole.put("role", role.getAuthority());
             userRoles.add(newRole);
         }
 

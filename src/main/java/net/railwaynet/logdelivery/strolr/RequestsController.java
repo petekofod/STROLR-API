@@ -376,18 +376,18 @@ public class RequestsController {
         }
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-logs")) {
-            return sendLogsRequest(payloadMap, railroadsService.getSCACbyMARK("RCAX", payloadMap.get("SCACMark")), principal);
+            return sendLogsRequest(payloadMap, Objects.requireNonNull(env.getProperty("SCAC")), principal);
         }
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-status")) {
-            return sendStatusRequest(payloadMap, railroadsService.getSCACbyMARK("RCAX", payloadMap.get("SCACMark")), principal);
+            return sendStatusRequest(payloadMap, Objects.requireNonNull(env.getProperty("SCAC")), principal);
         }
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-backoffice"))
-            return sendBackofficeRequest(payloadMap, payloadMap.get("SCAC"), principal);
+            return sendBackofficeRequest(payloadMap, Objects.requireNonNull(env.getProperty("SCAC")), principal);
 
         if (payloadMap.get(REQUEST_TYPE).equals("get-federation"))
-            return sendFederationRequest(payloadMap, payloadMap.get("SCAC"), principal);
+            return sendFederationRequest(payloadMap, Objects.requireNonNull(env.getProperty("SCAC")), principal);
 
         logger.error("Unknown request type!");
         throw new ResponseStatusException(
