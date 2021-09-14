@@ -60,9 +60,6 @@ workflows:
               branches:
                 only:
                   - master
-                  - stage
-                  - dev
-                  - prod
             <<: *slack-fail-post-step
 
       - aws-ecs/deploy-service-update:
@@ -78,8 +75,6 @@ workflows:
             branches:
               only:
                 - master
-                - dev
-                - prod
           <<: *slack-fail-post-step
 
           post-steps:
