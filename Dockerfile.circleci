@@ -1,0 +1,15 @@
+### STROLR-API BUILD Dockerfile.local
+
+FROM maven:3.8.1-jdk-11 as build
+
+WORKDIR /build
+COPY . /build
+RUN mvn clean install 
+
+
+FROM openjdk:11 as run
+WORKDIR /app
+RUN mkdir /app/conf
+COPY --from=build /build/src/main/resources/application.properties /app/conf/application.properties
+COPY --from=build /build/target/strolr2-0.0.2-SNAPSHOT.jar /app/strolr-api.jar
+ENTRYPOINT ["java","-jar","-Dspring.config.location=/app/conf/application.properties","strolr-api.jar"]
