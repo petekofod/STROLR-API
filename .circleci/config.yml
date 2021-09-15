@@ -67,7 +67,7 @@ workflows:
             - aws-ecr/build-and-push-image # only run this job once aws-ecr/build-and-push-image has completed
           family: "strolr-api-service"
           cluster-name: "strolr-api-cluster"
-          container-image-name-updates: "container=strolr-api,tag=${CIRCLE_SHA1}"
+          container-image-name-updates: "container=strolr-api-container,tag=${CIRCLE_SHA1}"
           context:
             - railwaynet
             - slack-secrets
