@@ -98,7 +98,8 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
             public void addCorsMappings(CorsRegistry registry) {
                 registry
                         .addMapping("/**")
-                        .allowedOrigins("http://localhost:3000", "https://localhost:3000", "https://strolr3.railwaynet.datasages.com")
+                        .allowedOrigins("http://localhost:3000", "https://localhost:3000",
+                                "https://strolrapi.railwaynet.datasages.com", "http://strolrapi.railwaynet.datasages.com")
                         .allowedHeaders("*")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
             }
