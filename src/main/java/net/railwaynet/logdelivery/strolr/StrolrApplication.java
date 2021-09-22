@@ -5,6 +5,7 @@ import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -42,6 +43,9 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
     public static void main(String[] args) {
         SpringApplication.run(StrolrApplication.class, args);
     }
+    
+	@Value("${strolr.cors.allowed_origin:https://strolr-ui.railwaynet.datasages.com}")
+	private String allowedOrigin;
 
     @Autowired
     private StatusesService statusesService;
@@ -98,8 +102,7 @@ public class StrolrApplication extends KeycloakWebSecurityConfigurerAdapter impl
             public void addCorsMappings(CorsRegistry registry) {
                 registry
                         .addMapping("/**")
-                        .allowedOrigins("http://localhost:3000", "https://localhost:3000",
-                                "https://strolrapi.railwaynet.datasages.com", "http://strolrapi.railwaynet.datasages.com")
+                        .allowedOrigins(allowedOrigin)
                         .allowedHeaders("*")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
             }
